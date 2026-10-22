@@ -50,7 +50,7 @@ if (ydoc) prosemirrorJSONToYXmlFragment(getSchema(extensions), DEMO_DOC, ydoc.ge
 const editor = new Editor({
   extensions,
   ...(ydoc ? {} : { content: DEMO_DOC }),
-  editorProps: { attributes: { class: "page-editor", "aria-label": "본문" } },
+  editorProps: { attributes: { class: "md-editor", "aria-label": "본문" } },
 });
 
 (window as unknown as { __demo: unknown }).__demo = { editor, ydoc, opened };

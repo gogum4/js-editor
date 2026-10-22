@@ -1,0 +1,714 @@
+/* 에디터 본문의 모양 — 루트 클래스 `md-editor`(docs/EDITOR-PACKAGE.md P5-4).
+   본문 DOM(제목·목록·표·콜아웃·코드 블록·이미지·각주·수식·토글 등)과 그 안의 부품(언어 선택·콜아웃 메뉴·이미지 막대·표 편집 막대)을 꾸민다.
+   편집 가능한 `.ProseMirror` 요소와 읽기 전용 표시(버전 비교 등)에 `md-editor` 클래스를 달아서 쓴다.
+   앱 고유의 것(페이지 링크·페이지 블록·동기화 블록·버전 비교)은 여기에 없고 앱의 `src/index.css`에 있다. */
+
+/* 본문 에디터 (TipTap/ProseMirror). Tailwind의 기본 초기화가 목록·제목 모양을 지우므로 직접 지정한다. */
+.md-editor {
+  min-height: 50vh;
+  outline: none;
+  line-height: 1.7;
+  color: #262626;
+  word-break: break-word;
+}
+.md-editor > * + * {
+  margin-top: 0.4em;
+}
+.md-editor h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 1.2em;
+}
+.md-editor h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: 1em;
+}
+.md-editor h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 0.9em;
+}
+.md-editor ul {
+  list-style: disc;
+  padding-left: 1.6em;
+}
+.md-editor ol {
+  list-style: decimal;
+  padding-left: 1.6em;
+}
+.md-editor li > p {
+  margin: 0;
+}
+.md-editor blockquote {
+  border-left: 3px solid #d4d4d4;
+  padding-left: 1em;
+  color: #525252;
+}
+.md-editor code {
+  background: #f1f1f1;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+.md-editor pre {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 0.8em 1em;
+  overflow-x: auto;
+}
+.md-editor pre code {
+  background: none;
+  padding: 0;
+}
+/* 링크: 그냥 클릭은 편집이라 글자 커서를 유지하고, Ctrl+클릭으로 연다 */
+.md-editor a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: text;
+}
+.md-editor a:hover {
+  color: #1d4ed8;
+}
+
+/* 블록 링크로 이동한 블록을 잠깐 강조 */
+.md-editor .block-flash {
+  background: #fef9c3;
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px #fef9c3;
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+/* 빈 줄 안내 (Placeholder 확장이 data-placeholder를 달아 준다) */
+.md-editor .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: #a3a3a3;
+  pointer-events: none;
+}
+
+/* 할 일 목록 */
+.md-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0.2em;
+}
+.md-editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+.md-editor ul[data-type="taskList"] li > label {
+  flex: none;
+  margin-top: 0.38em;
+  user-select: none;
+}
+.md-editor ul[data-type="taskList"] li > div {
+  flex: 1;
+  min-width: 0;
+}
+.md-editor ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+/* 콜아웃 */
+.md-editor .callout {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.7em 0;
+  padding: 0.75rem 1rem 0.75rem 0.75rem;
+  border: 1px solid;
+  border-radius: 8px;
+}
+.md-editor .callout-icon {
+  position: relative;
+  flex: none;
+  user-select: none;
+}
+.md-editor .callout-icon > button {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.md-editor .callout-icon > button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.md-editor .callout-content {
+  flex: 1;
+  min-width: 0;
+}
+.md-editor .callout-content > :first-child {
+  margin-top: 0;
+}
+.md-editor .callout-menu {
+  position: absolute;
+  top: 2rem;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 7.5rem;
+  padding: 0.25rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+.md-editor .callout-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+.md-editor .callout-menu button:hover,
+.md-editor .callout-menu button[aria-current="true"] {
+  background: #f1f1f1;
+}
+.md-editor .callout-note {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.md-editor .callout-tip {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.md-editor .callout-important {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+.md-editor .callout-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.md-editor .callout-caution {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* 코드 블록 막대(언어 선택·복사) */
+.md-editor .code-block {
+  position: relative;
+  margin: 0.7em 0;
+  background: #f6f8fa;
+  border-radius: 8px;
+}
+.md-editor .code-block pre {
+  margin: 0;
+  padding: 0.3rem 1rem 0.9rem;
+  background: none;
+  border-radius: 0 0 8px 8px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  tab-size: 4;
+}
+.md-editor .code-block-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.5rem 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  user-select: none;
+}
+.md-editor .code-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.md-editor .code-block-bar button {
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.md-editor .code-block-bar button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+/* mermaid 다이어그램 그림 */
+.md-editor .mermaid-preview {
+  padding: 0.6rem 1rem 1rem;
+  overflow-x: auto;
+  text-align: center;
+  user-select: none;
+}
+.md-editor .mermaid-preview svg {
+  /* Tailwind 기본 스타일이 svg를 블록으로 만들어 text-align이 먹지 않는다. 가로 가운데는 자동 여백으로 맞춘다. */
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  height: auto;
+}
+.md-editor .mermaid-clickable {
+  cursor: zoom-in;
+}
+.md-editor .mermaid-empty {
+  color: #9ca3af;
+  font-size: 0.8125rem;
+}
+.md-editor .mermaid-error {
+  text-align: left;
+  color: #b91c1c;
+  font-size: 0.8125rem;
+}
+.md-editor .mermaid-error pre {
+  margin-top: 0.3rem;
+  padding: 0;
+  background: none;
+  white-space: pre-wrap;
+  font-size: 0.75rem;
+}
+.md-editor .language-picker {
+  position: relative;
+}
+.md-editor .language-picker-popup {
+  position: absolute;
+  top: 1.7rem;
+  left: 0;
+  z-index: 30;
+  width: 18rem;
+  padding: 0.4rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  color: #262626;
+}
+.md-editor .language-picker-popup input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  outline: none;
+}
+.md-editor .language-picker-popup input:focus {
+  border-color: #60a5fa;
+}
+.md-editor .language-picker-popup ul {
+  max-height: 14rem;
+  margin-top: 0.3rem;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+}
+.md-editor .language-picker-popup li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.md-editor .language-picker-popup li[data-active="true"] {
+  background: #f1f1f1;
+}
+.md-editor .language-picker-popup li[aria-selected="true"] {
+  font-weight: 600;
+}
+.md-editor .language-picker-aliases,
+.md-editor .language-picker-count,
+.md-editor .language-picker-empty {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+.md-editor .language-picker-count,
+.md-editor .language-picker-empty {
+  margin-top: 0.3rem;
+  padding: 0 0.5rem;
+}
+
+/* 코드 구문 강조 색 (밝은 테마). 클래스 이름은 highlight.js가 붙인다. */
+.md-editor .hljs-comment,
+.md-editor .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.md-editor .hljs-keyword,
+.md-editor .hljs-doctag,
+.md-editor .hljs-template-tag,
+.md-editor .hljs-template-variable,
+.md-editor .hljs-type,
+.md-editor .hljs-variable.language_ {
+  color: #d73a49;
+}
+.md-editor .hljs-title,
+.md-editor .hljs-title.class_,
+.md-editor .hljs-title.function_ {
+  color: #6f42c1;
+}
+.md-editor .hljs-attr,
+.md-editor .hljs-attribute,
+.md-editor .hljs-literal,
+.md-editor .hljs-meta,
+.md-editor .hljs-number,
+.md-editor .hljs-operator,
+.md-editor .hljs-variable,
+.md-editor .hljs-selector-attr,
+.md-editor .hljs-selector-class,
+.md-editor .hljs-selector-id {
+  color: #005cc5;
+}
+.md-editor .hljs-regexp,
+.md-editor .hljs-string,
+.md-editor .hljs-meta .hljs-string {
+  color: #032f62;
+}
+.md-editor .hljs-built_in,
+.md-editor .hljs-symbol {
+  color: #e36209;
+}
+.md-editor .hljs-name,
+.md-editor .hljs-selector-tag {
+  color: #22863a;
+}
+.md-editor .hljs-bullet {
+  color: #735c0f;
+}
+.md-editor .hljs-addition {
+  color: #22863a;
+  background: #f0fff4;
+}
+.md-editor .hljs-deletion {
+  color: #b31d28;
+  background: #ffeef0;
+}
+.md-editor .hljs-emphasis {
+  font-style: italic;
+}
+.md-editor .hljs-strong {
+  font-weight: 700;
+}
+
+.md-editor hr {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1.2em 0;
+}
+
+/* 첨부 이미지 블록 (에디터와 버전 비교 화면이 같이 쓴다) */
+.md-editor .image-block {
+  margin: 0.75em 0;
+  line-height: 0;
+}
+.md-editor .image-block img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+/* 이미지 틀: 너비를 정하면(data-sized) 이미지가 틀을 채운다. 높이는 비율대로라 늘 비율이 지켜진다. 정렬은 틀의 가로 여백으로 맞춘다. */
+.md-editor .image-frame {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+.md-editor .image-frame[data-sized="true"] img,
+.md-editor .image-frame[data-sized="true"] .image-placeholder {
+  width: 100%;
+}
+.md-editor .image-frame[data-align="center"] {
+  margin-right: auto;
+  margin-left: auto;
+}
+.md-editor .image-frame[data-align="right"] {
+  margin-left: auto;
+}
+.md-editor .image-frame[data-resizing="true"] img {
+  outline: 2px dashed #3b82f6;
+  outline-offset: 2px;
+}
+/* 선택한 이미지 위의 정렬·크기 막대와 크기 손잡이 */
+.md-editor .image-toolbar {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.md-editor .image-toolbar button {
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  padding: 2px 6px;
+  color: #525252;
+  cursor: pointer;
+}
+.md-editor .image-toolbar button:hover {
+  background: #f5f5f5;
+}
+.md-editor .image-toolbar button[aria-pressed="true"] {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.md-editor .image-toolbar-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 3px;
+  background: #e5e5e5;
+}
+.md-editor .image-toolbar-size {
+  padding: 0 6px;
+  color: #737373;
+}
+.md-editor .image-resize-handle {
+  position: absolute;
+  bottom: -6px;
+  z-index: 5;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+  touch-action: none;
+}
+.md-editor .image-resize-handle[data-side="left"] {
+  left: -6px;
+  cursor: nesw-resize;
+}
+.md-editor .image-resize-handle[data-side="right"] {
+  right: -6px;
+  cursor: nwse-resize;
+}
+.md-editor .image-block.is-selected img,
+.md-editor .image-block.ProseMirror-selectednode img {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+.md-editor .image-placeholder {
+  padding: 1.5em;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #737373;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* 각주: 번호는 문서 순서대로 CSS 카운터가 붙이고, 페이지 끝에 목록이 모인다 */
+.md-editor {
+  counter-reset: footnote;
+}
+.md-editor .footnote-ref {
+  counter-increment: footnote;
+  color: #1d4ed8;
+  cursor: pointer;
+  font-size: 0.75em;
+  line-height: 0;
+  padding: 0 1px;
+}
+.md-editor .footnote-ref::after {
+  content: counter(footnote);
+}
+.md-editor .footnote-ref:hover {
+  background: #dbeafe;
+  border-radius: 3px;
+}
+.md-editor .footnote-ref.is-selected {
+  outline: 2px solid #93c5fd;
+  border-radius: 3px;
+}
+.md-editor .footnote-list {
+  margin-top: 2rem;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #525252;
+}
+.md-editor .footnote-list-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  color: #a3a3a3;
+}
+.md-editor .footnote-list ol {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: decimal;
+}
+.md-editor .footnote-list li {
+  cursor: pointer;
+  white-space: pre-line;
+}
+.md-editor .footnote-list li:hover {
+  color: #1d4ed8;
+}
+
+/* LaTeX 수식(KaTeX): 인라인은 글자 사이에, 블록은 한 줄을 차지하고 가운데 */
+.md-editor .math-inline {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+.md-editor .math-inline:hover {
+  background: #eff6ff;
+}
+.md-editor .math-inline.is-selected,
+.md-editor .math-block.is-selected {
+  outline: 2px solid #93c5fd;
+  border-radius: 4px;
+}
+.md-editor .math-block {
+  margin: 0.75rem 0;
+  cursor: pointer;
+  overflow-x: auto;
+  text-align: center;
+}
+.md-editor .math-block:hover {
+  background: #f8fafc;
+}
+.md-editor .math-block .katex-display {
+  margin: 0.25rem 0;
+}
+.math-placeholder {
+  color: #a3a3a3;
+  font-size: 0.875em;
+}
+.math-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+/* 표 (에디터와 읽기 전용 화면이 같이 쓴다). 열 너비는 colgroup, 셀 병합은 colspan·rowspan으로 그려진다 */
+.md-editor .tableWrapper {
+  margin: 0.75em 0;
+  overflow-x: auto;
+}
+.md-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.md-editor td,
+.md-editor th {
+  position: relative;
+  min-width: 3em;
+  box-sizing: border-box;
+  border: 1px solid #d4d4d4;
+  padding: 0.3em 0.6em;
+  vertical-align: top;
+  text-align: left;
+}
+.md-editor th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+.md-editor td > p,
+.md-editor th > p {
+  margin: 0.15em 0;
+}
+.md-editor .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgb(147 197 253 / 35%);
+  content: "";
+  pointer-events: none;
+}
+.md-editor .column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  z-index: 3;
+  width: 4px;
+  background: #60a5fa;
+  pointer-events: none;
+}
+.md-editor.resize-cursor {
+  cursor: col-resize;
+}
+/* 표 편집 막대 */
+.table-toolbar {
+  z-index: 40;
+  display: flex;
+  max-width: calc(100vw - 16px);
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+.table-toolbar button {
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  padding: 4px 8px;
+  color: #404040;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.table-toolbar button:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+.table-toolbar button:disabled {
+  color: #d4d4d4;
+  cursor: default;
+}
+.table-toolbar button.is-danger:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* 토글(접는 블록): 왼쪽 화살표로 열고 닫는다. 닫으면 제목 줄(첫 문단)만 보인다. 열림 상태는 문서가 아니라 설정에 있다 */
+.md-editor .toggle-block {
+  position: relative;
+  margin: 0.4em 0;
+  padding-left: 1.5rem;
+}
+.md-editor .toggle-arrow {
+  position: absolute;
+  top: 0.1em;
+  left: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: #737373;
+  font-size: 0.8rem;
+  line-height: 1.4rem;
+  text-align: center;
+  cursor: pointer;
+  transform: rotate(90deg);
+  transition: transform 0.1s;
+}
+.md-editor .toggle-arrow:hover {
+  background: #f5f5f5;
+}
+.md-editor .toggle-block[data-open="false"] > .toggle-arrow {
+  transform: rotate(0deg);
+}
+/* 에디터에서는 NodeViewContent가 .toggle-body 안에 래퍼 div를 한 겹 더 만든다(제목 줄은 그 안의 첫 문단). */
+.md-editor .toggle-block[data-open="false"] > .toggle-body > [data-node-view-content-react] > :not(:first-child) {
+  display: none;
+}
+.md-editor .toggle-block[data-readonly="true"] > .toggle-arrow {
+  pointer-events: none;
+}

@@ -7,7 +7,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./styles/ui.css"
+    "./styles.css": "./styles/index.css"
   },
   "dependencies": {
     "@9um4/editor-core": "workspace:*",

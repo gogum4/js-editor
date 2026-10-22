@@ -18,7 +18,10 @@ const BASELINE_SOURCE = ["src/index.css"];
  * 지금 규칙이 들어 있는 파일들. 옮긴 뒤에는 새 파일을 여기에 더하고, 선택자 이름을 바꿨다면 `rewrite`로 옛 이름을 맞춘다
  * (예: `[".md-editor", ".page-editor"]`는 새 파일의 `.md-editor`를 기준의 `.page-editor`로 보고 비교한다).
  */
-const CURRENT_SOURCES = [{ file: "src/index.css", rewrite: [] }];
+const CURRENT_SOURCES = [
+  { file: "src/index.css", rewrite: [] },
+  { file: "packages/editor-react/styles/editor.css", rewrite: [[".md-editor", ".page-editor"]] },
+];
 
 /** 주석을 지운다. */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");

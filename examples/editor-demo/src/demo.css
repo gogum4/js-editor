@@ -1,12 +1,17 @@
 /*
- * 데모의 스타일. 지금은 노트 앱의 스타일(`src/index.css`)을 그대로 쓰고, 패키지 화면이 쓰는 Tailwind 클래스를 찾도록 패키지 폴더를 스캔 대상에 더한다.
- * P5에서 스타일이 `editor-react` 패키지로 옮겨 가면 이 파일은 패키지의 스타일 파일을 가리키게 바뀐다.
+ * 데모의 스타일: 패키지의 스타일(`@9um4/editor-react/styles.css`)만 쓴다. 노트 앱의 `src/index.css`는 쓰지 않는다.
+ * Tailwind는 기본 초기화(preflight)만 쓴다 — 앱과 같은 바탕에서 모양이 같은지 비교하려는 것이다.
  */
-@import "../../../src/index.css";
-@source "../../../packages/editor-core/src";
-@source "../../../packages/editor-react/src";
+@import "tailwindcss";
+@import "@9um4/editor-react/styles.css";
 
+html,
+body,
+#root {
+  height: 100%;
+}
 body {
+  margin: 0;
   padding: 24px;
   background: #fff;
 }

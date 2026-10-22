@@ -1,0 +1,3 @@
+/* @9um4/editor-react/styles.css — 화면 부품(ui.css)과 본문 모양(editor.css)을 한 번에 가져온다. */
+@import "./ui.css";
+@import "./editor.css";
