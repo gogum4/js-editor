@@ -31,7 +31,7 @@ try {
       else if (path.includes("*")) continue; // 패턴(예: ./*)은 파일 하나가 아니다
       else if (!files.includes(path)) problems.push(`${name}: exports가 가리키는 파일이 tarball에 없다: ${target}`);
     }
-    // 타입 선언이 `./x.ts`를 가리키면 소비자의 TypeScript가 타입을 못 찾는다(fix-dts-imports.mjs가 고친다).
+    // 선언의 상대 import는 표준 모양인 `.js`로 쓴다(fix-dts-imports.mjs가 고친다; 지금 TypeScript는 `.ts`도 해석하지만 JS 출력과 맞춘다).
     for (const file of files.filter((f) => f.endsWith(".d.ts"))) {
       const text = readFileSync(join(root, file), "utf8");
       if (/(?:from\s*|import\s*\(\s*)["']\.{1,2}\/[^"']*\.tsx?["']/.test(text)) problems.push(`${name}: ${file}의 상대 import가 .ts/.tsx로 끝난다`);

@@ -1,5 +1,6 @@
 // 컴파일한 타입 선언(.d.ts)의 상대 import 확장자를 `.ts`/`.tsx` → `.js`로 바꾼다.
-// `rewriteRelativeImportExtensions`는 JS 출력만 고치고 선언은 `./x.ts`를 그대로 남겨서, 소비자의 TypeScript가 타입을 못 찾을 수 있다.
+// `rewriteRelativeImportExtensions`는 JS 출력만 고치고 선언은 `./x.ts`를 그대로 남긴다. TypeScript 6은 `./x.ts`도 해석해서 (확인함: 번들러·nodenext 해석 모두)
+// 지금 소비자에게 문제를 일으키지는 않지만, 선언의 상대 import는 `.js`로 쓰는 것이 표준 모양이고 JS 출력과도 같다. 오래된 도구에 기대지 않게 맞춰 둔다.
 // 사용: node scripts/fix-dts-imports.mjs <dist 폴더>
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
