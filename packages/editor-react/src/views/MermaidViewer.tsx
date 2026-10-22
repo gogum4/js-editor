@@ -203,15 +203,15 @@ export function MermaidViewer({ svg, onClose }: { svg: string; onClose: () => vo
       aria-label={strings.label}
       tabIndex={-1}
       onKeyDown={onKeyDown}
-      className="fixed inset-0 z-50 flex flex-col bg-black/70 text-white outline-none"
+      className="md-mermaid-viewer"
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-        <span className="min-w-0 truncate text-white/70">{strings.hint}</span>
-        <div className="flex shrink-0 items-center gap-1" data-mermaid-viewer-toolbar>
+      <div className="md-mermaid-bar">
+        <span className="md-mermaid-hint">{strings.hint}</span>
+        <div className="md-mermaid-tools" data-mermaid-viewer-toolbar>
           <ToolButton label={strings.zoomOut} onClick={() => zoomFromCenter(1 / STEP)}>
             −
           </ToolButton>
-          <span className="w-14 text-center tabular-nums" data-mermaid-viewer-zoom>
+          <span className="md-mermaid-zoom" data-mermaid-viewer-zoom>
             {view ? percentLabel(view.scale) : ""}
           </span>
           <ToolButton label={strings.zoomIn} onClick={() => zoomFromCenter(STEP)}>
@@ -237,14 +237,14 @@ export function MermaidViewer({ svg, onClose }: { svg: string; onClose: () => vo
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onDoubleClick={onDoubleClick}
-        className={["relative flex-1 touch-none select-none overflow-hidden", dragging ? "cursor-grabbing" : "cursor-grab"].join(" ")}
+        className={dragging ? "md-mermaid-viewport is-dragging" : "md-mermaid-viewport"}
       >
         <div
           ref={contentRef}
           data-mermaid-content
           role="img"
           aria-label={strings.diagram}
-          className="absolute left-0 top-0 origin-top-left rounded-lg bg-white shadow-2xl"
+          className="md-mermaid-content"
           style={{
             width: size.width,
             height: size.height,
@@ -266,7 +266,7 @@ function ToolButton({ label, onClick, children }: { label: string; onClick: () =
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="min-w-8 cursor-pointer rounded-md px-2 py-1 hover:bg-white/15 focus-visible:bg-white/15 focus-visible:outline-none"
+      className="md-mermaid-tool"
     >
       {children}
     </button>

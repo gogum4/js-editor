@@ -226,10 +226,10 @@ function MathEditor({ edit }: { edit: MathEditState }) {
       aria-label={edit.display ? strings.blockLabel : strings.inlineLabel}
       data-testid="math-editor"
       style={{ position: "fixed", left: 0, top: 0, width: WIDTH, zIndex: 70, visibility: "hidden" }}
-      className="rounded-lg border border-neutral-200 bg-white p-3 shadow-lg"
+      className="md-card"
     >
-      <p className="mb-1.5 text-xs font-medium text-neutral-500">{edit.display ? strings.blockTitle : strings.inlineTitle}</p>
-      <div className="relative">
+      <p className="md-card-title">{edit.display ? strings.blockTitle : strings.inlineTitle}</p>
+      <div className="md-card-anchor">
         <textarea
           ref={areaRef}
           value={draft}
@@ -247,24 +247,24 @@ function MathEditor({ edit }: { edit: MathEditState }) {
           aria-expanded={menuOpen}
           onBlur={(e) => commit(e.currentTarget.value)}
           onKeyDown={onKeyDown}
-          className="w-full resize-none rounded border border-neutral-200 px-2 py-1 font-mono text-sm text-neutral-800 outline-none focus:border-neutral-400"
+          className="md-card-textarea md-card-textarea-mono"
         />
         {menuOpen && <LatexCompletionMenu items={items} active={active} above={above} onPick={pick} onHover={setActive} />}
       </div>
       <div
         data-testid="math-preview"
-        className="mt-2 max-h-40 min-h-10 overflow-auto rounded bg-neutral-50 px-3 py-2 text-neutral-800"
+        className="md-math-preview"
       >
         {draft.trim() === "" ? (
-          <span className="text-sm text-neutral-400">{strings.preview}</span>
+          <span className="md-math-preview-note">{strings.preview}</span>
         ) : html === null ? (
-          <span className="text-sm text-neutral-400">…</span>
+          <span className="md-math-preview-note">…</span>
         ) : (
           <span dangerouslySetInnerHTML={{ __html: html }} />
         )}
       </div>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-      <div className="mt-2 flex items-center justify-between text-xs text-neutral-400">
+      {error && <p className="md-card-error">{error}</p>}
+      <div className="md-card-footer">
         <span>
           {edit.display ? strings.saveHintBlock : strings.saveHintInline} · \ {strings.completionHint}
         </span>
@@ -273,7 +273,7 @@ function MathEditor({ edit }: { edit: MathEditState }) {
           // 눌러도 입력창의 포커스가 빠지지 않게(blur로 먼저 저장되지 않게) mousedown을 막는다.
           onMouseDown={(e) => e.preventDefault()}
           onClick={remove}
-          className="rounded px-1.5 py-0.5 text-neutral-500 hover:bg-neutral-100 hover:text-red-600"
+          className="md-card-delete"
         >
           {strings.delete}
         </button>

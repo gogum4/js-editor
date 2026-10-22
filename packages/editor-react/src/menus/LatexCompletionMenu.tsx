@@ -32,12 +32,9 @@ export function LatexCompletionMenu({ items, active, above, onPick, onHover }: L
   return (
     <div
       data-testid="latex-completion"
-      className={[
-        "absolute right-0 left-0 z-10 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-lg",
-        above ? "bottom-full mb-1" : "top-full mt-1",
-      ].join(" ")}
+      className={above ? "md-latex md-latex-above" : "md-latex md-latex-below"}
     >
-      <ul ref={listRef} role="listbox" aria-label={strings.latexCompletionLabel} className="max-h-44 overflow-y-auto p-1">
+      <ul ref={listRef} role="listbox" aria-label={strings.latexCompletionLabel} className="md-latex-list">
         {items.map((item, index) => (
           <li
             key={item.name}
@@ -48,19 +45,16 @@ export function LatexCompletionMenu({ items, active, above, onPick, onHover }: L
             onMouseDown={(event) => event.preventDefault()}
             onMouseMove={() => onHover(index)}
             onClick={() => onPick(item)}
-            className={[
-              "flex cursor-pointer items-baseline gap-2 rounded-md px-2 py-1",
-              index === active ? "bg-neutral-100" : "",
-            ].join(" ")}
+            className="md-latex-item"
           >
-            <span className="w-32 shrink-0 truncate font-mono text-sm text-neutral-800">{`\\${item.name}`}</span>
-            <span className="min-w-0 flex-1 truncate text-xs text-neutral-600">{item.desc}</span>
-            <span className="shrink-0 text-[10px] text-neutral-400">{item.kind}</span>
+            <span className="md-latex-name">{`\\${item.name}`}</span>
+            <span className="md-latex-desc">{item.desc}</span>
+            <span className="md-latex-kind">{item.kind}</span>
           </li>
         ))}
       </ul>
       {current && <Detail command={current} />}
-      <p className="border-t border-neutral-100 px-2 py-1 text-[10px] text-neutral-400">{strings.latexCompletionHint}</p>
+      <p className="md-latex-hint">{strings.latexCompletionHint}</p>
     </div>
   );
 }
@@ -70,15 +64,15 @@ function Detail({ command }: { command: LatexCommand }) {
   const strings = useEditorStrings().math;
   const { html } = useMathHtml(command.example, false);
   return (
-    <div data-testid="latex-completion-detail" className="border-t border-neutral-100 bg-neutral-50 px-3 py-2">
-      <p className="text-xs text-neutral-700">
-        <span className="font-mono">{`\\${command.name}`}</span> — {command.desc}
+    <div data-testid="latex-completion-detail" className="md-latex-detail">
+      <p className="md-latex-detail-title">
+        <span className="md-latex-detail-name">{`\\${command.name}`}</span> — {command.desc}
       </p>
-      <div className="mt-1 flex items-center justify-between gap-3">
-        <div className="min-h-7 min-w-0 overflow-x-auto text-neutral-800" data-testid="latex-completion-example">
-          {html ? <span dangerouslySetInnerHTML={{ __html: html }} /> : <span className="text-xs text-neutral-400">…</span>}
+      <div className="md-latex-detail-row">
+        <div className="md-latex-example" data-testid="latex-completion-example">
+          {html ? <span dangerouslySetInnerHTML={{ __html: html }} /> : <span className="md-latex-example-empty">…</span>}
         </div>
-        <code className="max-w-[45%] shrink-0 truncate text-[11px] text-neutral-500" title={strings.latexInsertedTitle}>
+        <code className="md-latex-insert" title={strings.latexInsertedTitle}>
           {insertPreview(command)}
         </code>
       </div>

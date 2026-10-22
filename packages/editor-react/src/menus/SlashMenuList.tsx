@@ -63,15 +63,15 @@ export const SlashMenuList = forwardRef<SlashMenuHandle, SlashMenuListProps>(fun
 
   if (items.length === 0) {
     return (
-      <div className="w-72 rounded-lg border border-neutral-200 bg-white p-3 text-sm text-neutral-400 shadow-lg">
+      <div className="md-menu md-menu-slash md-menu-empty">
         {strings.slash.noMatch}
       </div>
     );
   }
 
   return (
-    <div className="w-72 rounded-lg border border-neutral-200 bg-white p-1 shadow-lg">
-      <ul ref={listRef} role="listbox" aria-label={strings.slash.menuLabel} className="max-h-80 overflow-y-auto">
+    <div className="md-menu md-menu-slash">
+      <ul ref={listRef} role="listbox" aria-label={strings.slash.menuLabel} className="md-menu-list">
         {items.map((item, index) => (
           <li
             key={item.id}
@@ -83,13 +83,10 @@ export const SlashMenuList = forwardRef<SlashMenuHandle, SlashMenuListProps>(fun
             onMouseDown={(event) => event.preventDefault()}
             onMouseMove={() => setActive(index)}
             onClick={() => command(item)}
-            className={[
-              "flex cursor-pointer flex-col rounded-md px-2.5 py-1.5",
-              index === active ? "bg-neutral-100" : "",
-            ].join(" ")}
+            className="md-menu-item"
           >
-            <span className="text-sm text-neutral-800">{item.label}</span>
-            <span className="text-xs text-neutral-400">{item.description}</span>
+            <span className="md-menu-label">{item.label}</span>
+            <span className="md-menu-desc">{item.description}</span>
           </li>
         ))}
       </ul>

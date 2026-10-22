@@ -64,8 +64,8 @@ export const CompletionMenuList = forwardRef<CompletionMenuHandle, CompletionMen
   if (items.length === 0) return null;
 
   return (
-    <div className="w-60 rounded-lg border border-neutral-200 bg-white p-1 shadow-lg">
-      <ul ref={listRef} role="listbox" aria-label={strings.completion.label} className="max-h-64 overflow-y-auto">
+    <div className="md-menu md-menu-completion">
+      <ul ref={listRef} role="listbox" aria-label={strings.completion.label} className="md-menu-list">
         {items.map((item, index) => (
           <li
             key={item.word}
@@ -77,13 +77,10 @@ export const CompletionMenuList = forwardRef<CompletionMenuHandle, CompletionMen
             onMouseDown={(event) => event.preventDefault()}
             onMouseMove={() => setActive(index)}
             onClick={() => command(item)}
-            className={[
-              "flex cursor-pointer items-baseline justify-between gap-3 rounded-md px-2.5 py-1",
-              index === active ? "bg-neutral-100" : "",
-            ].join(" ")}
+            className="md-menu-item"
           >
-            <span className="font-mono text-sm text-neutral-800">{item.word}</span>
-            <span className="text-xs text-neutral-400">{strings.completion.kinds[item.kind]}</span>
+            <span className="md-menu-label md-menu-label-mono">{item.word}</span>
+            <span className="md-menu-desc">{strings.completion.kinds[item.kind]}</span>
           </li>
         ))}
       </ul>
