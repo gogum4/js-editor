@@ -1,6 +1,6 @@
 # 에디터 패키지 분리 설계 (초안)
 
-이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다. **P1은 끝났다**(§8): `packages/editor-schema`가 있고 앱이 그것을 쓴다.
+이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다. **P1·P2는 끝났다**(§8): `packages/editor-schema`와 `packages/editor-core`가 있고 앱이 그것을 쓴다.
 
 ## 1. 목적과 결정
 
@@ -177,7 +177,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 |---|---|---|
 | P0 | §9의 미결 질문을 해소하고 이름·방언을 확정한다 | 이 문서의 §9가 비어 있다 |
 | P1 ✅ (dist 컴파일·Node 로드 시험 포함) | **경계 만들기**: `packages/`와 `editor-schema`로 순수 모듈 이동, 의존 방향 검사를 CI에 추가 | 기존 시험이 모두 통과하고, schema가 앱 코드를 import하지 않는다 |
-| P2 | **core 포트화**: `createEditorExtensions(options)`, 자산·키값·알림 포트, Collaboration 선택화, 문자열 사전, `import.meta.glob` 제거 | core 폴더에 `lib/api`·`tree/store` import가 0개 |
+| P2 ✅ | **core 포트화**: `createEditorExtensions(options)`, 자산·키값·알림 포트, Collaboration 선택화, 문자열 사전, `import.meta.glob` 제거 | core 폴더에 `lib/api`·`tree/store` import가 0개 |
 | P3 | **markdown**: 방언 명세, 골든 왕복 시험, 붙여넣기 변환, 입력 규칙 빈틈 메우기, 실제 Notion·Obsidian 파일로 검증 | 골든 시험 통과, 알려진 손실 목록 확정 |
 | P4 | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
 | P5 | **react**: 메뉴·NodeView·CSS 분리, 데모 페이지 | 노트 앱이 패키지만으로 같은 화면을 낸다 |
@@ -186,7 +186,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | P8 | **배포**: Changesets, 스키마 호환 semver 규칙, 레지스트리 결정 | 첫 버전을 소비자가 설치해 쓴다 |
 | P9 | 블로그 도입, 소비자 2개 이상 안정 후 **별도 저장소 분리 판단** | — |
 
-### P2 상세 계획 (2026-10-23 결정)
+### P2 상세 계획 (2026-10-23 결정, 같은 날 구현 완료)
 
 측정(2026-10-23): 에디터 폴더에서 `lib/api`·`tree/store`를 쓰는 파일 18개, `import.meta.glob` 1곳(`highlight/loader.ts`), 한글 문자열이 든 파일 약 61개, 모듈 전역 상태 8곳(`toggleStore`·`assetCache`·`keywordStore`·`lowlight`·`blockSource` 등).
 
@@ -203,6 +203,22 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 2-6 | **위키 계층 분리**: `PageLink`·`PageBlock`·`PageLinkSuggest`·`BlockLinkCopy`·슬래시 페이지 항목을 앱 쪽 확장으로, `createEditorExtensions({ extensions, slashItems })`로 주입 | 스키마 골든 + 기존 시험 |
 | 2-7 | **문자열 사전**: `strings` 옵션(ko 기본, en 제공) | 한글 하드코딩 0 |
 | 2-8 | **물리적 이동**: `packages/editor-core`로 위키가 아닌 코드와 `latexCommands`·`slashItems`를 한 번에 | 시험·빌드·CI 통과, core의 앱 import 0 |
+
+**결과** (2-0~2-8 모두 끝, 커밋은 `git log --grep "P2-"`):
+- `packages/editor-core`: 위키가 아닌 에디터 코드 75개 파일(확장·NodeView·슬래시·수식·각주·표·이미지·토글·코드 블록·포트·글 사전)과 `lib`의 `math`·`latexAssist`·`latexCommands`·`slashItems`. 공개 API는 `src/index.ts` 배럴 하나이고 앱은 `@9um4/editor-core`로만 가져온다.
+- **포트**: `KeyValueStore`·`AssetStore`·`Notifier`·`UrlOpener`(Tauri opener를 직접 쓰던 `LinkOpener`를 바꿨다). 앱 구현은 `src/features/editor/appPorts.ts`. 상태는 포트 객체별(`WeakMap`)이라 에디터가 여럿이어도 섞이지 않는다.
+- **주입 지점**: `createCoreExtensions(ydoc, { ports, strings, slashItems, slashHandlers, transform })`. 노트 앱의 `editorExtensions.ts`가 위키 확장을 **예전 자리 그대로** 끼운다. 스키마 골든이 노드·마크·확장 순서를 고정하고, P2 내내 한 글자도 바뀌지 않았다.
+- **Yjs 선택화**: `ydoc`가 없으면 StarterKit의 history가 되돌리기를 맡는다.
+- **`import.meta.glob` 제거**: `pnpm gen:languages`가 193개 언어의 명시적 지연 import 표를 만든다. 번들 구조(JS 290개, 언어 조각 해시)는 그대로다.
+- **글 사전**: `strings/`의 ko(기본)·en. 슬래시 항목은 한국어·영어로 모두 검색된다. `pnpm check:deps`(`check-core-strings`)가 core의 한글 하드코딩을 막는다.
+- 검증: 로컬 전체 시험 1507개, 새 클론에서 CI와 같은 순서(`install --frozen-lockfile` → 시험 → `check:deps` → `check:dist` → `build`) 통과.
+
+**P2에서 확인하지 못했거나 남은 것**:
+1. **화면에서 직접 확인하지 못했다.** 서버(Linux, 화면 없음)에서 Tauri 앱을 띄우지 못했다. React 컨텍스트(`EditorPortsProvider`)가 TipTap NodeView에 닿는지, 되돌리기/다시하기, 입력 동작은 사람이 [IME-CHECKLIST.md](IME-CHECKLIST.md)와 함께 확인해야 한다. 화면 없는 시험 환경에서는 일반 StarterKit도 되돌리기가 동작하지 않아 구조(설정값)만 시험했다.
+2. **글 사전에 없는 한국어**: 위키 계층(페이지 링크·페이지 블록·위키 슬래시 항목 4개), LaTeX 명령 설명·검색어 표(`lib/latexCommands.ts`, 약 300개 항목), 개발자용 `console.warn` 문구. 슬래시 기본 항목의 한국어 글은 `lib/slashItems.ts`에 데이터로 남아 있고 영어가 사전으로 덮는다.
+3. **core에 React 뷰가 들어 있다**(React는 peerDependency). P5에서 `editor-react`로 다시 나눈다. 그래서 `check:dist`(컴파일 후 Node 로드)는 아직 schema만 한다.
+4. **CSS는 앱의 `src/index.css`에 남아 있다**(콜아웃·코드 블록·표 등). Tailwind 클래스는 `packages/`도 자동으로 스캔된다. 스타일 분리는 P5.
+5. `lib/math.ts`가 `katex/dist/katex.min.css`를 JS에서 동적 import한다(§5 걸림돌 2). Next.js 서버 렌더링용 처리는 P4.
 
 하지 않는 것: **일반 참조 노드는 P7(PlanBench)에서 만든다** — 새 노드는 저장 스키마·`DOC_SCHEMA_VERSION`을 바꾸고 기존 `pageLink`/`pageBlock` 이전이 필요한데, 소비자가 하나뿐인 지금 만들면 틀린 추상화가 될 수 있다(§10). P2의 2-6 주입 구조가 그 바탕이다. 저장·동기화·저널 코드(`usePageDoc`·`docSaver`·`openDocs` 등)는 앱에 남는다.
 
