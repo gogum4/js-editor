@@ -1,0 +1,10 @@
+{
+  "name": "@9um4/editor-schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "에디터 스키마의 순수 규칙 — 노드·속성 정규화, 언어 이름 데이터. TipTap·DOM·앱 비의존(docs/EDITOR-PACKAGE.md)",
+  "exports": {
+    "./*": "./src/*.ts"
+  }
+}

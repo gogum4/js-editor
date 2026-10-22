@@ -1,4 +1,4 @@
-// highlight.js의 언어 모듈에서 언어 이름과 별칭을 뽑아 `src/lib/languageData.generated.ts`를 만든다.
+// highlight.js의 언어 모듈에서 언어 이름과 별칭을 뽑아 `packages/editor-schema/src/languageData.generated.ts`를 만든다.
 // 별칭(ts, py, sh, yml …)은 각 언어 모듈이 스스로 정의하고 있어서 손으로 표를 만들지 않고 그대로 가져온다.
 // highlight.js를 올린 뒤에는 `pnpm gen:languages`를 다시 실행하고 결과를 커밋한다.
 import { readdirSync, writeFileSync } from "node:fs";
@@ -48,7 +48,7 @@ export const LANGUAGE_ALIASES: Readonly<Record<string, string>> = ${JSON.stringi
 )};
 `;
 
-const target = fileURLToPath(new URL("../src/lib/languageData.generated.ts", import.meta.url));
+const target = fileURLToPath(new URL("../packages/editor-schema/src/languageData.generated.ts", import.meta.url));
 writeFileSync(target, output);
 console.log(`언어 ${names.length}개, 별칭 ${sortedAliases.length}개 → ${path.relative(process.cwd(), target)}`);
 if (conflicts.length > 0) console.log(`별칭 충돌 ${conflicts.length}건:\n  ${conflicts.join("\n  ")}`);
