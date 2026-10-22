@@ -52,3 +52,19 @@ const target = fileURLToPath(new URL("../packages/editor-schema/src/languageData
 writeFileSync(target, output);
 console.log(`언어 ${names.length}개, 별칭 ${sortedAliases.length}개 → ${path.relative(process.cwd(), target)}`);
 if (conflicts.length > 0) console.log(`별칭 충돌 ${conflicts.length}건:\n  ${conflicts.join("\n  ")}`);
+
+// 구문 강조용 지연 로더 표. `import.meta.glob`(Vite 전용)을 쓰지 않고 언어마다 명시적인 동적 import를 둔다 —
+// Vite·Next.js·Node 어디서나 같은 방식으로 언어별 조각이 나뉜다(docs/EDITOR-PACKAGE.md P2-4).
+const loaderLines = names.map((name) => `  ${JSON.stringify(name)}: () => import("highlight.js/lib/languages/${name}"),`).join("\n");
+const loaderOutput = `// 이 파일은 \`pnpm gen:languages\`(scripts/gen-language-data.mjs)가 만든다. 직접 고치지 않는다.
+// highlight.js ${require("highlight.js/package.json").version} 기준 ${names.length}개 언어.
+import type { LanguageFn } from "highlight.js";
+
+/** 언어 정식 이름 → 그 언어 정의를 불러오는 함수. 처음 쓸 때만 불러온다. */
+export const LANGUAGE_LOADERS: Readonly<Record<string, () => Promise<{ default: LanguageFn }>>> = {
+${loaderLines}
+};
+`;
+const loaderTarget = fileURLToPath(new URL("../src/features/editor/highlight/languageLoaders.generated.ts", import.meta.url));
+writeFileSync(loaderTarget, loaderOutput);
+console.log(`로더 ${names.length}개 → ${path.relative(process.cwd(), loaderTarget)}`);
