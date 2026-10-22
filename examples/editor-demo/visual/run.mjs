@@ -20,7 +20,9 @@ import { SCENES, waitReady } from "./scenes.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
-const baselinePath = join(here, "baseline", "computed-styles.json");
+// --plain: Tailwind 없이 패키지 스타일만 쓰는 페이지(plain.html)를 본다. 기준 파일도 따로다(Tailwind의 초기화가 없어 값이 다르다).
+const plain = process.argv.includes("--plain");
+const baselinePath = join(here, "baseline", plain ? "computed-styles-plain.json" : "computed-styles.json");
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
 const valueOf = (name) => args[args.indexOf(name) + 1];
@@ -54,7 +56,7 @@ async function main() {
         if (message.type() === "error" && !/Failed to load resource/.test(text)) errors.push(`console.error: ${text}`);
       });
       const open = async ({ collab = false } = {}) => {
-        await page.goto(url + (collab ? "?collab=1" : ""));
+        await page.goto(url + (plain ? "plain.html" : "") + (collab ? "?collab=1" : ""));
         await waitReady(page);
       };
       const dump = (selector) => page.evaluate(dumpSubtree, { selector, props: PROPS, inherited: INHERITED });

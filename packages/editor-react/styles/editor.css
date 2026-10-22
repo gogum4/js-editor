@@ -3,6 +3,68 @@
    편집 가능한 `.ProseMirror` 요소와 읽기 전용 표시(버전 비교 등)에 `md-editor` 클래스를 달아서 쓴다.
    앱 고유의 것(페이지 링크·페이지 블록·동기화 블록·버전 비교)은 여기에 없고 앱의 `src/index.css`에 있다. */
 
+/* 기본 초기화: Tailwind의 preflight가 하던 것 중 본문이 기대는 것만 `.md-editor` 안에서 한다.
+   Tailwind를 안 쓰는 소비자(블로그 등)에서도 브라우저 기본 여백·버튼 모양·글꼴이 본문에 스며들지 않게 하려는 것이다.
+   `@layer base` 안에 둔다 — 소비자의 스타일과 Tailwind 유틸리티(`mt-2` 등)는 레이어 밖/위라서 이것을 항상 이기고,
+   이 파일의 아래 규칙(레이어 밖)도 이것을 이긴다. Tailwind가 있는 앱에서는 preflight와 같은 값이라 달라지는 것이 없다. */
+@layer base {
+  :where(.md-editor),
+  :where(.md-editor) *,
+  :where(.md-editor) ::before,
+  :where(.md-editor) ::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  :where(.md-editor) :is(h1, h2, h3, h4, h5, h6) {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  :where(.md-editor) :is(ol, ul, menu) {
+    list-style: none;
+  }
+  :where(.md-editor) a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+  :where(.md-editor) :is(b, strong) {
+    font-weight: bolder;
+  }
+  :where(.md-editor) :is(code, kbd, samp, pre) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 1em;
+  }
+  :where(.md-editor) :is(img, svg, video, canvas, audio, iframe, embed, object) {
+    display: block;
+    vertical-align: middle;
+  }
+  :where(.md-editor) :is(img, video) {
+    max-width: 100%;
+    height: auto;
+  }
+  :where(.md-editor) table {
+    border-color: inherit;
+    border-collapse: collapse;
+    text-indent: 0;
+  }
+  :where(.md-editor) hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  :where(.md-editor) :is(button, input, select, optgroup, textarea) {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+}
+
 /* 본문 에디터 (TipTap/ProseMirror). Tailwind의 기본 초기화가 목록·제목 모양을 지우므로 직접 지정한다. */
 .md-editor {
   min-height: 50vh;
@@ -642,6 +704,7 @@
 }
 /* 표 편집 막대 */
 .table-toolbar {
+  box-sizing: border-box;
   z-index: 40;
   display: flex;
   max-width: calc(100vw - 16px);
@@ -656,10 +719,12 @@
   line-height: 1.2;
 }
 .table-toolbar button {
+  margin: 0;
   border: 0;
   border-radius: 4px;
   background: none;
   padding: 4px 8px;
+  font: inherit;
   color: #404040;
   white-space: nowrap;
   cursor: pointer;

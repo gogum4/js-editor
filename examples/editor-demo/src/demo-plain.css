@@ -1,0 +1,20 @@
+/*
+ * Tailwind 없이 패키지의 스타일(`@9um4/editor-react/styles.css`)만 쓰는 페이지. Tailwind를 쓰지 않는 소비자(블로그 등)에서도 같은 모양인지 본다.
+ * 아래 body 규칙은 데모 틀일 뿐 패키지 스타일이 아니다.
+ */
+@import "@9um4/editor-react/styles.css";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  padding: 24px;
+  background: #fff;
+}
+#root {
+  max-width: 760px;
+  margin: 0 auto;
+}

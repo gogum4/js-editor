@@ -7,7 +7,6 @@ import * as Y from "yjs";
 import { memoryPorts, type AssetStore } from "@9um4/editor-core";
 import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@9um4/editor-react";
 import { DEMO_DOC } from "./demoDoc";
-import "./demo.css";
 
 /**
  * 노트 앱 없이 에디터 패키지만으로 편집기를 띄운다. 이미지는 브라우저에서 그린 작은 PNG, 설정 저장소·링크 열기는 메모리/기록용이다.

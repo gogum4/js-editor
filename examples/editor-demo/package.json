@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "visual": "node visual/run.mjs",
-    "visual:update": "node visual/run.mjs --update"
+    "visual:update": "node visual/run.mjs --update",
+    "visual:plain": "node visual/run.mjs --plain",
+    "visual:update-plain": "node visual/run.mjs --plain --update"
   },
   "dependencies": {
     "@9um4/editor-core": "workspace:*",

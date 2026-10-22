@@ -6,6 +6,7 @@
 pnpm --filter editor-demo dev                 # 데모를 띄운다 (http://localhost:5173, ?collab=1이면 실제 Yjs 문서)
 pnpm --filter editor-demo visual              # 시각·동작 시험: 기준과 비교한다
 pnpm --filter editor-demo visual:update       # 의도한 변경이면 기준을 다시 만든다 (diff를 검토하고 커밋)
+pnpm --filter editor-demo visual:plain        # 같은 시험을 Tailwind 없는 페이지(plain.html)에서: 패키지 스타일만으로 모양이 서는지 (기준: computed-styles-plain.json, 갱신은 visual:update-plain)
 pnpm --filter editor-demo visual -- --screenshots <이름>        # 장면 스크린샷을 .visual/<이름>/에 저장 (커밋하지 않음)
 pnpm --filter editor-demo visual -- --diff <이름A> <이름B>      # 저장한 두 묶음을 픽셀 단위로 비교
 ```
