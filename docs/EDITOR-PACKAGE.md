@@ -259,6 +259,24 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 **확인에서 나온 수정** (사람이 앱에서 확인해 알려 준 실패): 붙여넣기 직후 Ctrl+Z가 원문으로 돌아가지 않고 붙여넣기 전체를 취소했다. 원인은 ① `MarkdownPaste`와 Collaboration의 우선순위가 둘 다 1000이었고 TipTap은 같은 우선순위에서 **나중에 등록된 확장의 단축키를 먼저** 실행해 Yjs가 Ctrl+Z를 가져간 것, ② 원문으로 "바꿔 넣는" 편집을 기록에 더하면 두 번째 Ctrl+Z가 변환된 내용을 되살리는 것이었다. 우선순위를 1100으로 올리고, 첫 Ctrl+Z는 "표준 되돌리기로 붙여넣기 취소 → 원문을 새 편집으로 삽입"으로 바꿨으며, 붙여넣기가 앞선 입력과 한 되돌리기 단계로 합쳐지지 않게 끊는다. 화면 없는 시험이 Yjs 없이 돌아서 못 잡았으므로 `happy-dom`을 개발 의존성에 더하고 실제 Yjs + 마운트된 에디터 시험(`markdownPaste.collab.test.ts`)을 추가했다 — 옛 설정으로 돌리면 이 시험이 실패하는 것을 확인했다.
 
+### P4 상세 계획 (2026-10-23 결정)
+
+결정: ① **파이프라인은 하나**: `Markdown → markdownToDoc → 본문 JSON → React 요소`. 원안의 unified(remark/rehype) 플러그인은 만들지 않는다 — 콜아웃·토글·각주·수식·블록 id의 해석을 두 곳에 구현하면 편집기와 블로그가 어긋나기 때문이다(대신 remark/rehype 생태계 플러그인은 쓸 수 없다). ② **Next.js 샘플 앱을 만들고 CI에서 `next build`도 돌린다**. ③ **mermaid는 브라우저에서 그린다**(서버는 `<pre class="mermaid">`).
+
+| 단계 | 내용 | 확인 방법 |
+|---|---|---|
+| 4-0 | `@9um4/editor-render` 골격(의존: schema·markdown·katex·lowlight, React는 peer). 의존 방향 검사와 **배포용 컴파일을 세 패키지 모두로** 확장, dist끼리의 import를 검증하는 로더 | `check:deps`·`check:dist` |
+| 4-1 | **핵심 렌더러**(JSON→React, 훅·브라우저 API 없음): 모든 블록·인라인, 콜아웃, 토글(`<details>`), 각주 목록, 표, 정렬, 안전한 링크, 이미지(주소 해석기 주입), 블록 id·제목 앵커 | `editor-markdown` 골든 픽스처 재사용 → HTML 골든 |
+| 4-2 | **서버 준비 단계** `prepareRender(doc)`(비동기): 수식→KaTeX HTML, 코드→lowlight 강조. 렌더 자체는 동기 | Node 시험 |
+| 4-3 | **클라이언트 조각** `MermaidDiagram`(`"use client"`) | 서버 출력 시험 |
+| 4-4 | **스타일**: `styles.css`(CSS 변수, 다크), 코드 강조 테마, KaTeX CSS 재노출 | 샘플 앱 육안 |
+| 4-5 | **편의 API**: `renderMarkdown(source)`(frontmatter·요소·목차·안내), `renderToHtml` | 단위 시험 |
+| 4-6 | **배포 형식**: 컴파일된 JS·타입, `exports` 맵, `"use client"` 보존 | Node 로드 시험 |
+| 4-7 | **Next.js 샘플** `examples/next-blog`(App Router, `generateStaticParams`) + `next build` + 산출 HTML 검사 + CI | 빌드·HTML 검사 |
+| 4-8 | 문서와 남은 것 | — |
+
+하지 않는 것: mermaid의 빌드 시점 SVG(브라우저 엔진 필요), 위키 링크의 의미 있는 해석(블로그에 위키가 없다 — 소비자가 `references` 해석기를 주면 링크로 만든다).
+
 ## 9. 결정 기록과 미결 질문
 
 ### 해소된 것
