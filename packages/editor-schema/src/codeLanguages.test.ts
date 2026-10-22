@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { languageOptions, resolveLanguage, searchLanguages } from "./codeLanguages";
-import { LANGUAGE_ALIASES, LANGUAGE_NAMES } from "./languageData.generated";
+import { languageOptions, resolveLanguage, searchLanguages } from "./codeLanguages.ts";
+import { LANGUAGE_ALIASES, LANGUAGE_NAMES } from "./languageData.generated.ts";
 
 describe("resolveLanguage", () => {
   it("keeps canonical names and understands the common aliases", () => {

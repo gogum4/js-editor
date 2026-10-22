@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeMenuPosition } from "./menuPosition";
+import { computeMenuPosition } from "./menuPosition.ts";
 
 const viewport = { width: 1000, height: 700 };
 const menu = { width: 300, height: 320 };

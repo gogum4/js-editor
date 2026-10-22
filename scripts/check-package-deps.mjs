@@ -1,6 +1,7 @@
 // packages/*의 import 방향을 검사한다(docs/EDITOR-PACKAGE.md §8 P1).
 // editor-schema는 같은 패키지 안의 상대 경로와 `node:` 내장만 import할 수 있다 —
 // 앱(`src/`)·서버·TipTap·React 등을 끌어오면 Node.js(블로그 서버)에서 쓸 수 없게 된다.
+// 허용 목록에 있는 외부 패키지도 그 패키지의 package.json에 선언돼 있어야 한다(선언 없이 쓰면 소비자가 설치하지 못한다).
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,11 +18,14 @@ function walk(dir, out = []) {
   return out;
 }
 
-const specifier = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)["']([^"']+)["']/g;
+const specifier = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)["']([^"']+)["']/g;
 const violations = [];
 
 for (const [pkg, allowed] of Object.entries(ALLOWED_PACKAGES)) {
   const pkgDir = join(root, "packages", pkg);
+  const manifest = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8"));
+  const declared = new Set([...Object.keys(manifest.dependencies ?? {}), ...Object.keys(manifest.peerDependencies ?? {})]);
+  for (const a of allowed) if (!declared.has(a)) violations.push(`packages/${pkg}/package.json: 허용한 ${a}가 dependencies에 없다`);
   for (const file of walk(join(pkgDir, "src"))) {
     const text = readFileSync(file, "utf8");
     for (const m of text.matchAll(specifier)) {

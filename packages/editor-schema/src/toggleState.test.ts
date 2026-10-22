@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_CLOSED_TOGGLES, parseClosedToggles, serializeClosedToggles, withToggleOpen } from "./toggleState";
+import { MAX_CLOSED_TOGGLES, parseClosedToggles, serializeClosedToggles, withToggleOpen } from "./toggleState.ts";
 
 describe("parseClosedToggles", () => {
   it("저장된 JSON 목록을 읽는다", () => {

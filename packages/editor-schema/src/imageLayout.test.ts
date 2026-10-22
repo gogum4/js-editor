@@ -10,7 +10,7 @@ import {
   normalizeImageWidth,
   presetWidth,
   resizedWidth,
-} from "./imageLayout";
+} from "./imageLayout.ts";
 
 describe("normalizeImageWidth", () => {
   it("범위 안의 숫자는 반올림해서 쓰고, 문자열 숫자도 받는다(HTML 속성)", () => {

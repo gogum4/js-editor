@@ -4,7 +4,20 @@
   "private": true,
   "type": "module",
   "description": "에디터 스키마의 순수 규칙 — 노드·속성 정규화, 언어 이름 데이터. TipTap·DOM·앱 비의존(docs/EDITOR-PACKAGE.md)",
+  "sideEffects": false,
+  "files": ["dist"],
   "exports": {
     "./*": "./src/*.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      "./*": {
+        "types": "./dist/*.d.ts",
+        "default": "./dist/*.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
   }
 }

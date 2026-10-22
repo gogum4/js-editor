@@ -1,4 +1,4 @@
-import { normalizeTextAlign } from "./textAlign";
+import { normalizeTextAlign } from "./textAlign.ts";
 
 /**
  * 이미지 블록의 크기와 정렬(순수 규칙).

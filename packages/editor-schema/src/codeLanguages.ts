@@ -1,4 +1,4 @@
-import { LANGUAGE_ALIASES, LANGUAGE_NAMES } from "./languageData.generated";
+import { LANGUAGE_ALIASES, LANGUAGE_NAMES } from "./languageData.generated.ts";
 
 const NAME_SET: ReadonlySet<string> = new Set(LANGUAGE_NAMES);
 

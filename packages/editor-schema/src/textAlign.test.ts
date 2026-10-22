@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ALIGNMENT_LABEL, alignmentOf, isTextAlignment, normalizeTextAlign, TEXT_ALIGNMENTS } from "./textAlign";
+import { ALIGNMENT_LABEL, alignmentOf, isTextAlignment, normalizeTextAlign, TEXT_ALIGNMENTS } from "./textAlign.ts";
 
 describe("normalizeTextAlign", () => {
   it("가운데·오른쪽·양쪽은 그대로, 대소문자와 공백은 무시한다", () => {

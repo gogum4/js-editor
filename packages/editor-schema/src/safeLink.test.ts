@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isSafeToOpen, wantsToOpenLink } from "./safeLink";
+import { isSafeToOpen, wantsToOpenLink } from "./safeLink.ts";
 
 describe("isSafeToOpen", () => {
   it("allows web and mail addresses", () => {

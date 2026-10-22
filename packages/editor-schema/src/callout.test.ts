@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CALLOUT_META, CALLOUT_TYPES, isCalloutType, normalizeCalloutType } from "./callout";
+import { CALLOUT_META, CALLOUT_TYPES, isCalloutType, normalizeCalloutType } from "./callout.ts";
 
 describe("callout types", () => {
   it("has the five GitHub-style kinds, each with a label and an icon", () => {
