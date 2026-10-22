@@ -4,7 +4,7 @@ import { Slice } from "@tiptap/pm/model";
 import { afterEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
 
-import { createReactExtensions } from "./react/createReactExtensions";
+import { createReactExtensions } from "./createReactExtensions";
 
 /**
  * 실제 Yjs(Collaboration)와 화면에 붙은 에디터에서 Ctrl+Z가 기대대로 동작하는지 시험한다.

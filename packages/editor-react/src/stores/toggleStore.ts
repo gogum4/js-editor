@@ -1,7 +1,7 @@
 import { create, type StoreApi, type UseBoundStore } from "zustand";
 
 import { parseClosedToggles, serializeClosedToggles, TOGGLE_CLOSED_KEY, withToggleOpen } from "@9um4/editor-schema/toggleState";
-import type { KeyValueStore } from "../../ports/types";
+import type { KeyValueStore } from "@9um4/editor-core";
 
 const SAVE_DELAY_MS = 400;
 

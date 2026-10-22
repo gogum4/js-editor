@@ -4,6 +4,7 @@
  */
 @import "../../../src/index.css";
 @source "../../../packages/editor-core/src";
+@source "../../../packages/editor-react/src";
 
 body {
   padding: 24px;

@@ -222,6 +222,8 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 **5-1 결과** (2026-10-23): core의 확장은 이제 화면을 모른다. `createCoreExtensions(ydoc, { views, menus, ui })`로 노드 뷰 7개(콜아웃·코드 블록·이미지·각주·토글·수식 인라인/블록), 메뉴 2개(`/`·코드 자동완성 — 닫힐 때 Ctrl+Space 위치를 비우는 일과 한글 조합 키 무시는 core가 주입된 render를 감싸서 한다), 편집 창 접점(`uiOf(editor).openMathEditor/openFootnoteEditor`)을 주입받고, 주입하지 않으면 `renderHTML` 기본 렌더로 그려진다. `src/react/`(views·menus·hosts·stores·hooks·context·`createReactExtensions`)에 React 쪽을 모았고, `scripts/check-core-react.mjs`가 **그 밖의 core가 React·zustand를 import하면 실패**시킨다(`check:deps`; 지금 위반 0). 수식 KaTeX 로더는 core(`lib/math.ts`), `useMathHtml` 훅은 react. 노트 앱·데모·화면 시험은 `createReactExtensions`를 쓴다. 검증: 단위 시험 1686개, DOM 골든 한 글자도 안 바뀜, 실제 Chromium의 계산된 스타일이 기준과 같음, 동작 시험 19개, **스크린샷 13장이 5-0b 시점과 픽셀 단위로 동일**.
 
+**5-2 결과** (2026-10-23): `packages/editor-react`(`@9um4/editor-react`)가 생겼다 — 뷰 10개·메뉴 3개·호스트 3개·저장소 3개·훅·컨텍스트·`createReactExtensions`와 화면 시험(DOM 골든 2개와 그 골든 파일, 실제 Yjs 마운트 시험)이 옮겨 왔고 공개 API는 `src/index.ts`(`"use client"`) 하나다. **core는 React를 전혀 쓰지 못한다**: `check-package-deps`의 core 허용 목록에서 `react`·`react-dom`·`@tiptap/react`·`zustand`를 뺐고 core의 `package.json`에서도 지웠다(5-1의 임시 검사 `check-core-react`는 이 규칙으로 대체되어 없앴다). **editor-react은 core의 공개 API(`@9um4/editor-core`, `@9um4/editor-core/testing`)만 쓴다**(상대 경로로 core 내부를 읽으면 `check-package-deps`가 막는다). 넓어진 core 공개 API: 수식·각주 편집 보조(`setMathLatex`·`setFootnoteText`·`collectFootnotes` 등), 수식 로더(`loadKatex`·`renderMathHtml`·`mathError`), LaTeX 자동완성 계산(`latexAssist`), mermaid 도구, `assetCacheFor`, 화면 시험 도구(`@9um4/editor-core/testing`에 `mountGolden`). 한글 하드코딩 검사는 두 패키지를 모두 본다. 노트 앱·데모는 React 쪽을 `@9um4/editor-react`에서 가져온다. 검증: 단위 시험 1686개, DOM 골든(옮겨 간 파일 그대로), 실제 Chromium 계산된 스타일 기준과 같음, 동작 시험 19개, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**, 앱 진입 JS +1.5KB.
+
 하지 않는 것: **일반 참조 노드는 P7(PlanBench)에서 만든다** — 새 노드는 저장 스키마·`DOC_SCHEMA_VERSION`을 바꾸고 기존 `pageLink`/`pageBlock` 이전이 필요한데, 소비자가 하나뿐인 지금 만들면 틀린 추상화가 될 수 있다(§10). P2의 2-6 주입 구조가 그 바탕이다. 저장·동기화·저널 코드(`usePageDoc`·`docSaver`·`openDocs` 등)는 앱에 남는다.
 
 위험: IME·자동완성·슬래시 같은 입력 동작은 시험이 다 못 잡으므로 끝에 [IME-CHECKLIST.md](IME-CHECKLIST.md)를 사람이 확인한다. core의 React 뷰는 Tailwind 클래스를 쓰므로 앱 CSS가 `packages/`도 스캔하게 설정한다.
@@ -307,7 +309,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 5-0 | **안전망**: ① 모든 노드가 든 문서를 happy-dom에서 **실제로 마운트**(EditorContent)해 렌더된 DOM을 골든으로 고정, ② `index.css`의 **규칙 집합**을 기준 파일로 고정(옮긴 뒤 규칙이 사라지지 않았는지 비교) | 이동 전 골든 생성 |
 | 5-0b | **실제 브라우저 안전망**(5-0의 한계를 푼다): ① `examples/editor-demo`(Vite) — 고정 문서·고정 id로 지금의 core 뷰를 띄운다(`?collab=1`이면 실제 Yjs), ② Playwright(headless Chromium)로 장면 13개의 **계산된 스타일**(`computedStyleMap`)을 덤프해 기준으로 커밋, ③ 실제 키 입력·붙여넣기·**CDP 한글 조합(IME)** 동작 시험 19개, ④ 같은 머신 전후 비교용 스크린샷(픽셀 diff) | 기준 비교 + 동작 시험 통과, CI `browser` 작업 |
 | 5-1 ✅ | **접점 만들기(제자리)**: core 안에서 뷰·메뉴·편집 창을 주입 방식으로 바꾸고, React에 묶인 파일을 `src/react/`로 모은다(아직 같은 패키지) | 5-0·5-0b가 한 글자·한 픽셀도 안 바뀜 |
-| 5-2 | **`editor-react` 패키지 생성**: `src/react/` 폴더를 통째로 새 패키지로 옮긴다(5-1이 경계를 이미 만들었다). core의 공개 API를 그것이 필요로 하는 만큼 넓힌다 | `check:deps`, 골든, `visual` |
+| 5-2 ✅ | **`editor-react` 패키지 생성**: `src/react/` 폴더를 통째로 새 패키지로 옮겼다. core의 공개 API를 그것이 필요로 하는 만큼 넓혔다 | `check:deps`, 골든, `visual` |
 | 5-3 | **Tailwind 클래스 → 일반 CSS**(45곳) | 골든 갱신 후 diff 검토 |
 | 5-4 | **CSS 이동**: 본문 스타일을 `editor-react`의 스타일 파일로, 앱 `index.css`에서 제거. 루트 클래스 `md-editor` | 규칙 집합 비교 |
 | 5-5 | **앱 연결**: `PageEditor`·`SyncedBlock`·호스트를 `createReactExtensions`와 새 import로 | 전체 시험 + 사람의 화면 확인 |

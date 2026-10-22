@@ -1,8 +1,8 @@
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type * as Y from "yjs";
 
-import { type CoreExtensionsOptions, createCoreExtensions } from "../coreExtensions";
-import type { EditorMenus, EditorUi, EditorViews } from "../ports/ui";
+import { type CoreExtensionsOptions, createCoreExtensions } from "@9um4/editor-core";
+import type { EditorMenus, EditorUi, EditorViews } from "@9um4/editor-core";
 import { completionMenuRender } from "./menus/completionMenuRender";
 import { slashMenuRender } from "./menus/slashMenuRender";
 import { openFootnoteEditor } from "./stores/footnoteEditStore";

@@ -2,7 +2,7 @@ import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/re
 import { useEffect, useRef, useState } from "react";
 
 import { resolveLanguage } from "@9um4/editor-schema/codeLanguages";
-import { isMermaidLanguage } from "../../mermaid/renderer";
+import { isMermaidLanguage } from "@9um4/editor-core";
 import { LanguagePicker } from "./LanguagePicker";
 import { MermaidPreview } from "./MermaidPreview";
 import { useEditorStrings } from "../context";

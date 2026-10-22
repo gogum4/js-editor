@@ -13,12 +13,14 @@ const ALLOWED_PACKAGES = {
   "editor-render": ["@9um4/editor-markdown", "@9um4/editor-schema", "highlight.js", "katex", "lowlight", "mermaid", "react", "react-dom"],
   // Markdown 변환: schema와 marked만(순수 함수라 TipTap·DOM이 필요 없다).
   "editor-markdown": ["@9um4/editor-schema", "marked"],
-  // 에디터 코어: TipTap·Yjs·React 계열과 schema만. 앱(`src/`)·Tauri·서버는 안 된다.
+  // 에디터 코어(React 없음): TipTap·Yjs와 schema·markdown. React·zustand를 쓰면 안 된다 — 화면은 editor-react가 주입한다(P5).
   "editor-core": [
     "@9um4/editor-markdown", "@9um4/editor-schema", "@tiptap/core", "@tiptap/extension-code-block", "@tiptap/extension-collaboration", "@tiptap/extension-list",
-    "@tiptap/extension-table", "@tiptap/extensions", "@tiptap/pm", "@tiptap/react", "@tiptap/starter-kit", "@tiptap/suggestion",
-    "@tiptap/y-tiptap", "highlight.js", "katex", "lowlight", "mermaid", "react", "react-dom", "yjs", "zustand",
+    "@tiptap/extension-table", "@tiptap/extensions", "@tiptap/pm", "@tiptap/starter-kit", "@tiptap/suggestion",
+    "@tiptap/y-tiptap", "highlight.js", "katex", "lowlight", "mermaid", "yjs",
   ],
+  // 에디터 React 화면: core 위에 React로 뷰·메뉴·편집 창을 얹는다. 앱(`src/`)·Tauri·서버·core의 내부 파일은 안 된다(공개 API `@9um4/editor-core`만).
+  "editor-react": ["@9um4/editor-core", "@9um4/editor-schema", "@tiptap/core", "@tiptap/pm", "@tiptap/react", "@tiptap/suggestion", "react", "react-dom", "yjs", "zustand"],
 };
 
 function walk(dir, out = []) {

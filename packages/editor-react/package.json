@@ -1,0 +1,25 @@
+{
+  "name": "@9um4/editor-react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "에디터의 React 화면 — 노드 뷰, 메뉴, 수식·각주 편집 창, 표 편집 막대, 컨텍스트. core의 확장에 주입해서 쓴다(docs/EDITOR-PACKAGE.md P5)",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@9um4/editor-core": "workspace:*",
+    "@9um4/editor-schema": "workspace:*",
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/suggestion": "^3.32.0",
+    "yjs": "^13.6.33",
+    "zustand": "^5.0.15"
+  },
+  "peerDependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}

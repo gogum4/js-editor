@@ -1,11 +1,12 @@
-// core 후보 에디터 코드에 화면에 보이는 한글이 하드코딩돼 있지 않은지 검사한다(docs/EDITOR-PACKAGE.md P2-7).
+// 에디터 패키지(core·react)에 화면에 보이는 한글이 하드코딩돼 있지 않은지 검사한다(docs/EDITOR-PACKAGE.md P2-7).
 // 화면 글은 `packages/editor-core/src/strings/`의 사전(ko·en)에 둔다. 검사에서 빼는 것: 주석, 개발자용 콘솔 출력(console.*),
-// 사전 폴더(strings/), 시험 파일, 한국어가 데이터인 파일(DATA_FILES). `packages/editor-core/src/`만 본다(앱 계층은 패키지 밖이다).
+// 사전 폴더(strings/), 시험 파일, 한국어가 데이터인 파일(DATA_FILES). `packages/editor-core/src/`와 `packages/editor-react/src/`를 본다(앱 계층은 패키지 밖이다).
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = fileURLToPath(new URL("../packages/editor-core/src", import.meta.url));
+// 화면 글은 core의 사전(strings/)에 있고, 그것을 쓰는 화면은 editor-react에 있다 — 두 패키지 모두 본다.
+const roots = ["../packages/editor-core/src", "../packages/editor-react/src"].map((p) => fileURLToPath(new URL(p, import.meta.url)));
 const SKIP_DIRS = ["strings/"];
 // 한국어가 데이터인 파일: 슬래시 항목의 기본(한국어) 글, LaTeX 명령 설명·검색어 표, 한글 입력 판별 정규식. 다른 언어는 사전으로 덮는다(슬래시) 또는 아직 없다(LaTeX 설명).
 const DATA_FILES = new Set(["lib/slashItems.ts", "lib/latexCommands.ts", "lib/latexAssist.ts"]);
@@ -21,7 +22,7 @@ function walk(dir, out = []) {
 }
 
 const found = [];
-for (const file of walk(root)) {
+for (const root of roots) for (const file of walk(root)) {
   const rel = relative(root, file).replaceAll("\\", "/");
   if (isApp(rel)) continue;
   // 블록 주석은 줄 수를 지키며 비운다.
