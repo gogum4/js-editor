@@ -1,6 +1,6 @@
 // CSS를 다른 파일로 옮겨도 규칙이 하나도 사라지지 않았는지 확인한다(docs/EDITOR-PACKAGE.md P5-0, P5-4).
 // 규칙을 (선택자 하나, 선언 묶음) 쌍으로 풀어 집합으로 비교한다 — 선택자를 쉼표로 묶거나 파일을 나눠도 같다.
-// 기준 파일(`scripts/css-rules-baseline.json`)은 옮기기 전의 `src/index.css`에서 만든다.
+// 기준 파일(`scripts/css-rules-baseline.json`)은 P5-7 끝의 CSS 파일들에서 만들었다(옮기기 전 `src/index.css`의 규칙을 모두 포함하고, 5-3·5-7에서 의도해서 더하거나 바꾼 것을 반영). 규칙을 일부러 바꾸면 `--write`로 다시 만들고 diff를 검토한다.
 // 이 검사는 "사라진 규칙"만 잡는다. 규칙 **순서·우선순위**가 달라지는 것은 못 잡으므로 옮긴 뒤에는 화면 확인이 필요하다.
 //
 // 사용:  node scripts/check-css-rules.mjs            기준과 비교
@@ -11,17 +11,14 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const baselinePath = `${root}scripts/css-rules-baseline.json`;
 
-/** 기준을 만드는 원본(옮기기 전 상태). */
-const BASELINE_SOURCE = ["src/index.css"];
+/** 기준을 만드는 원본. */
+const BASELINE_SOURCE = ["src/index.css", "packages/editor-react/styles/ui.css", "packages/editor-react/styles/editor.css"];
 
 /**
  * 지금 규칙이 들어 있는 파일들. 옮긴 뒤에는 새 파일을 여기에 더하고, 선택자 이름을 바꿨다면 `rewrite`로 옛 이름을 맞춘다
  * (예: `[".md-editor", ".page-editor"]`는 새 파일의 `.md-editor`를 기준의 `.page-editor`로 보고 비교한다).
  */
-const CURRENT_SOURCES = [
-  { file: "src/index.css", rewrite: [] },
-  { file: "packages/editor-react/styles/editor.css", rewrite: [[".md-editor", ".page-editor"]] },
-];
+const CURRENT_SOURCES = BASELINE_SOURCE.map((file) => ({ file, rewrite: [] }));
 
 /** 주석을 지운다. */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");

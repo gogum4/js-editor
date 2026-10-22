@@ -216,8 +216,8 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 **P2에서 확인하지 못했거나 남은 것**:
 1. **화면에서 직접 확인하지 못했다.** 서버(Linux, 화면 없음)에서 Tauri 앱을 띄우지 못했다. React 컨텍스트(`EditorPortsProvider`)가 TipTap NodeView에 닿는지, 되돌리기/다시하기, 입력 동작은 사람이 [IME-CHECKLIST.md](IME-CHECKLIST.md)와 함께 확인해야 한다. 화면 없는 시험 환경에서는 일반 StarterKit도 되돌리기가 동작하지 않아 구조(설정값)만 시험했다.
 2. **글 사전에 없는 한국어**: 위키 계층(페이지 링크·페이지 블록·위키 슬래시 항목 4개), LaTeX 명령 설명·검색어 표(`lib/latexCommands.ts`, 약 300개 항목), 개발자용 `console.warn` 문구. 슬래시 기본 항목의 한국어 글은 `lib/slashItems.ts`에 데이터로 남아 있고 영어가 사전으로 덮는다.
-3. **core에 React 뷰가 들어 있다**(React는 peerDependency). P5에서 `editor-react`로 다시 나눈다. 그래서 `check:dist`(컴파일 후 Node 로드)는 아직 schema만 한다.
-4. **CSS는 앱의 `src/index.css`에 남아 있다**(콜아웃·코드 블록·표 등). Tailwind 클래스는 `packages/`도 자동으로 스캔된다. 스타일 분리는 P5.
+3. ~~core에 React 뷰가 들어 있다~~ → P5에서 `editor-react`로 나눴고 `check:dist`가 다섯 패키지를 모두 본다.
+4. ~~CSS는 앱의 `src/index.css`에 남아 있다~~ → P5-4에서 `editor-react/styles/`로 옮겼다(앱 고유 규칙만 남음).
 5. `lib/math.ts`가 `katex/dist/katex.min.css`를 JS에서 동적 import한다(§5 걸림돌 2). Next.js 서버 렌더링용 처리는 P4.
 
 **5-1 결과** (2026-10-23): core의 확장은 이제 화면을 모른다. `createCoreExtensions(ydoc, { views, menus, ui })`로 노드 뷰 7개(콜아웃·코드 블록·이미지·각주·토글·수식 인라인/블록), 메뉴 2개(`/`·코드 자동완성 — 닫힐 때 Ctrl+Space 위치를 비우는 일과 한글 조합 키 무시는 core가 주입된 render를 감싸서 한다), 편집 창 접점(`uiOf(editor).openMathEditor/openFootnoteEditor`)을 주입받고, 주입하지 않으면 `renderHTML` 기본 렌더로 그려진다. `src/react/`(views·menus·hosts·stores·hooks·context·`createReactExtensions`)에 React 쪽을 모았고, `scripts/check-core-react.mjs`가 **그 밖의 core가 React·zustand를 import하면 실패**시킨다(`check:deps`; 지금 위반 0). 수식 KaTeX 로더는 core(`lib/math.ts`), `useMathHtml` 훅은 react. 노트 앱·데모·화면 시험은 `createReactExtensions`를 쓴다. 검증: 단위 시험 1686개, DOM 골든 한 글자도 안 바뀜, 실제 Chromium의 계산된 스타일이 기준과 같음, 동작 시험 19개, **스크린샷 13장이 5-0b 시점과 픽셀 단위로 동일**.
@@ -231,6 +231,15 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 **5-6 결과** (2026-10-23): `editor-core`와 `editor-react`도 배포용으로 컴파일하고 `check:dist`가 다섯 패키지를 모두 본다(`build:packages` → pack 모양 → 소비자 타입(번들러·nodenext, `skipLibCheck: false`) → Node 스모크). 각 패키지에 `tsconfig.build.json`·`files`·`publishConfig`·`build` 스크립트를 더했고 editor-react의 `"use client"`가 컴파일 뒤에도 진입점 맨 앞에 남는지 검사한다. 이 과정에서 잡힌 문제 셋: ① **core·react의 소스는 확장자 없는 상대 import(`./keywordStore`)를 써서 tsc 출력이 순수 Node에서 불러지지 않았다**(Node 스모크가 52개 모듈 중 첫 번째에서 깼다) → `fix-dts-imports.mjs`가 JS·선언의 확장자 없는 상대 import에 `.js`/`/index.js`를 붙이도록 넓혔다(소스는 건드리지 않음). ② **editor-react의 표 막대가 쓰는 표 명령 타입(`addRowAfter` 등)은 `@tiptap/extension-table`이 에디터 타입에 더하는 확장인데, editor-react은 그 패키지에 의존하지 않아 컴파일이 깨졌다**(선언 파일의 `/// <reference types>`는 tsc가 남기지 않는다) → 표 동작 목록(`TABLE_ACTIONS`: 실행·가능 여부·위험 표시)을 core의 `table/tableActions.ts`로 옮겨 공개했다 — 에디터 명령은 core에 있는 것이 옳다. ③ `katex/dist/katex.min.css` 동적 import에 타입 선언이 없어 컴파일이 깨졌다 → `css.d.ts`(번들러가 CSS를 처리한다는 전제를 문서화). editor-react은 컴파일할 때 core의 소스가 아니라 `dist/index.d.ts`를 보게 `paths`로 지정했고, 그래서 `build:packages`는 core를 먼저 짓는다(pnpm이 의존 순서를 지킨다). 소비자 타입 시험에 core·react의 공개 API 사용 예(`createCoreExtensions`·`createReactExtensions`·`newEditor`·`TABLE_ACTIONS`)와 "없는 옵션은 오류" 확인을 더했다. 검증: `check:dist` 전부 통과(Node에서 102개 모듈), 단위 1686개, 동작 19개, 스크린샷 13장 P5 이전과 동일, 앱 진입 JS 1,524,759B(5-2 대비 −1.8KB: Tailwind 클래스가 빠졌다).
 
 **5-7 결과** (2026-10-23): 데모는 `@9um4/editor-core`·`@9um4/editor-react`와 패키지 스타일(`@9um4/editor-react/styles.css`)만 쓴다(앱의 `src/`를 가져오는 곳 없음). 더해서 **Tailwind 없는 페이지(`plain.html`)** 를 만들었다 — 소비자(블로그·캘린더)가 Tailwind를 안 쓰는 경우를 실제 브라우저로 보려는 것이다. 처음에는 브라우저 기본 여백(`p`·`ul`)·버튼 테두리·`img` 크기 제한·`code` 글자 크기가 그대로 스며들어 모양이 많이 달랐다(스크린샷). 두 페이지의 계산된 스타일을 비교해 **차이를 낳는 속성만** 골라(박스 크기·여백·테두리 초기화, 제목 크기, 목록 기호, 링크 색, 버튼·입력 글꼴, 이미지·svg 표시) `editor.css` 앞머리의 `@layer base` 초기화로 넣었다: Tailwind preflight와 같은 값이라 앱에서는 아무것도 바뀌지 않고(계산된 스타일·스크린샷 13장 동일), `@layer base` 안이라 소비자의 스타일·Tailwind 유틸리티가 항상 이긴다(레이어 밖 규칙이 레이어 안 규칙을 이긴다 — 페이지 미리보기가 `page-editor md-editor` 요소에 `mt-1.5`·`border-t`를 얹는 것이 이 이유로 안전하다). 표 막대는 본문 밖에 뜨는 부품이라 `box-sizing`·`font: inherit`를 직접 적었다. 이제 두 페이지의 남은 차이는 소비자 몫(문서 기본 글꼴·줄 간격)뿐이고 **동작 시험 19개가 Tailwind 없는 페이지에서도 통과**한다. `visual:plain`(기준 `computed-styles-plain.json`)을 CI `browser` 작업에 더했다.
+
+**P5 완료 요약과 5-5·5-8** (2026-10-23): 5-5(앱 연결)의 코드 작업은 앞 단계에서 끝났다 — 앱은 `createReactExtensions`와 `@9um4/editor-react`·`@9um4/editor-react/styles.css`를 쓰고 본문 요소에 `page-editor md-editor`를 단다. 남은 것은 **앱 화면은 서버(Linux, 화면 없음)에서 띄울 수 없어 데모가 덮지 못하는 곳을 사람이 확인하는 일**이다. 확인 목록(앱 `pnpm tauri dev`, 이전 모습과 비교):
+1. 본문 편집 화면: 제목·목록·표·콜아웃·코드 블록·이미지·토글·각주·수식이 이전과 같은가(특히 첫 화면의 간격).
+2. 메뉴·편집 창: 슬래시 메뉴, 코드 자동완성, 수식 편집 창과 LaTeX 자동완성, 각주 편집 창, 마메이드 크게 보기의 모양과 위치.
+3. **CSS 순서가 바뀐 곳**(옮긴 규칙이 앱 규칙 앞으로 왔다): 버전 비교 화면(색·기호·접힘), 페이지 블록 카드·임베드·동기화 블록, 링크 호버 미리보기(`PagePreviewHost`: 위쪽 간격·구분선), 페이지 링크의 색·흐림.
+4. 어두운 배경이나 좁은 창에서 메뉴가 잘리지 않는가(WebView2).
+5. 한글 IME(실제 입력기; 체크리스트는 [IME-CHECKLIST.md](IME-CHECKLIST.md)) — 자동 시험은 이벤트 주입이다.
+
+P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 남음)은 풀렸다 — React는 `editor-react`, 본문 모양은 `editor-react/styles/editor.css`, 메뉴·편집 창은 `ui.css`에 있고 다섯 패키지가 모두 `check:dist`(컴파일·pack·소비자 타입·Node 로드·`"use client"`)를 거친다. 남은 한계: 헤드리스 Chromium(Linux)은 WebView2가 아니다, 마우스 올림·포커스 상태는 자동으로 보지 않는다, IME는 이벤트 주입이다, GitHub Actions의 `browser` 작업은 아직 한 번도 돌지 않았다. 다음 단계는 P6 이후.
 
 하지 않는 것: **일반 참조 노드는 P7(PlanBench)에서 만든다** — 새 노드는 저장 스키마·`DOC_SCHEMA_VERSION`을 바꾸고 기존 `pageLink`/`pageBlock` 이전이 필요한데, 소비자가 하나뿐인 지금 만들면 틀린 추상화가 될 수 있다(§10). P2의 2-6 주입 구조가 그 바탕이다. 저장·동기화·저널 코드(`usePageDoc`·`docSaver`·`openDocs` 등)는 앱에 남는다.
 
@@ -323,7 +332,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 5-5 | **앱 연결**: `PageEditor`·`SyncedBlock`·호스트를 `createReactExtensions`와 새 import로 | 전체 시험 + 사람의 화면 확인 |
 | 5-6 ✅ | **배포 모양**: core·react를 `check:dist`(컴파일·pack·소비자 타입·`"use client"` 보존)에 추가 | `check:dist` |
 | 5-7 ✅ | **데모 페이지**: `examples/editor-demo`는 5-0b에서 앞당겨 만들었다. 남은 일은 데모가 `editor-react`·패키지 스타일만 쓰도록 import를 바꾸는 것 | 빌드 + `visual`, CI |
-| 5-8 | 문서와 남은 것 | — |
+| 5-8 ✅ | 문서와 남은 것 | — |
 
 위험: ① **CSS 우선순위·순서**: 규칙 집합 비교는 "사라진 규칙"만 잡고 순서·우선순위 변화는 못 잡는다 → 5-5 뒤 사람의 화면 확인(이전과 같은 CDP 검증)이 필요하다 → **5-0b가 이 위험을 줄인다**(순서만 바꾼 CSS도 브라우저의 계산된 스타일 비교가 잡는다). ② **마운트 시험의 한계**: happy-dom은 레이아웃을 계산하지 않아 위치·크기 문제를 못 잡는다(DOM 구조·클래스만 고정) → 5-0b의 실제 브라우저 시험이 보완한다. ③ 범위가 크다(파일 20여 개, CSS 600줄) — 단계마다 시험이 통과한 채 커밋한다.
 
