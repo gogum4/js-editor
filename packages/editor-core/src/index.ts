@@ -5,6 +5,7 @@
 
 // 확장 목록
 export { type CoreExtensionsOptions, createCoreExtensions } from "./coreExtensions";
+export { type MarkdownCopyOptions, sliceToMarkdown } from "./extensions/MarkdownCopy";
 export { blockFlashKey, findBlockById } from "./extensions/BlockFlash";
 export { blockIdPlugin, blockIdTransaction, transactionIntroducesBlocks } from "./extensions/BlockId";
 

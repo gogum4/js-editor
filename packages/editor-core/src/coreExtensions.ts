@@ -21,6 +21,7 @@ import { Footnote } from "./footnote/Footnote";
 import { MathBlock } from "./math/MathBlock";
 import { MathInline } from "./math/MathInline";
 import { LinkOpener } from "./extensions/LinkOpener";
+import { MarkdownCopy, type MarkdownCopyOptions } from "./extensions/MarkdownCopy";
 import { MarkdownPaste } from "./extensions/MarkdownPaste";
 import { CodeHighlight } from "./highlight/CodeHighlight";
 import { ImageBlock } from "./image/ImageBlock";
@@ -33,6 +34,11 @@ export interface CoreExtensionsOptions {
   ports?: EditorPorts;
   /** Markdown 붙여넣기 변환이 위키 링크·이미지를 찾는 방법(노트 앱이 페이지 제목으로 찾아 준다). 비우면 못 찾는 것으로 보고 글자로 둔다. */
   markdown?: Partial<ImportContext>;
+  /**
+   * 복사할 때 `text/plain`을 Markdown으로 채운다(기본 꺼짐; 켜려면 내보내기 옵션 객체를 준다, 빈 `{}`도 켜짐).
+   * Obsidian 같은 일반 텍스트 편집기에 붙여도 문법이 유지되지만, 메모장에 붙이면 `**` 같은 기호가 보인다.
+   */
+  copyAsMarkdown?: MarkdownCopyOptions;
   /** 화면 글 사전. 기본은 한국어. */
   strings?: EditorStrings;
   /** 슬래시 메뉴 항목을 바꾼다(기본 항목을 받아 앱의 항목을 끼워 넣어 돌려준다). */
@@ -70,6 +76,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     }),
     LinkOpener,
     MarkdownPaste.configure({ context: options.markdown ?? {} }),
+    MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,
     CodeBlock,
