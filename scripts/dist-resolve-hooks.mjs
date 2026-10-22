@@ -10,7 +10,9 @@ export async function resolve(specifier, context, nextResolve) {
   const match = /^@9um4\/(editor-[a-z]+)(?:\/(.+))?$/.exec(specifier);
   if (match) {
     const [, pkg, sub] = match;
-    const file = `${root}${pkg}/dist/${sub ?? "index"}.js`;
+    // 하위 경로는 `dist/<sub>.js`이거나(schema) 폴더의 index(core의 `./testing`)다.
+    const candidates = [`${root}${pkg}/dist/${sub ?? "index"}.js`, `${root}${pkg}/dist/${sub}/index.js`];
+    const file = candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
     if (existsSync(file)) return { url: pathToFileURL(file).href, shortCircuit: true };
     throw new Error(`dist가 없다: ${specifier} → ${file} (먼저 빌드한다)`);
   }

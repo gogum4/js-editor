@@ -228,6 +228,8 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 **5-4 결과** (2026-10-23): 본문 모양 규칙(제목·목록·콜아웃·코드 블록·언어 선택·구문 강조·이미지·각주·수식·표와 표 편집 막대·토글·할 일·링크 기본형)을 `src/index.css`에서 `packages/editor-react/styles/editor.css`로 옮기고 루트 클래스를 `.md-editor`로 바꿨다(713줄 이동, 앱에는 295줄 남음). 패키지의 `styles.css` 내보내기는 `styles/index.css`가 `ui.css`(5-3)와 `editor.css`를 함께 가져온다. **앱 고유의 규칙은 앱에 남겼다**: 페이지 링크·페이지 블록·동기화 블록·버전 비교(`.page-editor` 선택자 그대로). 앱의 본문 요소는 `page-editor md-editor` 두 클래스를 모두 단다(`PageEditor`·`SyncedBlock`·`VersionCompareView`·`PagePreviewHost`). 순서가 바뀐 것: 옮긴 규칙이 앱 규칙(버전 비교·페이지 블록) 뒤에서 앞으로 왔다 — 같은 요소를 꾸미는 겹침이 없는지 따졌다(버전 비교의 `[data-diff]`는 노드가 아니라 비교 화면이 만든 래퍼에 붙고, 페이지 블록의 `.image-placeholder` 규칙은 여전히 뒤에 있다) — 앱 화면은 데모가 덮지 못하므로 5-5의 사람 확인 항목이다. `check-css-rules`는 두 파일을 보고 `.md-editor`를 기준의 `.page-editor`로 맞춰 비교한다(기준 210개 모두 있음). 데모는 이제 앱의 CSS가 아니라 패키지의 `styles.css`만 쓴다. 검증: 계산된 스타일이 기준과 같고(실제 Chromium) 동작 시험 19개·단위 시험 1686개 통과, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**.
 
+**5-6 결과** (2026-10-23): `editor-core`와 `editor-react`도 배포용으로 컴파일하고 `check:dist`가 다섯 패키지를 모두 본다(`build:packages` → pack 모양 → 소비자 타입(번들러·nodenext, `skipLibCheck: false`) → Node 스모크). 각 패키지에 `tsconfig.build.json`·`files`·`publishConfig`·`build` 스크립트를 더했고 editor-react의 `"use client"`가 컴파일 뒤에도 진입점 맨 앞에 남는지 검사한다. 이 과정에서 잡힌 문제 셋: ① **core·react의 소스는 확장자 없는 상대 import(`./keywordStore`)를 써서 tsc 출력이 순수 Node에서 불러지지 않았다**(Node 스모크가 52개 모듈 중 첫 번째에서 깼다) → `fix-dts-imports.mjs`가 JS·선언의 확장자 없는 상대 import에 `.js`/`/index.js`를 붙이도록 넓혔다(소스는 건드리지 않음). ② **editor-react의 표 막대가 쓰는 표 명령 타입(`addRowAfter` 등)은 `@tiptap/extension-table`이 에디터 타입에 더하는 확장인데, editor-react은 그 패키지에 의존하지 않아 컴파일이 깨졌다**(선언 파일의 `/// <reference types>`는 tsc가 남기지 않는다) → 표 동작 목록(`TABLE_ACTIONS`: 실행·가능 여부·위험 표시)을 core의 `table/tableActions.ts`로 옮겨 공개했다 — 에디터 명령은 core에 있는 것이 옳다. ③ `katex/dist/katex.min.css` 동적 import에 타입 선언이 없어 컴파일이 깨졌다 → `css.d.ts`(번들러가 CSS를 처리한다는 전제를 문서화). editor-react은 컴파일할 때 core의 소스가 아니라 `dist/index.d.ts`를 보게 `paths`로 지정했고, 그래서 `build:packages`는 core를 먼저 짓는다(pnpm이 의존 순서를 지킨다). 소비자 타입 시험에 core·react의 공개 API 사용 예(`createCoreExtensions`·`createReactExtensions`·`newEditor`·`TABLE_ACTIONS`)와 "없는 옵션은 오류" 확인을 더했다. 검증: `check:dist` 전부 통과(Node에서 102개 모듈), 단위 1686개, 동작 19개, 스크린샷 13장 P5 이전과 동일, 앱 진입 JS 1,524,759B(5-2 대비 −1.8KB: Tailwind 클래스가 빠졌다).
+
 하지 않는 것: **일반 참조 노드는 P7(PlanBench)에서 만든다** — 새 노드는 저장 스키마·`DOC_SCHEMA_VERSION`을 바꾸고 기존 `pageLink`/`pageBlock` 이전이 필요한데, 소비자가 하나뿐인 지금 만들면 틀린 추상화가 될 수 있다(§10). P2의 2-6 주입 구조가 그 바탕이다. 저장·동기화·저널 코드(`usePageDoc`·`docSaver`·`openDocs` 등)는 앱에 남는다.
 
 위험: IME·자동완성·슬래시 같은 입력 동작은 시험이 다 못 잡으므로 끝에 [IME-CHECKLIST.md](IME-CHECKLIST.md)를 사람이 확인한다. core의 React 뷰는 Tailwind 클래스를 쓰므로 앱 CSS가 `packages/`도 스캔하게 설정한다.
@@ -317,7 +319,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 5-3 ✅ | **Tailwind 클래스 → 일반 CSS**(45곳) | 골든 갱신 후 diff 검토 |
 | 5-4 ✅ | **CSS 이동**: 본문 스타일을 `editor-react`의 스타일 파일로, 앱 `index.css`에서 제거. 루트 클래스 `md-editor` | 규칙 집합 비교 |
 | 5-5 | **앱 연결**: `PageEditor`·`SyncedBlock`·호스트를 `createReactExtensions`와 새 import로 | 전체 시험 + 사람의 화면 확인 |
-| 5-6 | **배포 모양**: core·react를 `check:dist`(컴파일·pack·소비자 타입·`"use client"` 보존)에 추가 | `check:dist` |
+| 5-6 ✅ | **배포 모양**: core·react를 `check:dist`(컴파일·pack·소비자 타입·`"use client"` 보존)에 추가 | `check:dist` |
 | 5-7 | **데모 페이지**: `examples/editor-demo`는 5-0b에서 앞당겨 만들었다. 남은 일은 데모가 `editor-react`·패키지 스타일만 쓰도록 import를 바꾸는 것 | 빌드 + `visual`, CI |
 | 5-8 | 문서와 남은 것 | — |
 

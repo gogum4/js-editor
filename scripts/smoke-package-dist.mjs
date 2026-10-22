@@ -16,7 +16,7 @@ function jsFiles(dir) {
   });
 }
 
-const PACKAGES = ["editor-schema", "editor-markdown", "editor-render"];
+const PACKAGES = ["editor-schema", "editor-markdown", "editor-render", "editor-core", "editor-react"];
 let total = 0;
 for (const name of PACKAGES) {
   const dist = fileURLToPath(new URL(`../packages/${name}/dist/`, import.meta.url));
@@ -49,6 +49,12 @@ console.log("dist로 Markdown → HTML 렌더 OK");
 const client = fileURLToPath(new URL("../packages/editor-render/dist/client/MermaidDiagram.js", import.meta.url));
 if (!/^\s*"use client";/.test(readFileSync(client, "utf8"))) {
   console.error("MermaidDiagram.js 맨 앞에 \"use client\" 지시어가 없다");
+  process.exit(1);
+}
+// editor-react은 모듈 전체가 클라이언트 모듈이다: 진입점 맨 앞에 지시어가 남아야 한다.
+const reactEntry = fileURLToPath(new URL("../packages/editor-react/dist/index.js", import.meta.url));
+if (!/^\s*"use client";/.test(readFileSync(reactEntry, "utf8"))) {
+  console.error("editor-react/dist/index.js 맨 앞에 \"use client\" 지시어가 없다");
   process.exit(1);
 }
 console.log('dist의 "use client" 지시어 OK');

@@ -5,9 +5,25 @@
   "type": "module",
   "description": "에디터의 React 화면 — 노드 뷰, 메뉴, 수식·각주 편집 창, 표 편집 막대, 컨텍스트. core의 확장에 주입해서 쓴다(docs/EDITOR-PACKAGE.md P5)",
   "sideEffects": false,
+  "files": [
+    "dist",
+    "styles"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./styles/index.css"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./styles.css": "./styles/index.css"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-dts-imports.mjs dist"
   },
   "dependencies": {
     "@9um4/editor-core": "workspace:*",

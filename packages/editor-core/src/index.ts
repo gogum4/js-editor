@@ -41,3 +41,5 @@ export { isMermaidLanguage, renderMermaid } from "./mermaid/renderer";
 export type { MermaidResult } from "./mermaid/renderer";
 export { centerAt, constrainView, fitView, percentLabel, svgSize, zoomAt } from "./mermaid/viewerMath";
 export type { Size, View } from "./mermaid/viewerMath";
+export { TABLE_ACTIONS } from "./table/tableActions";
+export type { TableAction } from "./table/tableActions";

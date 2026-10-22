@@ -14,7 +14,7 @@ const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const work = mkdtempSync(join(repo, ".consumer-check-"));
 
 try {
-  for (const name of ["editor-schema", "editor-markdown", "editor-render"]) {
+  for (const name of ["editor-schema", "editor-markdown", "editor-render", "editor-core", "editor-react"]) {
     const pack = join(work, "packs", name);
     execFileSync(pnpm, ["--filter", `@9um4/${name}`, "pack", "--pack-destination", pack], { stdio: "pipe", shell: process.platform === "win32" });
     const tgz = readdirSync(pack).find((f) => f.endsWith(".tgz"));
@@ -30,6 +30,10 @@ import { markdownToDoc, docToMarkdown, parseFrontmatter, type ImportContext } fr
 import { blockIdOf, blockIdFromForeign } from "@9um4/editor-schema/blockId";
 import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import * as Y from "yjs";
+import { createCoreExtensions, koStrings, TABLE_ACTIONS, type CoreExtensionsOptions, type EditorStrings } from "@9um4/editor-core";
+import { newEditor } from "@9um4/editor-core/testing";
+import { createReactExtensions, EditorPortsProvider, TableToolbar, useEditorStrings } from "@9um4/editor-react";
 
 // 타입이 실제로 해석되는지(any가 아닌지) 확인하는 사용 예.
 export async function page(source: string) {
@@ -51,6 +55,18 @@ export async function page(source: string) {
 
 // @ts-expect-error — 존재하지 않는 옵션은 오류여야 한다(타입이 any로 풀리지 않았다는 증거).
 export const bad: RenderOptions = { noSuchOption: true };
+
+// 에디터: core(React 없음)와 editor-react의 공개 API도 같은 방식으로 해석돼야 한다. 표 명령 타입(addRowAfter 등)은 core 안에서 풀린다.
+export function editor() {
+  const options: CoreExtensionsOptions = { strings: koStrings };
+  const strings: EditorStrings = koStrings;
+  const extensions = createReactExtensions(new Y.Doc(), options);
+  const plain = createCoreExtensions(null);
+  const headless = newEditor(undefined, plain);
+  return { extensions, strings, headless, tableActions: TABLE_ACTIONS.map((a) => a.key), provider: EditorPortsProvider, strings2: useEditorStrings, toolbar: <TableToolbar editor={null} /> };
+}
+// @ts-expect-error — core에 없는 옵션은 오류여야 한다.
+export const badCore: CoreExtensionsOptions = { noSuchOption: true };
 `,
   );
   writeFileSync(

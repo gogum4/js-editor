@@ -5,9 +5,27 @@
   "type": "module",
   "description": "에디터 코어 — TipTap 확장, 포트·주입 접점 인터페이스, 화면 글 사전. React 화면은 @9um4/editor-react, 위키·저장·동기화는 없다(docs/EDITOR-PACKAGE.md)",
   "sideEffects": false,
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./testing": "./src/testing/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./testing": {
+        "types": "./dist/testing/index.d.ts",
+        "default": "./dist/testing/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-dts-imports.mjs dist"
   },
   "dependencies": {
     "@9um4/editor-markdown": "workspace:*",

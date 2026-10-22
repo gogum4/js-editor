@@ -2,25 +2,7 @@ import type { Editor } from "@tiptap/core";
 import { useEffect, useReducer } from "react";
 
 import { useEditorStrings } from "../context";
-import type { EditorStrings } from "@9um4/editor-core";
-
-const ACTIONS: ReadonlyArray<{
-  key: keyof EditorStrings["table"]["actions"];
-  run: (editor: Editor) => boolean;
-  can: (editor: Editor) => boolean;
-  danger?: boolean;
-}> = [
-  { key: "addRowBefore", run: (e) => e.chain().focus().addRowBefore().run(), can: (e) => e.can().addRowBefore() },
-  { key: "addRowAfter", run: (e) => e.chain().focus().addRowAfter().run(), can: (e) => e.can().addRowAfter() },
-  { key: "addColumnBefore", run: (e) => e.chain().focus().addColumnBefore().run(), can: (e) => e.can().addColumnBefore() },
-  { key: "addColumnAfter", run: (e) => e.chain().focus().addColumnAfter().run(), can: (e) => e.can().addColumnAfter() },
-  { key: "deleteRow", run: (e) => e.chain().focus().deleteRow().run(), can: (e) => e.can().deleteRow(), danger: true },
-  { key: "deleteColumn", run: (e) => e.chain().focus().deleteColumn().run(), can: (e) => e.can().deleteColumn(), danger: true },
-  { key: "mergeCells", run: (e) => e.chain().focus().mergeCells().run(), can: (e) => e.can().mergeCells() },
-  { key: "splitCell", run: (e) => e.chain().focus().splitCell().run(), can: (e) => e.can().splitCell() },
-  { key: "toggleHeaderRow", run: (e) => e.chain().focus().toggleHeaderRow().run(), can: (e) => e.can().toggleHeaderRow() },
-  { key: "deleteTable", run: (e) => e.chain().focus().deleteTable().run(), can: (e) => e.can().deleteTable(), danger: true },
-];
+import { TABLE_ACTIONS } from "@9um4/editor-core";
 
 /** 커서(또는 선택)가 놓인 표의 DOM 요소. 표 밖이면 null. */
 function currentTable(editor: Editor): HTMLTableElement | null {
@@ -73,7 +55,7 @@ export function TableToolbar({ editor }: { editor: Editor | null }) {
       style={{ position: "fixed", top, left }}
       onMouseDown={(event) => event.preventDefault()}
     >
-      {ACTIONS.map((action) => (
+      {TABLE_ACTIONS.map((action) => (
         <button
           key={action.key}
           type="button"

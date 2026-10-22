@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const PACKAGES = ["editor-schema", "editor-markdown", "editor-render"];
+const PACKAGES = ["editor-schema", "editor-markdown", "editor-render", "editor-core", "editor-react"];
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const tmp = mkdtempSync(join(tmpdir(), "pack-check-"));
 const problems = [];
