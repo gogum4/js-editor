@@ -36,12 +36,13 @@ describe("안전", () => {
     expect(out).toContain('rel="noopener noreferrer nofollow"');
   });
 
-  it("이미지는 기본으로 원격 주소와 /·./ 경로만 쓰고, 저장소 해시는 주소를 모르니 대체 글을 보인다", () => {
+  it("이미지는 기본으로 원격 주소와 스킴 없는 경로만 쓰고, 저장소 해시는 주소를 모르니 대체 글을 보인다", () => {
     const remote = html(doc({ type: "image", attrs: { importPath: "https://example.com/a.png", alt: "로고", remote: true, width: 120 } }));
     expect(remote).toContain('src="https://example.com/a.png"');
     expect(remote).toContain('width="120"');
     const relative = html(doc({ type: "image", attrs: { importPath: "./a.png", alt: "" } }));
     expect(relative).toContain('src="./a.png"');
+    expect(html(doc({ type: "image", attrs: { importPath: "images/a.png", alt: "" } }))).toContain('src="images/a.png"'); // 스킴이 없는 경로
     const stored = html(doc({ type: "image", attrs: { hash: "a".repeat(64), mime: "image/png", alt: "그림" } }));
     expect(stored).not.toContain("<img");
     expect(stored).toContain("image-missing");

@@ -13,7 +13,8 @@
     ".": "./src/index.ts",
     "./styles.css": "./styles/render.css",
     "./highlight.css": "./styles/highlight.css",
-    "./katex.css": "./styles/katex.css"
+    "./katex.css": "./styles/katex.css",
+    "./html": "./src/html.ts"
   },
   "publishConfig": {
     "exports": {
@@ -23,7 +24,11 @@
       },
       "./styles.css": "./styles/render.css",
       "./highlight.css": "./styles/highlight.css",
-      "./katex.css": "./styles/katex.css"
+      "./katex.css": "./styles/katex.css",
+      "./html": {
+        "types": "./dist/html.d.ts",
+        "default": "./dist/html.js"
+      }
     }
   },
   "scripts": {

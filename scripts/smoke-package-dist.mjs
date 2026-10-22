@@ -52,3 +52,12 @@ if (!/^\s*"use client";/.test(readFileSync(client, "utf8"))) {
   process.exit(1);
 }
 console.log('dist의 "use client" 지시어 OK');
+
+// 편의 API: frontmatter·목차·HTML 문자열 진입점(react-dom/server를 쓰는 별도 파일)까지 dist로 한 번 돌려 본다.
+const { renderMarkdownToHtml } = await import("@9um4/editor-render/html");
+const result = await renderMarkdownToHtml("---\ntitle: 글\n---\n\n# 제목\n\n본문 \`코드\`");
+if (result.frontmatter.title !== "글" || result.headings[0]?.id !== "제목" || !result.html.includes("<code>코드</code>")) {
+  console.error("renderMarkdownToHtml 결과가 이상하다:", result);
+  process.exit(1);
+}
+console.log("dist의 renderMarkdownToHtml OK");

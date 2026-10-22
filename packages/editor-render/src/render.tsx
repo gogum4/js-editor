@@ -34,9 +34,11 @@ function anchorId(node: PmNode, ctx: Context): string | undefined {
   return id === null ? undefined : `^${id}`;
 }
 
+/** 기본 이미지 주소: `http(s)` 이미지와, 스킴이 없는 경로(`a.png`, `./a.png`, `/img/a.png`)만 쓴다. `javascript:`·`data:` 같은 스킴은 막는다. */
 function defaultImageUrl(image: ImageSource): string | null {
-  if (image.path !== null && (image.remote || /^(\/|\.\/|\.\.\/)/.test(image.path))) return image.path;
-  return null;
+  if (image.path === null) return null;
+  if (image.remote) return image.path;
+  return /^[a-z][a-z0-9+.-]*:/i.test(image.path.trim()) ? null : image.path;
 }
 
 // ───────────────────────── 인라인 ─────────────────────────

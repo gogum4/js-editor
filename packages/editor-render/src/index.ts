@@ -5,6 +5,7 @@
 export { collectHeadings, type HeadingInfo, slugify, textOf } from "./slug.ts";
 export { enRenderStrings, koRenderStrings, type RenderStrings } from "./strings.ts";
 export { MermaidDiagram, type MermaidDiagramProps } from "./client/MermaidDiagram.tsx";
+export { renderMarkdown, type RenderedMarkdown, type RenderMarkdownOptions } from "./markdown.ts";
 export { prepareRender } from "./prepare.ts";
 export { renderDoc } from "./render.tsx";
 export type { ImageSource, PageReference, Prepared, RenderOptions } from "./types.ts";
