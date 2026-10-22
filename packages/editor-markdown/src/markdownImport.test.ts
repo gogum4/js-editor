@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { blockIdFromForeign } from "@9um4/editor-schema/blockId";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { docToMarkdown } from "./markdown";
-import { finalizeImages, type ImportContext, markdownToDoc, NOTICE, parseFrontmatter } from "./markdownImport";
+import { docToMarkdown } from "./markdown.ts";
+import { finalizeImages, type ImportContext, markdownToDoc, NOTICE, parseFrontmatter } from "./markdownImport.ts";
 
 const PAGES: Record<string, string> = { 프로젝트: "p-project", 회의록: "p-meeting", "폴더/깊은 글": "p-deep" };
 const IMAGES = new Set(["assets/a.png", "그림/b.jpg", "docs/c.png"]);

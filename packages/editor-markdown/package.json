@@ -11,5 +11,19 @@
   "dependencies": {
     "@9um4/editor-schema": "workspace:*",
     "marked": "16.4.2"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
   }
 }

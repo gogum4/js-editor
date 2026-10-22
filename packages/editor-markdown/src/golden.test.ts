@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { docToMarkdown } from "./markdown";
-import { type ImportContext, markdownToDoc } from "./markdownImport";
+import { docToMarkdown } from "./markdown.ts";
+import { type ImportContext, markdownToDoc } from "./markdownImport.ts";
 
 /**
  * 방언 골든 시험(docs/MARKDOWN-DIALECT.md). `fixtures/<이름>.doc.json`(문서)마다

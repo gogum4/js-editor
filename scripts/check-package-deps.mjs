@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const ALLOWED_PACKAGES = {
   "editor-schema": [],
+  // 읽기 전용 렌더링: React(peer)·KaTeX·lowlight와 schema·markdown. TipTap·ProseMirror·Yjs·브라우저 API는 안 된다(서버 컴포넌트에서 돌아야 한다).
+  "editor-render": ["@9um4/editor-markdown", "@9um4/editor-schema", "highlight.js", "katex", "lowlight", "react", "react-dom"],
   // Markdown 변환: schema와 marked만(순수 함수라 TipTap·DOM이 필요 없다).
   "editor-markdown": ["@9um4/editor-schema", "marked"],
   // 에디터 코어: TipTap·Yjs·React 계열과 schema만. 앱(`src/`)·Tauri·서버는 안 된다.
