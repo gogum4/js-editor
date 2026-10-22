@@ -77,11 +77,11 @@
 | `callout`, `textAlign`, `safeLink`, `imageLayout`, `toggleState`, `menuPosition` | 20~58 | 서로 간 의존뿐 | schema (바로 이동 가능) |
 | `assets` | 65 | 없음 | schema (해시 규칙을 블로그와 공유해야 함) |
 | `codeLanguages`, `languageData.generated` | 106+194 | 없음 | schema |
-| `latexCommands`, `latexAssist` | 371+161 | 없음 | core(수식 보조) |
-| `slashItems` | 110 | 없음 | core (페이지 블록 항목은 등록식으로 분리) |
+| `latexCommands`, `latexAssist` | 371+161 | 없음 | core(수식 보조) — P2에서 core를 만들 때 옮긴다(schema는 이름·정규화만 둔다) |
+| `slashItems` | 110 | 없음 | core (페이지 블록 항목은 등록식으로 분리) — P2에서 옮긴다 |
 | `markdown` (내보내기) | 448 | assets·imageLayout·textAlign | markdown |
 | `markdownImport` (가져오기) | 777 | marked 등 | markdown |
-| `blockId` | 106 | `yjs`, `markdown` 타입 | **분리 필요** — ID 생성·정규화는 schema, Yjs 부분은 앱 쪽 어댑터 |
+| `blockId` | 106 | `yjs`, `markdown` 타입 | ✅ **분리함** — ID 생성·정규화는 schema(`blockId`), Yjs 부분은 앱의 `lib/blockIdYjs.ts`. `PmNode`·`PmMark` 타입은 schema의 `pmDoc`로 옮기고 `lib/markdown`이 다시 내보낸다 |
 | `math` | 72 | **React 훅 + KaTeX CSS 동적 import** | **분리 필요** — 로더는 core, 훅은 react |
 | `blockLink`, `pageLinks`, `pageLinkSearch`, `pagePreview`, `blockDiff` | 105~647 | yjs·위키·버전 비교 | 앱 |
 
@@ -176,7 +176,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 단계 | 내용 | 끝났다고 볼 조건 |
 |---|---|---|
 | P0 | §9의 미결 질문을 해소하고 이름·방언을 확정한다 | 이 문서의 §9가 비어 있다 |
-| P1 ✅ | **경계 만들기**: `packages/`와 `editor-schema`로 순수 모듈 이동, 의존 방향 검사를 CI에 추가 | 기존 시험이 모두 통과하고, schema가 앱 코드를 import하지 않는다 |
+| P1 ✅ (dist 컴파일·Node 로드 시험 포함) | **경계 만들기**: `packages/`와 `editor-schema`로 순수 모듈 이동, 의존 방향 검사를 CI에 추가 | 기존 시험이 모두 통과하고, schema가 앱 코드를 import하지 않는다 |
 | P2 | **core 포트화**: `createEditorExtensions(options)`, 자산·키값·알림 포트, Collaboration 선택화, 문자열 사전, `import.meta.glob` 제거 | core 폴더에 `lib/api`·`tree/store` import가 0개 |
 | P3 | **markdown**: 방언 명세, 골든 왕복 시험, 붙여넣기 변환, 입력 규칙 빈틈 메우기, 실제 Notion·Obsidian 파일로 검증 | 골든 시험 통과, 알려진 손실 목록 확정 |
 | P4 | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
