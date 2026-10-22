@@ -1,6 +1,6 @@
 # 에디터 패키지 분리 설계 (초안)
 
-이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. **아직 코드는 바뀌지 않았다** — 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다.
+이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다. **P1은 끝났다**(§8): `packages/editor-schema`가 있고 앱이 그것을 쓴다.
 
 ## 1. 목적과 결정
 
@@ -157,6 +157,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 ## 7. 이름 제안
 
+- **결정(2026-10-22): scope는 `@9um4`.** 아래는 결정 전 비교다. 공개 npm으로 올린다면 npm 사용자 이름 `9um4`가 비어 있는지 계정으로 확인해야 하고, GitHub Packages로 올린다면 저장소를 `9um4` 소유로 옮겨야 한다(P8). 그 전까지는 워크스페이스 링크(`workspace:*`)로만 쓰므로 영향이 없다.
 - **scope 후보 두 개** (사용자가 `@9um4`를 제안함). GitHub의 사용자 `9um4`와 조직 `9um4-utils`는 **둘 다 존재한다**(확인함). npm 쪽 이름이 비어 있는지는 **확인하지 못했다**(레지스트리 검색 API는 scope 필터를 무시하고, npmjs.com은 봇을 막는다) — npm 계정으로 직접 확인해야 한다.
 
   | | `@9um4` | `@9um4-utils` |
@@ -167,7 +168,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
   | 길이 | 짧음 | 김 |
 
   **추천: `@9um4-utils`.** 공개 여부가 미정인데, 이 이름만 두 레지스트리 모두에서 저장소를 옮기지 않고 쓸 수 있다. scope를 나중에 바꾸면 모든 소비자의 import가 바뀌므로 지금 정한다. 공개로 확정되고 짧은 이름이 중요하면 `@9um4`로 가는 것도 합리적이다(그때 npm 이름을 확인).
-- **패키지 이름은 기능 이름으로**: `@9um4-utils/editor-schema`, `editor-core`, `editor-markdown`, `editor-render`, `editor-react`. 앱 이름이 가칭("Notes")이라 이름에 넣지 않는다.
+- **패키지 이름은 기능 이름으로**: `@9um4/editor-schema`, `editor-core`, `editor-markdown`, `editor-render`, `editor-react`. 앱 이름이 가칭("Notes")이라 이름에 넣지 않는다.
 - **저장소**: 1단계는 이 저장소의 `packages/` 워크스페이스(`pnpm-workspace.yaml`에 추가)로 둔다. 소비자가 둘 이상 안정되면 `9um4-utils/editor`로 분리를 판단한다.
 
 ## 8. 단계 계획
@@ -175,7 +176,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 단계 | 내용 | 끝났다고 볼 조건 |
 |---|---|---|
 | P0 | §9의 미결 질문을 해소하고 이름·방언을 확정한다 | 이 문서의 §9가 비어 있다 |
-| P1 | **경계 만들기**: `packages/`와 `editor-schema`로 순수 모듈 이동, 의존 방향 검사(`dependency-cruiser` 등)를 CI에 추가 | 기존 시험이 모두 통과하고, schema가 앱 코드를 import하지 않는다 |
+| P1 ✅ | **경계 만들기**: `packages/`와 `editor-schema`로 순수 모듈 이동, 의존 방향 검사를 CI에 추가 | 기존 시험이 모두 통과하고, schema가 앱 코드를 import하지 않는다 |
 | P2 | **core 포트화**: `createEditorExtensions(options)`, 자산·키값·알림 포트, Collaboration 선택화, 문자열 사전, `import.meta.glob` 제거 | core 폴더에 `lib/api`·`tree/store` import가 0개 |
 | P3 | **markdown**: 방언 명세, 골든 왕복 시험, 붙여넣기 변환, 입력 규칙 빈틈 메우기, 실제 Notion·Obsidian 파일로 검증 | 골든 시험 통과, 알려진 손실 목록 확정 |
 | P4 | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
@@ -195,7 +196,8 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 블로그 렌더링 | **Next.js** → P4를 App Router 기준으로 설계 |
 | Markdown 지원 범위 | §6의 ①~③은 P3, ④ 소스 보기는 미룸 (사용자가 제안을 받아들임) |
 | Notion 호환 | **가져오기(이전)만** |
-| scope | 후보 `@9um4` / `@9um4-utils`, 추천은 `@9um4-utils`(§7). 공개 여부는 미정 |
+| scope | **`@9um4`로 확정**(§7). 공개 여부는 미정 |
+| 표 스키마 미리 보기 | PlanBench 전용 확장으로 확인됨(사용자). 코어에는 일반 참조 노드 확장 지점만 둔다(§2) |
 
 ### 아직 남은 것
 
