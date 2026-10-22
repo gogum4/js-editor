@@ -259,6 +259,11 @@ export interface ImportContext {
   resolvePage(target: string, fromDir: string): string | null;
   /** 이미지의 상대 경로(또는 파일 이름)를 가져올 폴더 안의 경로로 바꾼다. 폴더에 없으면 null. */
   resolveImage(path: string, fromDir: string): string | null;
+  /**
+   * 참이면 `http(s)://` 주소의 이미지를 링크가 아니라 이미지 노드(`importPath`가 그 주소, `remote: true`)로 가져온다.
+   * 읽기 전용 렌더링(블로그)을 위한 옵션이다 — 노트 앱의 가져오기는 이미지를 저장소에 넣어야 해서 켜지 않는다.
+   */
+  remoteImages?: boolean;
 }
 
 export interface MarkdownImportResult {
@@ -389,6 +394,9 @@ function imageNode(href: string, rawAlt: string, state: State): PmNode {
   if (sized) {
     alt = sized[1]!.trim();
     width = normalizeImageWidth(Number(sized[2]));
+  }
+  if (state.ctx.remoteImages === true && /^https?:\/\//i.test(href)) {
+    return { type: "image", attrs: { importPath: href, alt, remote: true, ...(width !== null ? { width } : {}) } };
   }
   if (/^[a-z][a-z0-9+.-]*:/i.test(href)) {
     note(state, NOTICE.remoteImage);

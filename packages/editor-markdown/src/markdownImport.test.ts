@@ -294,6 +294,29 @@ describe("이 앱이 내보낸 Markdown을 다시 읽는다(왕복)", () => {
   });
 });
 
+describe("원격 이미지 (읽기 전용 렌더링용 옵션)", () => {
+  const remote: ImportContext = { ...ctx, remoteImages: true };
+  const md = "![로고|120](https://example.com/a.png)";
+
+  it("기본은 링크로 두고 안내한다 (노트 앱의 가져오기)", () => {
+    const r = markdownToDoc("![로고](https://example.com/a.png)", ctx, "");
+    expect(r.doc.content![0]).toEqual({ type: "paragraph", content: [{ type: "text", text: "로고", marks: [{ type: "link", attrs: { href: "https://example.com/a.png" } }] }] });
+    expect(r.notices.get(NOTICE.remoteImage)).toBe(1);
+  });
+
+  it("remoteImages를 켜면 이미지 노드가 된다 (저장소에 넣을 이미지 목록에는 들지 않는다)", () => {
+    const r = markdownToDoc(md, remote, "");
+    expect(r.doc.content![0]).toEqual({ type: "image", attrs: { importPath: "https://example.com/a.png", alt: "로고", remote: true, width: 120 } });
+    expect(r.images).toEqual([]);
+    expect(r.notices.get(NOTICE.remoteImage)).toBeUndefined();
+  });
+
+  it("javascript: 같은 http(s)가 아닌 주소는 켜도 이미지가 되지 않는다", () => {
+    const r = markdownToDoc("![x](javascript:alert(1))", remote, "");
+    expect(JSON.stringify(r.doc)).not.toContain('"type":"image"');
+  });
+});
+
 describe("블록 id (`^id`)", () => {
   const first = (md: string) => blocks(md)[0]!;
 
