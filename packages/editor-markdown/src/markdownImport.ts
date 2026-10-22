@@ -12,6 +12,7 @@
 
 import { Lexer, type Token, type Tokens } from "marked";
 
+import { blockIdFromForeign, isBlockIdType } from "@9um4/editor-schema/blockId";
 import { normalizeCalloutType } from "@9um4/editor-schema/callout";
 import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
@@ -107,7 +108,9 @@ type Placeholder =
   | { kind: "wiki"; target: string; anchor: string | null; alias: string | null; embed: boolean; raw: string }
   | { kind: "math"; latex: string; raw: string }
   | { kind: "mathBlock"; latex: string; raw: string }
-  | { kind: "footnote"; id: string; raw: string };
+  | { kind: "footnote"; id: string; raw: string }
+  /** 줄 끝의 `^블록id`(Obsidian). 글자에서는 빠지고 그 블록의 id가 된다. */
+  | { kind: "blockId"; id: string; raw: string };
 
 interface Protected {
   text: string;
@@ -138,7 +141,7 @@ function looksLikeMoney(latex: string): boolean {
 
 function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>): string {
   const put = (placeholder: Placeholder) => `${OPEN}${store.push(placeholder) - 1}${CLOSE}`;
-  return splitCodeSpans(line)
+  const joined = splitCodeSpans(line)
     .map((part) => {
       if (part.code) return part.text;
       return part.text
@@ -156,7 +159,11 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
         .replace(/\[\^([^\]\s]+)\]/g, (raw, id: string) => (footnotes.has(id) ? put({ kind: "footnote", id, raw }) : raw));
     })
     .join("");
+  // 줄 끝의 `^블록id`. 글자가 있는 id만(`x ^2` 같은 지수 표기가 id로 읽히지 않게 3글자 이상, 글자 포함).
+  return joined.replace(BLOCK_ID_AT_END, (raw, _lead: string, id: string) => (/[A-Za-z]/.test(id) ? put({ kind: "blockId", id, raw }) : raw));
 }
+
+const BLOCK_ID_AT_END = /(^|[ \t])\^([A-Za-z0-9][A-Za-z0-9-]{2,})[ \t]*$/;
 
 /**
  * `marked`가 망가뜨릴 것들을 자리표시자로 바꾼다: 위키 링크, 수식(`_`·`*`가 기울임으로 읽힌다), 각주 정의와 참조.
@@ -283,6 +290,15 @@ interface State {
   images: Set<string>;
   /** `<u>` 안에 있는 동안 1 이상. */
   underline: number;
+  /** 방금 읽은 글에서 찾은 줄 끝 `^id`(블록이 만들어지면 그 블록에 단다). */
+  foundId: string | null;
+  /** 자기 줄에 홀로 있던 `^id`(앞 블록의 id다). */
+  orphanId: string | null;
+}
+
+/** 블록에 id를 단다. id가 없는 종류의 블록(목록 항목 등)이면 그대로 둔다. */
+function withBlockId(node: PmNode, id: string): PmNode {
+  return isBlockIdType(node.type) ? { ...node, attrs: { ...(node.attrs ?? {}), id: blockIdFromForeign(id) } } : node;
 }
 
 const note = (s: State, message: string) => s.notices.set(message, (s.notices.get(message) ?? 0) + 1);
@@ -317,6 +333,10 @@ function wikiNode(p: Extract<Placeholder, { kind: "wiki" }>, marks: readonly PmM
     note(state, p.embed ? NOTICE.unresolvedEmbed : NOTICE.unresolvedLink);
     return textNode(p.raw, marks);
   }
+  // `[[페이지#^블록]]`은 블록 링크로 가져온다. `[[페이지#제목]]`(제목 위치)은 위치를 빼고 페이지 링크로 둔다.
+  if (p.anchor !== null && p.anchor.startsWith("^") && p.anchor.length > 1) {
+    return { type: "pageLink", attrs: { pageId, blockId: blockIdFromForeign(p.anchor.slice(1)) } };
+  }
   if (p.anchor !== null) note(state, NOTICE.anchorLink);
   return { type: "pageLink", attrs: { pageId } };
 }
@@ -339,6 +359,7 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     const p = state.store[Number(m[1])];
     if (!p) continue;
     if (p.kind === "wiki") nodes.push(wikiNode(p, marks, state));
+    else if (p.kind === "blockId") state.foundId = p.id;
     else if (p.kind === "footnote") nodes.push({ type: "footnote", attrs: { text: state.footnotes.get(p.id) ?? "" } });
     else nodes.push({ type: "mathInline", attrs: { latex: p.latex } });
   }
@@ -508,6 +529,11 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   const only = /^(\d+)$/.exec(token.text.trim());
   const placeholder = only ? state.store[Number(only[1])] : undefined;
   if (placeholder?.kind === "mathBlock") return [{ type: "mathBlock", attrs: { latex: placeholder.latex } }];
+  if (placeholder?.kind === "blockId") {
+    // 자기 줄에 홀로 있는 `^id`는 바로 앞 블록의 id다(코드·표·수식 같은 줄 끝에 못 붙이는 블록).
+    state.orphanId = placeholder.id;
+    return [];
+  }
   if (placeholder?.kind === "wiki" && placeholder.embed) {
     const image = embeddedImage(placeholder, state);
     if (image) return [image];
@@ -543,7 +569,11 @@ function blockquoteBlocks(token: Tokens.Blockquote, state: State): PmNode[] {
   }
   const bodyText = header[3] ?? "";
   if (bodyText.trim() !== "") {
-    content.push(...paragraphsAround(inlineNodes(Lexer.lexInline(bodyText), [], state)));
+    state.foundId = null;
+    const bodyBlocks = paragraphsAround(inlineNodes(Lexer.lexInline(bodyText), [], state));
+    if (state.foundId !== null && bodyBlocks.length > 0) bodyBlocks[bodyBlocks.length - 1] = withBlockId(bodyBlocks[bodyBlocks.length - 1]!, state.foundId);
+    state.foundId = null;
+    content.push(...bodyBlocks);
   }
   content.push(...convertBlocks(token.tokens.slice(1), state));
   return [{ type: "callout", attrs: { type: calloutType(header[1]!) }, content: content.length > 0 ? content : [{ type: "paragraph" }] }];
@@ -605,7 +635,17 @@ function plainParagraph(text: string): PmNode {
   return content.length > 0 ? { type: "paragraph", content } : { type: "paragraph" };
 }
 
+/** 토큰 하나를 블록들로. 글에서 찾은 줄 끝 `^id`는 만들어진 마지막 블록에 단다. */
 function tokenBlocks(token: Token, state: State): PmNode[] {
+  state.foundId = null;
+  const blocks = tokenBlocksWithoutId(token, state);
+  const id = state.foundId;
+  state.foundId = null;
+  if (id !== null && blocks.length > 0) blocks[blocks.length - 1] = withBlockId(blocks[blocks.length - 1]!, id);
+  return blocks;
+}
+
+function tokenBlocksWithoutId(token: Token, state: State): PmNode[] {
   switch (token.type) {
     case "paragraph":
     case "text":
@@ -724,7 +764,13 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
       handleHtml((token as Tokens.HTML).raw, stack, state);
       continue;
     }
-    stack[stack.length - 1]!.nodes.push(...tokenBlocks(token, state));
+    const frame = stack[stack.length - 1]!;
+    state.orphanId = null;
+    frame.nodes.push(...tokenBlocks(token, state));
+    if (state.orphanId !== null && frame.nodes.length > 0) {
+      frame.nodes[frame.nodes.length - 1] = withBlockId(frame.nodes[frame.nodes.length - 1]!, state.orphanId);
+    }
+    state.orphanId = null;
   }
   // 닫히지 않은 구간은 닫는다.
   while (stack.length > 1) {
@@ -740,7 +786,7 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
  */
 export function markdownToDoc(markdown: string, ctx: ImportContext, fromDir: string): MarkdownImportResult {
   const { text, store, footnotes } = protect(markdown);
-  const state: State = { ctx, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0 };
+  const state: State = { ctx, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
   const tokens = new Lexer({ gfm: true, breaks: false }).lex(text);
   const content = convertBlocks(tokens, state);
   return {

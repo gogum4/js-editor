@@ -8,6 +8,7 @@ import {
   blockKey,
   canonicalBlock,
   generateBlockId,
+  blockIdFromForeign,
   isBlockIdType,
 } from "./blockId.ts";
 import type { PmNode } from "./pmDoc.ts";
@@ -81,5 +82,20 @@ describe("blockIdOf", () => {
       expect(blockIdOf({ type: "paragraph", attrs: { id: bad as string } })).toBeNull();
     }
     expect(blockIdOf({ type: "paragraph" })).toBeNull();
+  });
+});
+
+describe("blockIdFromForeign", () => {
+  it("우리 모양의 id는 그대로 둔다", () => {
+    expect(blockIdFromForeign("abc0123456")).toBe("abc0123456");
+  });
+
+  it("다른 모양은 글자에서 정해지는 우리 모양의 id가 된다 (고정된 값)", () => {
+    expect(blockIdFromForeign("my-id")).toMatch(BLOCK_ID_PATTERN);
+    expect(blockIdFromForeign("my-id")).toBe(blockIdFromForeign("my-id"));
+    expect(blockIdFromForeign("my-id")).not.toBe(blockIdFromForeign("my-ie"));
+    // 값이 바뀌면 이미 가져온 노트의 블록 링크가 끊어지므로 고정한다.
+    expect(blockIdFromForeign("my-id")).toBe("um0cdfuogn");
+    expect(blockIdFromForeign("한글-id")).toMatch(BLOCK_ID_PATTERN);
   });
 });

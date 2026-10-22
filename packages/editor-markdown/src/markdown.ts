@@ -6,6 +6,7 @@
  */
 
 import { assetFileName, isAssetHash } from "@9um4/editor-schema/assets";
+import { blockIdOf } from "@9um4/editor-schema/blockId";
 import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
@@ -23,6 +24,12 @@ export interface MarkdownOptions {
    * 주지 않거나 null이면 그 블록은 빼고 안내한다.
    */
   syncedContent?: (pageId: string) => PmNode[] | null;
+  /**
+   * 블록 id를 Obsidian의 `^id`로 남긴다: 링크할 수 있는 블록(문단·제목·코드·수식·표·이미지)에 `^id`를 붙이고,
+   * 블록 링크는 `[[제목#^id]]`로 쓴다. 문단·제목은 줄 끝에 ' ^id', 나머지는 블록 아래 빈 줄 뒤 한 줄(`^id`)이다.
+   * 기본은 꺼짐(한 페이지 내보내기는 id가 지저분하므로). 전체 내보내기가 켠다.
+   */
+  blockIds?: boolean;
 }
 
 export interface MarkdownResult {
@@ -145,8 +152,10 @@ class Renderer {
 
   private pageLink(node: PmNode): string {
     const id = typeof node.attrs?.pageId === "string" ? node.attrs.pageId : "";
-    // 블록 링크는 그 페이지로 가는 링크로 내보낸다(블록 표시(`^id`)를 Markdown에 남기지 않는다).
-    if (node.type === "pageLink" && typeof node.attrs?.blockId === "string" && node.attrs.blockId !== "") {
+    // 블록 링크: `blockIds`가 켜져 있으면 `[[제목#^id]]`, 아니면 그 페이지로 가는 링크로 내보낸다(블록 표시 `^id`를 남기지 않는다).
+    const blockId = node.type === "pageLink" ? blockIdOf({ type: "x", attrs: { id: node.attrs?.blockId } }) : null;
+    const anchor = blockId !== null && this.options.blockIds ? `#^${blockId}` : "";
+    if (node.type === "pageLink" && typeof node.attrs?.blockId === "string" && node.attrs.blockId !== "" && anchor === "") {
       this.notices.add("블록 링크는 그 페이지로 가는 링크로 내보냈어요.");
     }
     const title = id ? this.options.pageTitle(id) : null;
@@ -159,7 +168,7 @@ class Renderer {
     ids.add(id);
     this.linkedTitles.set(shown, ids);
     // `[[…]]` 안에서 대괄호는 구분자와 헷갈리므로 뺀다.
-    return `[[${shown.replace(/[[\]]/g, "").replace(/\s+/g, " ")}]]`;
+    return `[[${shown.replace(/[[\]]/g, "").replace(/\s+/g, " ")}${anchor}]]`;
   }
 
   private text(node: PmNode): string {
@@ -227,6 +236,17 @@ class Renderer {
   }
 
   private block(node: PmNode): string | null {
+    const rendered = this.blockWithoutId(node);
+    if (rendered === null || !this.options.blockIds) return rendered;
+    const id = blockIdOf(node);
+    if (id === null) return rendered;
+    if (node.type === "paragraph" || node.type === "heading") return `${rendered} ^${id}`;
+    // 코드·수식·표·이미지는 줄 끝에 붙일 수 없어서 블록 아래 빈 줄 뒤에 둔다(Obsidian의 규칙).
+    if (node.type === "codeBlock" || node.type === "mathBlock" || node.type === "table" || node.type === "image") return `${rendered}\n\n^${id}`;
+    return rendered;
+  }
+
+  private blockWithoutId(node: PmNode): string | null {
     switch (node.type) {
       case "paragraph": {
         const text = this.inline(node.content);

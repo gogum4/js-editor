@@ -1,0 +1,214 @@
+{
+  "description": "블록 id(^id): 문단·제목은 줄 끝, 코드·수식·표는 아래 줄, 목록·인용·콜아웃 안의 문단, 블록 링크",
+  "lossless": true,
+  "blockIds": true,
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 1,
+          "id": "head000001"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "제목"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "문단 하나"
+          }
+        ],
+        "attrs": {
+          "id": "para000001"
+        }
+      },
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": "js",
+          "id": "code000001"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "let a = 1;"
+          }
+        ]
+      },
+      {
+        "type": "mathBlock",
+        "attrs": {
+          "latex": "x^2",
+          "id": "math000001"
+        }
+      },
+      {
+        "type": "table",
+        "content": [
+          {
+            "type": "tableRow",
+            "content": [
+              {
+                "type": "tableHeader",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "A"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "tableHeader",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "B"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "content": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "attrs": {
+          "id": "tabl000001"
+        }
+      },
+      {
+        "type": "bulletList",
+        "content": [
+          {
+            "type": "listItem",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "항목"
+                  }
+                ],
+                "attrs": {
+                  "id": "item000001"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "blockquote",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "인용 안 문단"
+              }
+            ],
+            "attrs": {
+              "id": "quot000001"
+            }
+          }
+        ]
+      },
+      {
+        "type": "callout",
+        "attrs": {
+          "type": "tip"
+        },
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "콜아웃 안 문단"
+              }
+            ],
+            "attrs": {
+              "id": "call000001"
+            }
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "블록 링크: "
+          },
+          {
+            "type": "pageLink",
+            "attrs": {
+              "pageId": "p-a",
+              "blockId": "para000001"
+            }
+          },
+          {
+            "type": "text",
+            "text": " 와 페이지 링크 "
+          },
+          {
+            "type": "pageLink",
+            "attrs": {
+              "pageId": "p-b"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

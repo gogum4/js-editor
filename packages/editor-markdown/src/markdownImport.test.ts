@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { blockIdFromForeign } from "@9um4/editor-schema/blockId";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { docToMarkdown } from "./markdown";
 import { finalizeImages, type ImportContext, markdownToDoc, NOTICE, parseFrontmatter } from "./markdownImport";
@@ -155,11 +156,21 @@ describe("블록", () => {
 });
 
 describe("링크·수식·각주", () => {
-  it("[[위키 링크]]는 페이지 링크, [[이름|표시]]·[[이름#위치]]도 그 페이지로", () => {
-    const r = parse("보라 [[프로젝트]] 와 [[회의록|회의]] 와 [[폴더/깊은 글#^abc]]");
+  it("[[위키 링크]]는 페이지 링크, [[이름|표시]]·[[이름#제목]]은 그 페이지로, [[이름#^블록]]은 블록 링크로", () => {
+    const r = parse("보라 [[프로젝트]] 와 [[회의록|회의]] 와 [[폴더/깊은 글#^abc0123456]] 와 [[프로젝트#소개]]");
     expect(r.doc.content![0]).toEqual(
-      para(text("보라 "), { type: "pageLink", attrs: { pageId: "p-project" } }, text(" 와 "), { type: "pageLink", attrs: { pageId: "p-meeting" } }, text(" 와 "), { type: "pageLink", attrs: { pageId: "p-deep" } }),
+      para(
+        text("보라 "),
+        { type: "pageLink", attrs: { pageId: "p-project" } },
+        text(" 와 "),
+        { type: "pageLink", attrs: { pageId: "p-meeting" } },
+        text(" 와 "),
+        { type: "pageLink", attrs: { pageId: "p-deep", blockId: "abc0123456" } },
+        text(" 와 "),
+        { type: "pageLink", attrs: { pageId: "p-project" } },
+      ),
     );
+    // 제목 위치 링크만 위치를 잃는다(블록 링크는 잃지 않는다).
     expect(r.notices.get(NOTICE.anchorLink)).toBe(1);
   });
 
@@ -280,5 +291,52 @@ describe("이 앱이 내보낸 Markdown을 다시 읽는다(왕복)", () => {
     expect(back[0]).toMatchObject({ type: "paragraph", attrs: { textAlign: "center" } });
     expect(back[1]).toMatchObject({ type: "heading", attrs: { level: 1, textAlign: "right" } });
     expect(back[2]).toEqual({ type: "image", attrs: { importPath: "assets/a.png", alt: "그림", width: 320, textAlign: "center" } });
+  });
+});
+
+describe("블록 id (`^id`)", () => {
+  const first = (md: string) => blocks(md)[0]!;
+
+  it("문단·제목의 줄 끝 ^id는 글자에서 빠지고 블록 id가 된다", () => {
+    expect(first("문단 글 ^abc0123456")).toEqual({ type: "paragraph", attrs: { id: "abc0123456" }, content: [text("문단 글")] });
+    expect(first("## 제목 ^head000001")).toMatchObject({ type: "heading", attrs: { level: 2, id: "head000001" }, content: [text("제목")] });
+    expect(first("여러 줄\n문단 ^abc0123456").content).toEqual([text("여러 줄"), { type: "hardBreak" }, text("문단")]);
+  });
+
+  it("자기 줄에 홀로 있는 ^id는 바로 앞 블록(코드·수식·표)의 id다", () => {
+    const md = ["```js", "x", "```", "", "^code000001", "", "| a |", "|---|", "| 1 |", "", "^tabl000001", "", "$$", "y", "$$", "", "^math000001"].join("\n");
+    const b = blocks(md);
+    expect(b.map((n) => [n.type, n.attrs?.id])).toEqual([
+      ["codeBlock", "code000001"],
+      ["table", "tabl000001"],
+      ["mathBlock", "math000001"],
+    ]);
+  });
+
+  it("목록 항목·인용·콜아웃 안 문단의 ^id도 읽는다", () => {
+    const list = first("- 항목 ^item000001");
+    expect(list.content![0]!.content![0]).toMatchObject({ type: "paragraph", attrs: { id: "item000001" } });
+    expect(first("> 인용 ^quot000001").content![0]).toMatchObject({ type: "paragraph", attrs: { id: "quot000001" } });
+    expect(first("> [!NOTE]\n> 콜아웃 ^call000001").content![0]).toMatchObject({ type: "paragraph", attrs: { id: "call000001" } });
+  });
+
+  it("우리 모양이 아닌 id(Obsidian의 ^my-id)는 글자에서 정해지는 id가 되고, 링크도 같은 id를 가리킨다", () => {
+    const id = blockIdFromForeign("my-quote");
+    expect(first("글 ^my-quote").attrs?.id).toBe(id);
+    expect(first("[[프로젝트#^my-quote]]").content![0]).toEqual({ type: "pageLink", attrs: { pageId: "p-project", blockId: id } });
+  });
+
+  it("지수 표기(x ^2)나 숫자뿐인 ^123은 id가 아니다", () => {
+    expect(first("x ^2")).toEqual(para(text("x ^2")));
+    expect(first("값 ^123")).toEqual(para(text("값 ^123")));
+  });
+
+  it("코드 안의 ^id는 그대로 둔다", () => {
+    expect(blocks("```\n코드 ^abc0123456\n```")[0]).toMatchObject({ type: "codeBlock", content: [text("코드 ^abc0123456")] });
+    expect(first("`코드 ^abc0123456`").content![0]).toMatchObject({ text: "코드 ^abc0123456", marks: [{ type: "code" }] });
+  });
+
+  it("id를 가질 수 없는 블록 뒤의 홀로 있는 ^id는 무시한다 (글자를 잃지 않는다)", () => {
+    expect(blocks("^abc0123456")).toEqual([{ type: "paragraph" }]);
   });
 });

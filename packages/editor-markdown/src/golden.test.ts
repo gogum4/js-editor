@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { canonicalBlock } from "@9um4/editor-schema/blockId";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { docToMarkdown } from "./markdown";
 import { type ImportContext, markdownToDoc } from "./markdownImport";
@@ -17,6 +16,8 @@ import { type ImportContext, markdownToDoc } from "./markdownImport";
 interface Fixture {
   description: string;
   lossless: boolean;
+  /** 참이면 블록 id(`^id`)를 남기는 내보내기로 시험하고, 다시 읽은 문서와 id까지 비교한다. */
+  blockIds?: boolean;
   losses?: string[];
   doc: PmNode;
 }
@@ -26,23 +27,26 @@ const TITLES: Record<string, string> = { "p-a": "프로젝트 A", "p-b": "회의
 const IDS = Object.fromEntries(Object.entries(TITLES).map(([id, title]) => [title, id]));
 const ctx: ImportContext = { resolvePage: (target) => IDS[target.trim()] ?? null, resolveImage: () => null };
 
-const toMarkdown = (doc: PmNode) => docToMarkdown(doc, { pageTitle: (id) => TITLES[id] ?? null }).markdown;
+const toMarkdown = (doc: PmNode, blockIds = false) => docToMarkdown(doc, { pageTitle: (id) => TITLES[id] ?? null, blockIds }).markdown;
 
-/** 비교용: 블록 id와 null 속성을 없애고, 마크 순서를 맞추고, 같은 마크가 이어진 글자를 합친다. */
-function normalize(node: PmNode): PmNode {
-  const c = canonicalBlock(node);
-  if (c.content) {
+/** 비교용: null 속성을 없애고(`keepIds`가 아니면 블록 id도), 마크 순서를 맞추고, 같은 마크가 이어진 글자를 합친다. */
+function normalize(node: PmNode, keepIds: boolean): PmNode {
+  const out: PmNode = { type: node.type };
+  const attrs = Object.fromEntries(Object.entries(node.attrs ?? {}).filter(([key, value]) => value !== null && value !== undefined && (keepIds || key !== "id")));
+  if (Object.keys(attrs).length > 0) out.attrs = attrs;
+  if (node.content) {
     const merged: PmNode[] = [];
-    for (const child of c.content.map(normalize)) {
+    for (const child of node.content.map((c) => normalize(c, keepIds))) {
       const last = merged[merged.length - 1];
       if (last?.type === "text" && child.type === "text" && JSON.stringify(last.marks) === JSON.stringify(child.marks)) {
         merged[merged.length - 1] = { ...last, text: (last.text ?? "") + (child.text ?? "") };
       } else merged.push(child);
     }
-    c.content = merged;
+    out.content = merged;
   }
-  if (c.marks) c.marks = [...c.marks].sort((a, b) => a.type.localeCompare(b.type));
-  return c;
+  if (node.marks) out.marks = [...node.marks].sort((x, y) => x.type.localeCompare(y.type));
+  if (node.text !== undefined) out.text = node.text;
+  return out;
 }
 
 // Vitest(Vite)가 픽스처 JSON을 불러온다. 골든 `.md`·`.imported.json`은 `toMatchFileSnapshot`이 읽고 쓴다.
@@ -59,7 +63,8 @@ describe("Markdown 방언 골든", () => {
     const fixture = fixtures.get(name)!;
 
     describe(name, () => {
-      const markdown = toMarkdown(fixture.doc);
+      const ids = fixture.blockIds === true;
+      const markdown = toMarkdown(fixture.doc, ids);
 
       it("문서 → Markdown이 골든과 같다", async () => {
         await expect(markdown).toMatchFileSnapshot(`../fixtures/${name}.md`);
@@ -68,18 +73,18 @@ describe("Markdown 방언 골든", () => {
       const reread = markdownToDoc(markdown, ctx, "").doc;
 
       it(fixture.lossless ? "Markdown → 문서 → Markdown이 제자리다" : "손실이 있어도 한 번 읽은 뒤에는 제자리다(두 번째부터 안정)", () => {
-        const second = toMarkdown(reread);
+        const second = toMarkdown(reread, ids);
         if (fixture.lossless) expect(second).toBe(markdown);
-        expect(toMarkdown(markdownToDoc(second, ctx, "").doc)).toBe(second);
+        expect(toMarkdown(markdownToDoc(second, ctx, "").doc, ids)).toBe(second);
       });
 
       if (fixture.lossless) {
         it("손실 없이 다시 읽힌다", () => {
-          expect(normalize(reread)).toEqual(normalize(fixture.doc));
+          expect(normalize(reread, ids)).toEqual(normalize(fixture.doc, ids));
         });
       } else {
         it("다시 읽은 모양을 고정한다(잃는 것을 드러낸다)", async () => {
-          await expect(JSON.stringify(normalize(reread), null, 2) + "\n").toMatchFileSnapshot(`../fixtures/${name}.imported.json`);
+          await expect(JSON.stringify(normalize(reread, ids), null, 2) + "\n").toMatchFileSnapshot(`../fixtures/${name}.imported.json`);
         });
       }
     });
