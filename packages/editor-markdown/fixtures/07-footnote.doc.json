@@ -1,0 +1,34 @@
+{
+  "description": "각주: 번호는 문서 순서",
+  "lossless": true,
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "첫째"
+          },
+          {
+            "type": "footnote",
+            "attrs": {
+              "text": "첫 각주"
+            }
+          },
+          {
+            "type": "text",
+            "text": " 둘째"
+          },
+          {
+            "type": "footnote",
+            "attrs": {
+              "text": "둘째 각주"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

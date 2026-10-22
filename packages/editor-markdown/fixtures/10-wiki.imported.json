@@ -1,0 +1,48 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "참고: "
+        },
+        {
+          "type": "pageLink",
+          "attrs": {
+            "pageId": "p-a"
+          }
+        },
+        {
+          "type": "text",
+          "text": " 와 "
+        },
+        {
+          "type": "pageLink",
+          "attrs": {
+            "pageId": "p-b"
+          }
+        }
+      ]
+    },
+    {
+      "type": "pageBlock",
+      "attrs": {
+        "pageId": "p-a",
+        "mode": "embed"
+      }
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "pageLink",
+          "attrs": {
+            "pageId": "p-b"
+          }
+        }
+      ]
+    }
+  ]
+}

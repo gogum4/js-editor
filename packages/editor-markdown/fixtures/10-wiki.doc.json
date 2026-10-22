@@ -1,0 +1,51 @@
+{
+  "description": "위키 링크·페이지 임베드·페이지 카드(페이지 제목은 시험 사전)",
+  "lossless": false,
+  "losses": [
+    "페이지 카드는 링크 한 줄이 되어 되돌아오면 문단 안의 페이지 링크가 된다"
+  ],
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "참고: "
+          },
+          {
+            "type": "pageLink",
+            "attrs": {
+              "pageId": "p-a"
+            }
+          },
+          {
+            "type": "text",
+            "text": " 와 "
+          },
+          {
+            "type": "pageLink",
+            "attrs": {
+              "pageId": "p-b"
+            }
+          }
+        ]
+      },
+      {
+        "type": "pageBlock",
+        "attrs": {
+          "pageId": "p-a",
+          "mode": "embed"
+        }
+      },
+      {
+        "type": "pageBlock",
+        "attrs": {
+          "pageId": "p-b",
+          "mode": "card"
+        }
+      }
+    ]
+  }
+}

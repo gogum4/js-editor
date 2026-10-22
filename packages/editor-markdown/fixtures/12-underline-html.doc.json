@@ -1,0 +1,39 @@
+{
+  "description": "밑줄은 <u>로 내보내고 다시 읽는다",
+  "lossless": true,
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "밑줄",
+            "marks": [
+              {
+                "type": "underline"
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "text": " 그리고 "
+          },
+          {
+            "type": "text",
+            "text": "밑줄 굵게",
+            "marks": [
+              {
+                "type": "underline"
+              },
+              {
+                "type": "bold"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

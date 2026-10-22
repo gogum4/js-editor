@@ -1,0 +1,37 @@
+{
+  "description": "정렬: 가운데·오른쪽(HTML div)",
+  "lossless": true,
+  "losses": [
+    "왼쪽 정렬은 속성이 없는 것과 같다"
+  ],
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "attrs": {
+          "textAlign": "center"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "가운데"
+          }
+        ]
+      },
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 2,
+          "textAlign": "right"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "오른쪽 제목"
+          }
+        ]
+      }
+    ]
+  }
+}

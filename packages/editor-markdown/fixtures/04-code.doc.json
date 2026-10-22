@@ -1,0 +1,48 @@
+{
+  "description": "코드 블록: 언어 있음·없음, 안에 백틱 세 개",
+  "lossless": true,
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": "typescript"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "const x: number = 1;\nconsole.log(x);"
+          }
+        ]
+      },
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": null
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "언어 없는 코드"
+          }
+        ]
+      },
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": "md"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "```js\ninner\n```"
+          }
+        ]
+      },
+      {
+        "type": "horizontalRule"
+      }
+    ]
+  }
+}

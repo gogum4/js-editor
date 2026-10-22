@@ -1,0 +1,34 @@
+{
+  "description": "인라인·블록 수식",
+  "lossless": true,
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "에너지는 "
+          },
+          {
+            "type": "mathInline",
+            "attrs": {
+              "latex": "E=mc^2"
+            }
+          },
+          {
+            "type": "text",
+            "text": " 이다."
+          }
+        ]
+      },
+      {
+        "type": "mathBlock",
+        "attrs": {
+          "latex": "\\int_0^1 x^2\\,dx = \\frac{1}{3}"
+        }
+      }
+    ]
+  }
+}

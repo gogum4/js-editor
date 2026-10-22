@@ -197,9 +197,18 @@ class Renderer {
       while (list.length > 0 && isEmptyParagraph(list[list.length - 1])) list = list.slice(0, -1);
     }
     const parts: string[] = [];
+    let previousFamily: ReturnType<typeof listFamily> = null;
+    let flip = false;
     for (const node of list) {
+      const family = listFamily(node);
+      flip = family !== null && family === previousFamily ? !flip : false;
+      this.flipList = flip;
       const rendered = this.block(node);
-      if (rendered !== null) parts.push(this.aligned(node, rendered));
+      this.flipList = false;
+      if (rendered !== null) {
+        parts.push(this.aligned(node, rendered));
+        previousFamily = family;
+      }
     }
     return parts.join("\n\n");
   }
@@ -228,14 +237,19 @@ class Renderer {
         const level = Math.min(Math.max(Number(node.attrs?.level) || 1, 1), 6);
         return `${"#".repeat(level)} ${this.inline(node.content).replace(/\n/g, " ")}`.trimEnd();
       }
-      case "bulletList":
-        return this.list(node, () => "- ");
+      case "bulletList": {
+        const mark = this.takeFlip() ? "*" : "-";
+        return this.list(node, () => `${mark} `);
+      }
       case "orderedList": {
         const start = Number(node.attrs?.start) || 1;
-        return this.list(node, (index) => `${start + index}. `);
+        const delimiter = this.takeFlip() ? ")" : ".";
+        return this.list(node, (index) => `${start + index}${delimiter} `);
       }
-      case "taskList":
-        return this.list(node, (_index, item) => (item.attrs?.checked ? "- [x] " : "- [ ] "));
+      case "taskList": {
+        const mark = this.takeFlip() ? "*" : "-";
+        return this.list(node, (_index, item) => (item.attrs?.checked ? `${mark} [x] ` : `${mark} [ ] `));
+      }
       case "blockquote":
         return prefixLines(this.blocks(node.content), "> ");
       case "callout": {
@@ -368,6 +382,15 @@ class Renderer {
     return `${fence}${language}\n${code}\n${fence}`;
   }
 
+  /** 바로 앞 목록과 기호를 바꿔 써야 하는지(`blocks`·`list`가 정하고, 목록을 쓰는 쪽이 한 번 읽어 간다). */
+  private flipList = false;
+
+  private takeFlip(): boolean {
+    const flip = this.flipList;
+    this.flipList = false;
+    return flip;
+  }
+
   private list(node: PmNode, marker: (index: number, item: PmNode) => string): string {
     const items = node.content ?? [];
     return items
@@ -376,8 +399,13 @@ class Renderer {
         const indent = " ".repeat(bullet.length);
         const parts: string[] = [];
         let previous: PmNode | null = null;
+        let flip = false;
         for (const child of item.content ?? []) {
+          const family = listFamily(child);
+          flip = family !== null && previous !== null && family === listFamily(previous) ? !flip : false;
+          this.flipList = flip;
           const rendered = this.block(child);
+          this.flipList = false;
           if (rendered === null) continue;
           // 목록이 이어질 때는 붙여 쓰고, 문단·코드 등은 빈 줄로 나눈다.
           const sep = previous === null ? "" : isList(child) ? "\n" : "\n\n";
@@ -390,6 +418,15 @@ class Renderer {
       })
       .join("\n");
   }
+}
+
+/**
+ * 이어서 놓이면 Markdown이 한 목록으로 합치는 목록의 계열: 글머리·할 일은 `-`/`*`, 번호는 `.`/`)`. 같은 계열이 바로 이어지면
+ * 둘째는 다른 기호(`*`, `)`)로 써서 목록 둘이 한 목록으로 합쳐지지 않게 한다(CommonMark는 기호가 바뀌면 새 목록으로 본다).
+ */
+function listFamily(node: PmNode): "bullet" | "ordered" | null {
+  if (node.type === "bulletList" || node.type === "taskList") return "bullet";
+  return node.type === "orderedList" ? "ordered" : null;
 }
 
 function isList(node: PmNode): boolean {

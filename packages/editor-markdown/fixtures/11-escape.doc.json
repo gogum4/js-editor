@@ -1,0 +1,54 @@
+{
+  "description": "Markdown 문법으로 읽힐 글자는 이스케이프",
+  "lossless": true,
+  "doc": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "별표 * 와 밑줄 _ 와 대괄호 [x] 와 틸데 ~ 와 역슬래시 \\ 와 < 꺾쇠"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "# 샵으로 시작"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "- 하이픈으로 시작"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "1. 번호로 시작"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "> 꺾쇠로 시작"
+          }
+        ]
+      }
+    ]
+  }
+}
