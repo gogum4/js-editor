@@ -25,11 +25,11 @@ console.log(`모두 ${total}개 OK`);
 
 // 배포된 모양 그대로 Markdown → 본문 JSON → HTML이 끝까지 되는지 한 번 돌려 본다.
 const { markdownToDoc } = await import("@9um4/editor-markdown");
-const { renderDoc } = await import("@9um4/editor-render");
+const { prepareRender, renderDoc } = await import("@9um4/editor-render");
 const { renderToStaticMarkup } = await import("react-dom/server");
-const { doc } = markdownToDoc("# 제목\n\n**굵게** 와 [링크](https://example.com)\n\n> [!TIP]\n> 팁", { resolvePage: () => null, resolveImage: () => null }, "");
-const html = renderToStaticMarkup(renderDoc(doc));
-for (const expected of ["<h1", "<strong>굵게</strong>", 'href="https://example.com"', "callout-tip"]) {
+const { doc } = markdownToDoc("# 제목\n\n**굵게** 와 [링크](https://example.com) 와 $x^2$\n\n> [!TIP]\n> 팁\n\n```ts\nconst a = 1;\n```", { resolvePage: () => null, resolveImage: () => null }, "");
+const html = renderToStaticMarkup(renderDoc(doc, { prepared: await prepareRender(doc) }));
+for (const expected of ["<h1", "<strong>굵게</strong>", 'href="https://example.com"', "callout-tip", 'class="katex"', "hljs-keyword"]) {
   if (!html.includes(expected)) {
     console.error(`dist 렌더 결과에 ${expected}가 없다:\n${html}`);
     process.exit(1);

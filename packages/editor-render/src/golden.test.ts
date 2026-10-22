@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { prepareRender } from "./prepare.ts";
 import { renderDoc } from "./render.tsx";
 import type { RenderOptions } from "./types.ts";
 
@@ -40,6 +41,18 @@ describe("HTML 골든", () => {
     it(name, async () => {
       const html = format(renderToStaticMarkup(renderDoc(fixture.doc, optionsFor(fixture))));
       await expect(html).toMatchFileSnapshot(`../fixtures/${name}.html`);
+    });
+  }
+});
+
+// 서버 준비(KaTeX·코드 강조)까지 거친 모양. KaTeX/highlight.js를 올리면 HTML이 달라질 수 있어서 수식·코드가 든 픽스처만 고정한다.
+describe("HTML 골든 (서버 준비 포함)", () => {
+  for (const name of ["04-code", "06-math"]) {
+    it(name, async () => {
+      const fixture = fixtures.get(name)!;
+      const prepared = await prepareRender(fixture.doc);
+      const html = format(renderToStaticMarkup(renderDoc(fixture.doc, { ...optionsFor(fixture), prepared })));
+      await expect(html).toMatchFileSnapshot(`../fixtures/${name}.prepared.html`);
     });
   }
 });

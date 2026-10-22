@@ -65,6 +65,9 @@ export const LANGUAGE_LOADERS: Readonly<Record<string, () => Promise<{ default: 
 ${loaderLines}
 };
 `;
-const loaderTarget = fileURLToPath(new URL("../src/features/editor/highlight/languageLoaders.generated.ts", import.meta.url));
-writeFileSync(loaderTarget, loaderOutput);
-console.log(`로더 ${names.length}개 → ${path.relative(process.cwd(), loaderTarget)}`);
+// 같은 표를 에디터 코어(브라우저)와 읽기 전용 렌더러(서버)가 각자 가진다 — 서로 import하지 않는 패키지다.
+for (const target of ["../packages/editor-core/src/highlight/languageLoaders.generated.ts", "../packages/editor-render/src/languageLoaders.generated.ts"]) {
+  const file = fileURLToPath(new URL(target, import.meta.url));
+  writeFileSync(file, loaderOutput);
+  console.log(`로더 ${names.length}개 → ${path.relative(process.cwd(), file)}`);
+}
