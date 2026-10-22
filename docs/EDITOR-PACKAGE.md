@@ -186,6 +186,28 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | P8 | **배포**: Changesets, 스키마 호환 semver 규칙, 레지스트리 결정 | 첫 버전을 소비자가 설치해 쓴다 |
 | P9 | 블로그 도입, 소비자 2개 이상 안정 후 **별도 저장소 분리 판단** | — |
 
+### P2 상세 계획 (2026-10-23 결정)
+
+측정(2026-10-23): 에디터 폴더에서 `lib/api`·`tree/store`를 쓰는 파일 18개, `import.meta.glob` 1곳(`highlight/loader.ts`), 한글 문자열이 든 파일 약 61개, 모듈 전역 상태 8곳(`toggleStore`·`assetCache`·`keywordStore`·`lowlight`·`blockSource` 등).
+
+결정: ① **React NodeView는 P2에서 core에 같이 옮긴다**(React는 peerDependency; P5에서 `editor-react`로 다시 분리 — 이동이 두 번 일어나는 비용을 받아들인다). ② **문자열 사전은 한국어 기본 + 영어 제공**.
+
+| 단계 | 내용 | 확인 방법 |
+|---|---|---|
+| 2-0 | **안전망**: `createEditorExtensions`의 스키마(노드·마크·속성 이름)를 골든 파일로 고정, 폴더 단위 의존 규칙을 `check:deps`에 추가 | 스키마가 한 글자도 안 바뀐다 |
+| 2-1 | **포트 정의**: `KeyValueStore`·`AssetStore`·`Notifier` 인터페이스와 메모리 기본값 | 타입만 추가 |
+| 2-2 | **모듈 전역 → 확장 옵션**: `toggleStore`·`assetCache`를 포트를 받는 구조로 | 기존 시험 + 에디터 2개 동시 시험 |
+| 2-3 | **이미지·알림 포트화**: `insertImages`·`ImageView`의 `api.putAsset`·`reportError` | 기존 시험 |
+| 2-4 | **`import.meta.glob` 제거**: `gen:languages`가 193개 언어의 명시적 지연 import 표를 생성 | Node import 시험 + 번들 크기 비교 |
+| 2-5 | **Collaboration 선택화**: `ydoc`가 없으면 일반 `undoRedo` | 새 시험 |
+| 2-6 | **위키 계층 분리**: `PageLink`·`PageBlock`·`PageLinkSuggest`·`BlockLinkCopy`·슬래시 페이지 항목을 앱 쪽 확장으로, `createEditorExtensions({ extensions, slashItems })`로 주입 | 스키마 골든 + 기존 시험 |
+| 2-7 | **문자열 사전**: `strings` 옵션(ko 기본, en 제공) | 한글 하드코딩 0 |
+| 2-8 | **물리적 이동**: `packages/editor-core`로 위키가 아닌 코드와 `latexCommands`·`slashItems`를 한 번에 | 시험·빌드·CI 통과, core의 앱 import 0 |
+
+하지 않는 것: **일반 참조 노드는 P7(PlanBench)에서 만든다** — 새 노드는 저장 스키마·`DOC_SCHEMA_VERSION`을 바꾸고 기존 `pageLink`/`pageBlock` 이전이 필요한데, 소비자가 하나뿐인 지금 만들면 틀린 추상화가 될 수 있다(§10). P2의 2-6 주입 구조가 그 바탕이다. 저장·동기화·저널 코드(`usePageDoc`·`docSaver`·`openDocs` 등)는 앱에 남는다.
+
+위험: IME·자동완성·슬래시 같은 입력 동작은 시험이 다 못 잡으므로 끝에 [IME-CHECKLIST.md](IME-CHECKLIST.md)를 사람이 확인한다. core의 React 뷰는 Tailwind 클래스를 쓰므로 앱 CSS가 `packages/`도 스캔하게 설정한다.
+
 ## 9. 결정 기록과 미결 질문
 
 ### 해소된 것
