@@ -2,8 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { renderDoc } from "./render";
-import type { RenderOptions } from "./types";
+import { renderDoc } from "./render.tsx";
+import type { RenderOptions } from "./types.ts";
 
 /**
  * HTML 골든(docs/EDITOR-PACKAGE.md P4). `@9um4/editor-markdown`의 Markdown 골든 픽스처(본문 JSON)를 그대로 렌더해

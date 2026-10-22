@@ -5,10 +5,10 @@ import { blockIdOf } from "@9um4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
-import { hastToReact } from "./highlight";
-import { collectHeadings, textOf } from "./slug";
-import { koRenderStrings, type RenderStrings } from "./strings";
-import { codeKey, type ImageSource, mathKey, type RenderOptions } from "./types";
+import { hastToReact } from "./highlight.tsx";
+import { collectHeadings, textOf } from "./slug.ts";
+import { koRenderStrings, type RenderStrings } from "./strings.ts";
+import { codeKey, type ImageSource, mathKey, type RenderOptions } from "./types.ts";
 
 /** 렌더 한 번 동안 쓰는 상태. 렌더는 문서 순서대로 한 번 돌고, 각주 번호는 나온 순서대로 매겨진다. */
 interface Context {

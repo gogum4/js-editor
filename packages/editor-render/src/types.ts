@@ -1,5 +1,5 @@
-import type { HastChild } from "./highlight";
-import type { RenderStrings } from "./strings";
+import type { HastChild } from "./highlight.tsx";
+import type { RenderStrings } from "./strings.ts";
 
 /** 서버 준비 단계(`prepareRender`)의 결과: 비동기로만 얻을 수 있는 것(수식 HTML, 코드 강조)을 미리 모아 둔다. 렌더 자체는 동기다. */
 export interface Prepared {

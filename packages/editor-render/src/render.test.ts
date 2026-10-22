@@ -2,8 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { collectHeadings, enRenderStrings, renderDoc, slugify } from "./index";
-import type { RenderOptions } from "./types";
+import { collectHeadings, enRenderStrings, renderDoc, slugify } from "./index.ts";
+import type { RenderOptions } from "./types.ts";
 
 const t = (text: string, ...marks: Array<string | { type: string; attrs: Record<string, unknown> }>): PmNode => ({
   type: "text",
