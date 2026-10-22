@@ -181,7 +181,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | P3 | **markdown**: 방언 명세, 골든 왕복 시험, 붙여넣기 변환, 입력 규칙 빈틈 메우기, 실제 Notion·Obsidian 파일로 검증 | 골든 시험 통과, 알려진 손실 목록 확정 |
 | P4 ✅ | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
 | P5 | **react**: 메뉴·NodeView·CSS 분리, 데모 페이지 | 노트 앱이 패키지만으로 같은 화면을 낸다 |
-| P6 | **시범 소비자**: 캘린더 Markdown 부분에 도입하고 API 빈틈을 기록한다 | 빈틈 목록을 반영했다 |
+| P6 | **시범 소비자**: **블로그 관리자 편집기**(캘린더는 Flutter라 P6b WebView로 미룸)에 도입하고 `raw` 보존 노드·방언 어댑터를 만들며 API 빈틈을 기록한다 | 빈틈 목록을 반영했다 |
 | P7 | **PlanBench 도입**: 확장 지점으로 스키마·표 노드를 얹는다 | PlanBench 고유 기능이 그대로 동작한다 |
 | P8 | **배포**: Changesets, 스키마 호환 semver 규칙, 레지스트리 결정 | 첫 버전을 소비자가 설치해 쓴다 |
 | P9 | 블로그 도입, 소비자 2개 이상 안정 후 **별도 저장소 분리 판단** | — |
@@ -335,6 +335,29 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 | 5-8 ✅ | 문서와 남은 것 | — |
 
 위험: ① **CSS 우선순위·순서**: 규칙 집합 비교는 "사라진 규칙"만 잡고 순서·우선순위 변화는 못 잡는다 → 5-5 뒤 사람의 화면 확인(이전과 같은 CDP 검증)이 필요하다 → **5-0b가 이 위험을 줄인다**(순서만 바꾼 CSS도 브라우저의 계산된 스타일 비교가 잡는다). ② **마운트 시험의 한계**: happy-dom은 레이아웃을 계산하지 않아 위치·크기 문제를 못 잡는다(DOM 구조·클래스만 고정) → 5-0b의 실제 브라우저 시험이 보완한다. ③ 범위가 크다(파일 20여 개, CSS 600줄) — 단계마다 시험이 통과한 채 커밋한다.
+
+### P6 상세 계획 (2026-10-23 결정, 미착수)
+
+**시범 소비자는 블로그 관리자 편집기(`~/blog`, Next.js 16·React 19)로 한다.** 캘린더(`~/todo`, LunarTask)는 Flutter 앱이고 Markdown 편집기가 아직 없어서 React 패키지를 바로 못 쓴다(WebView에 번들을 올리는 별도 작업 → **P6b**로 미룬다). 계획표의 "캘린더 Markdown 부분"은 이 결정으로 바뀐다.
+
+블로그 사실: Markdown이 원본이고(DB의 `contentMd`) 렌더링은 자체 remark 파이프라인(`lib/domain/render.ts`: gfm·math·`remark-directive`·임베드·fold·시리즈 카드·rehype-katex)이다. 관리자 편집기는 textarea 기반 `UnifiedEditor`(블록 단위 인라인 편집, 소스 줄 번호 `rehypeSourceLines`)와 모드 전환(`PostEditor`)이다. 문법은 `markdown-syntax.md`: 콜아웃은 `:::note[제목]`(우리는 `> [!note]`), `:::center|right|indent{n}|fold{h}`, `::youtube`·`::post{slug}`·`::series{id}`·소셜 임베드, `:postlink[텍스트]{slug}`.
+
+**핵심 어려움**: ① 방언이 다르다. ② **Markdown이 원본이라 왕복이 손실 없어야 한다** — 에디터가 모르는 디렉티브가 저장 때 사라지면 안 된다(§6 원본 보존, P3에서 "P6 이후"로 미룬 `raw` 노드가 여기서 필요해진다). ③ 블로그 렌더링 파이프라인은 건드리지 않는다(독자 화면 위험 0).
+
+| 단계 | 내용 | 끝났다고 볼 조건 |
+|---|---|---|
+| 6-0 | **측정**: 블로그 실제 글(DB의 `contentMd` 전부)을 `markdownToDoc`→`docToMarkdown`에 넣어 왕복 손실을 센다(읽기 전용 스크립트, 저장소 밖). 결과를 문법별 표로 | 손실 목록 확정 |
+| 6-1 | **`raw` 보존 노드**(schema·core·markdown): 모르는 블록·인라인 문법(디렉티브 전체)을 원문 그대로 담는 노드. 편집기에서는 회색 상자로 원문 표시·소스 편집, 내보낼 때 한 글자도 안 바꾼다. 노트 앱은 `DOC_SCHEMA_VERSION`을 올리고 `raw`를 쓰지 않는 옵션(기본 끔)으로 유지 | 골든: 모르는 구문이 든 문서의 왕복이 바이트 동일 |
+| 6-2 | **방언 어댑터**: `editor-markdown`에 방언 옵션(`dialect: "obsidian" | "blog"`) — 블로그 방언에서 `:::note|info|tip|warning|danger[제목]`↔콜아웃, `:::center|right`↔정렬, `:::indent{n}`, 이어 `::post`·`::series`·`::youtube`·`:postlink`는 구조화 노드 없이 **raw로 보존**(P7의 참조 노드 이후 승격 가능). 콜아웃 종류 매핑(note·info·tip·warning·danger ↔ 우리 5종) | 블로그 방언 골든 + 6-0의 손실 0 |
+| 6-3 | **블로그 쪽 어댑터(블로그 저장소)**: `PostEditor`에 WYSIWYG 모드를 **추가**(기존 textarea 모드는 그대로 둔다 — 문제가 있으면 즉시 되돌림). 저장은 `docToMarkdown`(블로그 방언)→`contentMd`. 이미지 업로드는 core의 자산 포트에 블로그의 업로더를 연결. 패키지는 `file:`/pnpm 링크 또는 `pnpm pack` tarball로 설치(레지스트리는 P8) | 관리자에서 글을 열어 WYSIWYG로 고치고 저장했을 때 독자 화면이 같다 |
+| 6-4 | **검증**: 블로그 글 전부를 열었다 저장해(저장 안 하는 건식 실행) 렌더 HTML이 바이트 동일한지 비교 + 사람이 글 몇 편 직접 편집 | 불일치 0 또는 설명된 것만 |
+| 6-5 | **API 빈틈 기록**: 블로그 연결에서 막힌 곳(포트, 방언, CSS 충돌 — 블로그는 Tailwind typography `prose`를 쓴다, 다크 모드, SSR 경계, 번들 크기)을 이 문서에 표로 적고 패키지에 반영 | 빈틈 목록을 반영했다 |
+
+위험: ① raw 노드가 에디터 안에서 어색하면 쓰기 불편하다 → 6-1에서 소스 편집 UI를 같이 만든다. ② 블로그가 Tailwind `prose`·다크 모드를 쓴다 → `md-editor` 스타일이 `prose`와 겹치지 않게 `not-prose`나 격리 필요(5-7의 `@layer base` 초기화가 도움). ③ 블로그 Node 24·Next 16 환경 차이 → `check:dist`의 소비자 시험을 블로그 모양(Next 빌드)으로 한 번 더 돌린다. ④ 블로그 저장소는 따로 있다(`~/blog`) → 6-3은 그 저장소에 별도 커밋이며, 이 저장소의 `examples/next-blog`는 읽기 전용 샘플로 둔다.
+
+하지 않는 것: 블로그 독자용 렌더링 파이프라인 교체(P9에서 판단), 캘린더 WebView(P6b), 레지스트리 배포(P8), 새 구조화 노드(`::post` 등 승격은 P7 참조 노드와 함께).
+
+미결: ⓐ 블로그 실제 글 데이터(DB)를 읽을 방법(로컬 덤프나 읽기 전용 접속) ⓑ WYSIWYG를 기본 모드로 삼을지 선택 모드로 둘지(권장: 선택 모드로 시작).
 
 ## 9. 결정 기록과 미결 질문
 
