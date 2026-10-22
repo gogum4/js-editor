@@ -220,6 +220,8 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 4. **CSS는 앱의 `src/index.css`에 남아 있다**(콜아웃·코드 블록·표 등). Tailwind 클래스는 `packages/`도 자동으로 스캔된다. 스타일 분리는 P5.
 5. `lib/math.ts`가 `katex/dist/katex.min.css`를 JS에서 동적 import한다(§5 걸림돌 2). Next.js 서버 렌더링용 처리는 P4.
 
+**5-1 결과** (2026-10-23): core의 확장은 이제 화면을 모른다. `createCoreExtensions(ydoc, { views, menus, ui })`로 노드 뷰 7개(콜아웃·코드 블록·이미지·각주·토글·수식 인라인/블록), 메뉴 2개(`/`·코드 자동완성 — 닫힐 때 Ctrl+Space 위치를 비우는 일과 한글 조합 키 무시는 core가 주입된 render를 감싸서 한다), 편집 창 접점(`uiOf(editor).openMathEditor/openFootnoteEditor`)을 주입받고, 주입하지 않으면 `renderHTML` 기본 렌더로 그려진다. `src/react/`(views·menus·hosts·stores·hooks·context·`createReactExtensions`)에 React 쪽을 모았고, `scripts/check-core-react.mjs`가 **그 밖의 core가 React·zustand를 import하면 실패**시킨다(`check:deps`; 지금 위반 0). 수식 KaTeX 로더는 core(`lib/math.ts`), `useMathHtml` 훅은 react. 노트 앱·데모·화면 시험은 `createReactExtensions`를 쓴다. 검증: 단위 시험 1686개, DOM 골든 한 글자도 안 바뀜, 실제 Chromium의 계산된 스타일이 기준과 같음, 동작 시험 19개, **스크린샷 13장이 5-0b 시점과 픽셀 단위로 동일**.
+
 하지 않는 것: **일반 참조 노드는 P7(PlanBench)에서 만든다** — 새 노드는 저장 스키마·`DOC_SCHEMA_VERSION`을 바꾸고 기존 `pageLink`/`pageBlock` 이전이 필요한데, 소비자가 하나뿐인 지금 만들면 틀린 추상화가 될 수 있다(§10). P2의 2-6 주입 구조가 그 바탕이다. 저장·동기화·저널 코드(`usePageDoc`·`docSaver`·`openDocs` 등)는 앱에 남는다.
 
 위험: IME·자동완성·슬래시 같은 입력 동작은 시험이 다 못 잡으므로 끝에 [IME-CHECKLIST.md](IME-CHECKLIST.md)를 사람이 확인한다. core의 React 뷰는 Tailwind 클래스를 쓰므로 앱 CSS가 `packages/`도 스캔하게 설정한다.
@@ -294,23 +296,23 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 ### P5 상세 계획 (2026-10-23 결정)
 
-측정(2026-10-23): core의 TS 파일 48개 중 38개는 이미 React가 없다. React가 얽힌 곳은 `.tsx` 17개(1,747줄)와 그 뷰를 직접 import하는 확장(노드 뷰 7개: 콜아웃·코드 블록·이미지·각주·토글·수식 인라인/블록, 메뉴 2개: 슬래시·코드 자동완성)이다. 확장이 편집 창을 열려고 `openMathEditor`·`openFootnoteEditor`(zustand 저장소 → React 창)를 직접 부른다. `src/index.css`(1006줄)의 에디터 본문 스타일이 약 600줄이고, TSX에 Tailwind 유틸리티 클래스가 45곳 있다. 앱이 core에서 가져다 쓰는 React 쪽 이름: \`AssetImage\`·\`TableToolbar\`·\`MathEditorHost\`·\`FootnoteEditorHost\`·\`EditorPortsProvider\`·\`useMathHtml\`·\`placeMenu\`.
+측정(2026-10-23): core의 TS 파일 48개 중 38개는 이미 React가 없다. React가 얽힌 곳은 `.tsx` 17개(1,747줄)와 그 뷰를 직접 import하는 확장(노드 뷰 7개: 콜아웃·코드 블록·이미지·각주·토글·수식 인라인/블록, 메뉴 2개: 슬래시·코드 자동완성)이다. 확장이 편집 창을 열려고 `openMathEditor`·`openFootnoteEditor`(zustand 저장소 → React 창)를 직접 부른다. `src/index.css`(1006줄)의 에디터 본문 스타일이 약 600줄이고, TSX에 Tailwind 유틸리티 클래스가 45곳 있다. 앱이 core에서 가져다 쓰는 React 쪽 이름: `AssetImage`·`TableToolbar`·`MathEditorHost`·`FootnoteEditorHost`·`EditorPortsProvider`·`useMathHtml`·`placeMenu`.
 
-결정: ① **Tailwind 클래스는 일반 CSS로 바꾼다**(패키지가 자기 CSS를 배포해 소비자가 Tailwind가 없어도 된다). ② **본문 루트 CSS 클래스는 \`md-editor\`로 새로 정한다**(패키지 스타일은 \`.md-editor\` 아래에서만; 앱은 \`page-editor\`에 \`md-editor\`를 함께 달고 앱 전용 스타일만 \`page-editor\`에 남긴다; 읽기 전용 렌더러의 \`md-doc\`과 짝). ③ **데모 페이지 \`examples/editor-demo\`(Vite)를 만든다**.
+결정: ① **Tailwind 클래스는 일반 CSS로 바꾼다**(패키지가 자기 CSS를 배포해 소비자가 Tailwind가 없어도 된다). ② **본문 루트 CSS 클래스는 `md-editor`로 새로 정한다**(패키지 스타일은 `.md-editor` 아래에서만; 앱은 `page-editor`에 `md-editor`를 함께 달고 앱 전용 스타일만 `page-editor`에 남긴다; 읽기 전용 렌더러의 `md-doc`과 짝). ③ **데모 페이지 `examples/editor-demo`(Vite)를 만든다**.
 
-설계: **editor-core는 React가 없다**(스키마·명령·입력 규칙·붙여넣기·복사·포트·순수 로직). 뷰·메뉴·편집 창은 **주입**받는다 — \`createCoreExtensions(ydoc, { views, menus, ui })\`: \`views\`는 노드 이름별 \`NodeViewRenderer\` 맵(없으면 \`renderHTML\` 기본 렌더라서 React 아닌 소비자도 쓸 수 있다), \`menus\`는 Suggestion의 \`render\`, \`ui\`는 편집 창 열기 접점(\`openMathEditor\`·\`openFootnoteEditor\`; 기본은 아무것도 안 함). **editor-react**는 뷰 17개·메뉴·편집 창 호스트·\`EditorPortsProvider\`와 훅·\`createReactExtensions()\`(core에 위 주입을 채워 줌)·스타일을 가지며 \`"use client"\`다. \`lib/math.ts\`의 KaTeX 로더는 core, \`useMathHtml\` 훅은 react.
+설계: **editor-core는 React가 없다**(스키마·명령·입력 규칙·붙여넣기·복사·포트·순수 로직). 뷰·메뉴·편집 창은 **주입**받는다 — `createCoreExtensions(ydoc, { views, menus, ui })`: `views`는 노드 이름별 `NodeViewRenderer` 맵(없으면 `renderHTML` 기본 렌더라서 React 아닌 소비자도 쓸 수 있다), `menus`는 Suggestion의 `render`, `ui`는 편집 창 열기 접점(`openMathEditor`·`openFootnoteEditor`; 기본은 아무것도 안 함). **editor-react**는 뷰 17개·메뉴·편집 창 호스트·`EditorPortsProvider`와 훅·`createReactExtensions()`(core에 위 주입을 채워 줌)·스타일을 가지며 `"use client"`다. `lib/math.ts`의 KaTeX 로더는 core, `useMathHtml` 훅은 react.
 
 | 단계 | 내용 | 확인 방법 |
 |---|---|---|
-| 5-0 | **안전망**: ① 모든 노드가 든 문서를 happy-dom에서 **실제로 마운트**(EditorContent)해 렌더된 DOM을 골든으로 고정, ② \`index.css\`의 **규칙 집합**을 기준 파일로 고정(옮긴 뒤 규칙이 사라지지 않았는지 비교) | 이동 전 골든 생성 |
+| 5-0 | **안전망**: ① 모든 노드가 든 문서를 happy-dom에서 **실제로 마운트**(EditorContent)해 렌더된 DOM을 골든으로 고정, ② `index.css`의 **규칙 집합**을 기준 파일로 고정(옮긴 뒤 규칙이 사라지지 않았는지 비교) | 이동 전 골든 생성 |
 | 5-0b | **실제 브라우저 안전망**(5-0의 한계를 푼다): ① `examples/editor-demo`(Vite) — 고정 문서·고정 id로 지금의 core 뷰를 띄운다(`?collab=1`이면 실제 Yjs), ② Playwright(headless Chromium)로 장면 13개의 **계산된 스타일**(`computedStyleMap`)을 덤프해 기준으로 커밋, ③ 실제 키 입력·붙여넣기·**CDP 한글 조합(IME)** 동작 시험 19개, ④ 같은 머신 전후 비교용 스크린샷(픽셀 diff) | 기준 비교 + 동작 시험 통과, CI `browser` 작업 |
-| 5-1 | **접점 만들기(제자리)**: core 안에서 뷰·메뉴·편집 창을 주입 방식으로 바꾼다(파일은 아직 안 옮김) | 5-0 골든이 한 글자도 안 바뀜 |
-| 5-2 | **\`editor-react\` 패키지 생성**: 뷰·메뉴·호스트·컨텍스트 이동, 수식 훅 분리. core에서 \`react\`·\`@tiptap/react\`·\`react-dom\` import를 **검사로 금지** | \`check:deps\`, 골든 |
+| 5-1 ✅ | **접점 만들기(제자리)**: core 안에서 뷰·메뉴·편집 창을 주입 방식으로 바꾸고, React에 묶인 파일을 `src/react/`로 모은다(아직 같은 패키지) | 5-0·5-0b가 한 글자·한 픽셀도 안 바뀜 |
+| 5-2 | **`editor-react` 패키지 생성**: `src/react/` 폴더를 통째로 새 패키지로 옮긴다(5-1이 경계를 이미 만들었다). core의 공개 API를 그것이 필요로 하는 만큼 넓힌다 | `check:deps`, 골든, `visual` |
 | 5-3 | **Tailwind 클래스 → 일반 CSS**(45곳) | 골든 갱신 후 diff 검토 |
-| 5-4 | **CSS 이동**: 본문 스타일을 \`editor-react\`의 스타일 파일로, 앱 \`index.css\`에서 제거. 루트 클래스 \`md-editor\` | 규칙 집합 비교 |
-| 5-5 | **앱 연결**: \`PageEditor\`·\`SyncedBlock\`·호스트를 \`createReactExtensions\`와 새 import로 | 전체 시험 + 사람의 화면 확인 |
-| 5-6 | **배포 모양**: core·react를 \`check:dist\`(컴파일·pack·소비자 타입·\`"use client"\` 보존)에 추가 | \`check:dist\` |
-| 5-7 | **데모 페이지** \`examples/editor-demo\`: 앱 없이 패키지만으로 편집기를 띄운다 | 빌드 + 마운트 시험, CI |
+| 5-4 | **CSS 이동**: 본문 스타일을 `editor-react`의 스타일 파일로, 앱 `index.css`에서 제거. 루트 클래스 `md-editor` | 규칙 집합 비교 |
+| 5-5 | **앱 연결**: `PageEditor`·`SyncedBlock`·호스트를 `createReactExtensions`와 새 import로 | 전체 시험 + 사람의 화면 확인 |
+| 5-6 | **배포 모양**: core·react를 `check:dist`(컴파일·pack·소비자 타입·`"use client"` 보존)에 추가 | `check:dist` |
+| 5-7 | **데모 페이지**: `examples/editor-demo`는 5-0b에서 앞당겨 만들었다. 남은 일은 데모가 `editor-react`·패키지 스타일만 쓰도록 import를 바꾸는 것 | 빌드 + `visual`, CI |
 | 5-8 | 문서와 남은 것 | — |
 
 위험: ① **CSS 우선순위·순서**: 규칙 집합 비교는 "사라진 규칙"만 잡고 순서·우선순위 변화는 못 잡는다 → 5-5 뒤 사람의 화면 확인(이전과 같은 CDP 검증)이 필요하다 → **5-0b가 이 위험을 줄인다**(순서만 바꾼 CSS도 브라우저의 계산된 스타일 비교가 잡는다). ② **마운트 시험의 한계**: happy-dom은 레이아웃을 계산하지 않아 위치·크기 문제를 못 잡는다(DOM 구조·클래스만 고정) → 5-0b의 실제 브라우저 시험이 보완한다. ③ 범위가 크다(파일 20여 개, CSS 600줄) — 단계마다 시험이 통과한 채 커밋한다.
