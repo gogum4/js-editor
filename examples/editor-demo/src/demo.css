@@ -1,0 +1,15 @@
+/*
+ * 데모의 스타일. 지금은 노트 앱의 스타일(`src/index.css`)을 그대로 쓰고, 패키지 화면이 쓰는 Tailwind 클래스를 찾도록 패키지 폴더를 스캔 대상에 더한다.
+ * P5에서 스타일이 `editor-react` 패키지로 옮겨 가면 이 파일은 패키지의 스타일 파일을 가리키게 바뀐다.
+ */
+@import "../../../src/index.css";
+@source "../../../packages/editor-core/src";
+
+body {
+  padding: 24px;
+  background: #fff;
+}
+#root {
+  max-width: 760px;
+  margin: 0 auto;
+}
