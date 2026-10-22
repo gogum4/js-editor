@@ -4,7 +4,7 @@ import { Slice } from "@tiptap/pm/model";
 import { afterEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
 
-import { createCoreExtensions } from "./coreExtensions";
+import { createReactExtensions } from "./react/createReactExtensions";
 
 /**
  * 실제 Yjs(Collaboration)와 화면에 붙은 에디터에서 Ctrl+Z가 기대대로 동작하는지 시험한다.
@@ -21,7 +21,7 @@ afterEach(() => {
 function mount(): Editor {
   const element = document.createElement("div");
   document.body.appendChild(element);
-  editor = new Editor({ element, extensions: createCoreExtensions(new Y.Doc()) });
+  editor = new Editor({ element, extensions: createReactExtensions(new Y.Doc()) });
   return editor;
 }
 

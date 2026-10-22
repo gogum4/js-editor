@@ -1,8 +1,8 @@
 import type { Editor } from "@tiptap/core";
 import { useEffect, useReducer } from "react";
 
-import { useEditorStrings } from "../ports/context";
-import type { EditorStrings } from "../strings/types";
+import { useEditorStrings } from "../context";
+import type { EditorStrings } from "../../strings/types";
 
 const ACTIONS: ReadonlyArray<{
   key: keyof EditorStrings["table"]["actions"];

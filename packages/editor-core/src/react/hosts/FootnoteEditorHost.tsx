@@ -1,8 +1,9 @@
 import { useLayoutEffect, useRef } from "react";
 
 import { computeMenuPosition } from "@9um4/editor-schema/menuPosition";
-import { closeFootnoteEditor, setFootnoteText, useFootnoteEditStore, type FootnoteEditState } from "./footnoteEdit";
-import { useEditorStrings } from "../ports/context";
+import { type FootnoteEditState, setFootnoteText } from "../../footnote/footnoteEdit";
+import { closeFootnoteEditor, useFootnoteEditStore } from "../stores/footnoteEditStore";
+import { useEditorStrings } from "../context";
 
 const WIDTH = 320;
 

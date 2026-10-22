@@ -1,8 +1,7 @@
 import { InputRule, mergeAttributes, Node } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { type CalloutType, calloutTypeFromName, DEFAULT_CALLOUT_TYPE, normalizeCalloutType } from "@9um4/editor-schema/callout";
-import { CalloutView } from "./CalloutView";
+import type { NodeViewOptions } from "../ports/ui";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -14,8 +13,11 @@ declare module "@tiptap/core" {
 }
 
 /** 색과 아이콘이 있는 강조 블록. 안에는 다른 블록(문단, 목록 등)을 넣을 수 있다. */
-export const Callout = Node.create({
+export const Callout = Node.create<NodeViewOptions>({
   name: "callout",
+
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions: () => ({ nodeView: null }),
   group: "block",
   content: "block+",
   defining: true,
@@ -39,7 +41,7 @@ export const Callout = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(CalloutView);
+    return this.options.nodeView;
   },
 
   /**

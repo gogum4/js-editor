@@ -10,22 +10,24 @@ export { blockFlashKey, findBlockById } from "./extensions/BlockFlash";
 export { blockIdPlugin, blockIdTransaction, transactionIntroducesBlocks } from "./extensions/BlockId";
 
 // 화면(편집 창·막대·이미지)
-export { FootnoteEditorHost } from "./footnote/FootnoteEditorHost";
-export { AssetImage } from "./image/AssetImage";
-export { MathEditorHost } from "./math/MathEditorHost";
+export { FootnoteEditorHost } from "./react/hosts/FootnoteEditorHost";
+export { AssetImage } from "./react/views/AssetImage";
+export { MathEditorHost } from "./react/hosts/MathEditorHost";
 export { placeMenu } from "./menuPlace";
-export { TableToolbar } from "./table/TableToolbar";
-export { useMathHtml } from "./lib/math";
+export { TableToolbar } from "./react/hosts/TableToolbar";
+export { useMathHtml } from "./react/hooks/useMathHtml";
 
 // 슬래시 메뉴
 export { CORE_SLASH_ITEMS, filterSlashItems, localizeSlashItems, type SlashItem } from "./lib/slashItems";
 export type { SlashHandlers } from "./slash/runSlashCommand";
 
 // 포트(앱이 에디터에 연결해 주는 것)
-export { EditorPortsProvider, useEditorPorts, useEditorStrings } from "./ports/context";
-export { EditorPortsExtension, portsOf, stringsOf } from "./ports/editorPorts";
+export { EditorPortsProvider, useEditorPorts, useEditorStrings } from "./react/context";
+export { EditorPortsExtension, portsOf, stringsOf, uiOf } from "./ports/editorPorts";
+export { createReactExtensions, reactMenus, reactUi, reactViews } from "./react/createReactExtensions";
+export { type EditorMenus, type EditorUi, type EditorViews, type NodeViewOptions, noUi, type SuggestionRender } from "./ports/ui";
 export { browserUrlOpener, consoleNotifier, memoryKeyValue, memoryPorts, noAssets } from "./ports/memory";
 export type { AssetStore, EditorPorts, KeyValueStore, Notifier, StoredAsset, UrlOpener } from "./ports/types";
 
 // 화면 글 사전
-export { enStrings, type EditorStrings, koStrings } from "./strings";
+export { enStrings, type EditorStrings, koStrings } from "./strings/index";

@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
-import { insertPreview } from "../lib/latexAssist";
-import type { LatexCommand } from "../lib/latexCommands";
-import { useMathHtml } from "../lib/math";
-import { useEditorStrings } from "../ports/context";
+import { insertPreview } from "../../lib/latexAssist";
+import type { LatexCommand } from "../../lib/latexCommands";
+import { useMathHtml } from "../hooks/useMathHtml";
+import { useEditorStrings } from "../context";
 
 interface LatexCompletionMenuProps {
   items: readonly LatexCommand[];

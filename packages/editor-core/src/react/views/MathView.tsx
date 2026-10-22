@@ -1,8 +1,8 @@
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 
-import { useMathHtml } from "../lib/math";
-import { openMathEditor } from "./mathEdit";
-import { useEditorStrings } from "../ports/context";
+import { useMathHtml } from "../hooks/useMathHtml";
+import { openMathEditor } from "../stores/mathEditStore";
+import { useEditorStrings } from "../context";
 
 /** 수식을 그린 HTML 또는 자리표시·오류. 인라인과 블록이 함께 쓴다. */
 function MathBody({ latex, display }: { latex: string; display: boolean }) {

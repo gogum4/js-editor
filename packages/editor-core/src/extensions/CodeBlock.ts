@@ -1,23 +1,27 @@
-import CodeBlockBase from "@tiptap/extension-code-block";
+import CodeBlockBase, { type CodeBlockOptions } from "@tiptap/extension-code-block";
 import { Plugin, TextSelection } from "@tiptap/pm/state";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { enterEdit, shouldDeletePair, typedCharAction } from "./codeAssist";
 import { isCompletionOpen } from "../completion/CodeCompletion";
 import { computeIndentEdits } from "./codeIndent";
-import { CodeBlockView } from "./CodeBlockView";
+import type { NodeViewOptions } from "../ports/ui";
 
 /**
  * 기본 코드 블록에 언어 선택·복사 막대(`CodeBlockView`)를 붙이고, 코드를 쓰기 편하게 한 것:
  * Tab 들여쓰기, 괄호·따옴표 자동 닫기, Enter 자동 들여쓰기.
  * 색은 문서와 별개의 장식으로 입히므로(`CodeHighlight`) 저장되는 내용은 기본 코드 블록과 같다.
  */
-export const CodeBlock = CodeBlockBase.extend({
+export const CodeBlock = CodeBlockBase.extend<CodeBlockOptions & NodeViewOptions>({
   // 목록·할 일 안에 코드 블록이 있어도 그쪽의 Tab(항목 들여쓰기)보다 먼저 받는다.
   priority: 200,
 
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions() {
+    return { ...(this.parent?.() as CodeBlockOptions), nodeView: null };
+  },
+
   addNodeView() {
-    return ReactNodeViewRenderer(CodeBlockView);
+    return this.options.nodeView;
   },
 
   addKeyboardShortcuts() {

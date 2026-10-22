@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { languageOptions, searchLanguages } from "@9um4/editor-schema/codeLanguages";
-import { useEditorStrings } from "../ports/context";
+import { useEditorStrings } from "../context";
 
 interface LanguagePickerProps {
   /** 지금 쓰는 언어의 정식 이름. 없으면 null (색 없는 일반 텍스트). */

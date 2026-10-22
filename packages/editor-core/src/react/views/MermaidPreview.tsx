@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-import { type MermaidResult, renderMermaid } from "../mermaid/renderer";
+import { type MermaidResult, renderMermaid } from "../../mermaid/renderer";
 import { MermaidViewer } from "./MermaidViewer";
-import { useEditorStrings } from "../ports/context";
+import { useEditorStrings } from "../context";
 
 /** 입력이 멈춘 뒤 이만큼 지나야 다시 그린다. 타이핑하는 동안 문법이 계속 틀려 있는 것을 보여 주지 않으려는 것. */
 const RENDER_DELAY_MS = 400;

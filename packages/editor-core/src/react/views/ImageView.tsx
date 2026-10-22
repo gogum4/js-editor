@@ -10,7 +10,7 @@ import {
   resizedWidth,
 } from "@9um4/editor-schema/imageLayout";
 import { AssetImage } from "./AssetImage";
-import { useEditorStrings } from "../ports/context";
+import { useEditorStrings } from "../context";
 
 const ALIGN_BUTTONS: ReadonlyArray<{ align: ImageAlign }> = [{ align: "left" }, { align: "center" }, { align: "right" }];
 

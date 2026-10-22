@@ -8,18 +8,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { CompletionMenuList } from "./completion/CompletionMenuList";
-import { createCoreExtensions } from "./coreExtensions";
-import { MermaidViewer } from "./extensions/MermaidViewer";
-import { FootnoteEditorHost } from "./footnote/FootnoteEditorHost";
-import { openFootnoteEditor } from "./footnote/footnoteEdit";
+import { CompletionMenuList } from "./react/menus/CompletionMenuList";
+import { createReactExtensions } from "./react/createReactExtensions";
+import { MermaidViewer } from "./react/views/MermaidViewer";
+import { FootnoteEditorHost } from "./react/hosts/FootnoteEditorHost";
+import { openFootnoteEditor } from "./react/stores/footnoteEditStore";
 import type { LatexCommand } from "./lib/latexCommands";
-import { LatexCompletionMenu } from "./math/LatexCompletionMenu";
-import { MathEditorHost } from "./math/MathEditorHost";
-import { openMathEditor } from "./math/mathEdit";
-import { EditorPortsProvider } from "./ports/context";
+import { LatexCompletionMenu } from "./react/menus/LatexCompletionMenu";
+import { MathEditorHost } from "./react/hosts/MathEditorHost";
+import { openMathEditor } from "./react/stores/mathEditStore";
+import { EditorPortsProvider } from "./react/context";
 import { memoryPorts } from "./ports/memory";
-import { TableToolbar } from "./table/TableToolbar";
+import { TableToolbar } from "./react/hosts/TableToolbar";
 import { formatDom, maskKatex, withFixedIds } from "./testing/mountGolden";
 
 /**
@@ -50,7 +50,7 @@ async function mount(content: PmNode, extra?: ReactNode): Promise<Editor> {
   const ports = memoryPorts();
   const container = document.createElement("div");
   document.body.appendChild(container);
-  editor = new Editor({ extensions: createCoreExtensions(null, { ports }), content: withFixedIds(content) });
+  editor = new Editor({ extensions: createReactExtensions(null, { ports }), content: withFixedIds(content) });
   root = createRoot(container);
   await act(async () => {
     root!.render(createElement(EditorPortsProvider, { ports, children: [createElement(EditorContent, { key: "c", editor }), extra] }));

@@ -1,15 +1,18 @@
 import { InputRule, mergeAttributes, Node } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { findEmptyMathBlock, openMathEditor } from "./mathEdit";
-import { MathBlockView } from "./MathView";
+import { uiOf } from "../ports/editorPorts";
+import { findEmptyMathBlock } from "./mathEdit";
+import type { NodeViewOptions } from "../ports/ui";
 
 /**
  * 한 줄을 차지하는 LaTeX 수식(`$$ … $$`). 본문에는 LaTeX 글자(`latex`)만 저장한다. 한 덩어리(atom)라서 선택하고 Backspace로 지우거나
  * 끌어서 옮기고, 누르면 편집 창이 열린다. 줄 맨 앞에서 `$$`와 공백을 치거나 `/수식`으로 만든다.
  */
-export const MathBlock = Node.create({
+export const MathBlock = Node.create<NodeViewOptions>({
   name: "mathBlock",
+
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions: () => ({ nodeView: null }),
   group: "block",
   atom: true,
   draggable: true,
@@ -34,7 +37,7 @@ export const MathBlock = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(MathBlockView);
+    return this.options.nodeView;
   },
 
   addInputRules() {
@@ -48,7 +51,7 @@ export const MathBlock = Node.create({
           // 끼운 빈 수식의 편집 창을 연다(입력 규칙이 끝난 뒤에 위치를 찾는다).
           setTimeout(() => {
             const pos = findEmptyMathBlock(editor);
-            if (pos !== null) openMathEditor(editor, pos);
+            if (pos !== null) uiOf(editor).openMathEditor(editor, pos);
           }, 0);
         },
       }),

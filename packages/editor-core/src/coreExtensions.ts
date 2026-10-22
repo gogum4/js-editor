@@ -9,6 +9,7 @@ import type * as Y from "yjs";
 
 import { EditorPortsExtension } from "./ports/editorPorts";
 import type { EditorPorts } from "./ports/types";
+import type { EditorMenus, EditorUi, EditorViews } from "./ports/ui";
 import { koStrings } from "./strings/ko";
 import type { EditorStrings } from "./strings/types";
 import { CodeCompletion } from "./completion/CodeCompletion";
@@ -39,6 +40,13 @@ export interface CoreExtensionsOptions {
    * Obsidian 같은 일반 텍스트 편집기에 붙여도 문법이 유지되지만, 메모장에 붙이면 `**` 같은 기호가 보인다.
    */
   copyAsMarkdown?: MarkdownCopyOptions;
+  /**
+   * 화면을 core 밖에서 주입한다(docs/EDITOR-PACKAGE.md P5). `views`는 노드 이름별 노드 뷰, `menus`는 `/` 명령·코드 자동완성 메뉴, `ui`는 수식·각주 편집 창 여는 접점.
+   * 주입하지 않으면 노드는 `renderHTML` 기본 렌더로 그려지고 메뉴·편집 창은 뜨지 않는다 — React를 쓰는 소비자는 `editor-react`의 `createReactExtensions`를 쓴다.
+   */
+  views?: EditorViews;
+  menus?: EditorMenus;
+  ui?: EditorUi;
   /** 화면 글 사전. 기본은 한국어. */
   strings?: EditorStrings;
   /** 슬래시 메뉴 항목을 바꾼다(기본 항목을 받아 앱의 항목을 끼워 넣어 돌려준다). */
@@ -57,9 +65,10 @@ export interface CoreExtensionsOptions {
  */
 export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensionsOptions = {}): AnyExtension[] {
   const strings = options.strings ?? koStrings;
+  const views = options.views ?? {};
   const localizedItems = localizeSlashItems(CORE_SLASH_ITEMS, strings.slash.items);
   const list: AnyExtension[] = [
-    EditorPortsExtension.configure({ ports: options.ports ?? null, strings }),
+    EditorPortsExtension.configure({ ports: options.ports ?? null, strings, ui: options.ui ?? null }),
     // Yjs가 있으면 되돌리기/다시하기는 Yjs UndoManager(Collaboration)가 맡고(ProseMirror history와 함께 쓰면 충돌한다),
     // 없으면 StarterKit의 history를 쓴다. 코드 블록은 아래의 확장 버전을 쓴다.
     StarterKit.configure({
@@ -79,12 +88,12 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,
-    CodeBlock,
+    CodeBlock.configure({ nodeView: views.codeBlock ?? null }),
     CodeHighlight,
-    CodeCompletion,
-    Callout,
+    CodeCompletion.configure({ render: options.menus?.codeCompletion ?? null }),
+    Callout.configure({ nodeView: views.callout ?? null }),
     TextAlign,
-    Toggle,
+    Toggle.configure({ nodeView: views.toggle ?? null }),
     // 표: 열 너비 조절(`colwidth`)과 셀 병합(`colspan`·`rowspan`)은 셀 속성으로 저장한다. 셀 안에는 문단만 둔다(목록·표 중첩 없음).
     Table.configure({ resizable: true, cellMinWidth: 60 }),
     TableRow,
@@ -102,11 +111,11 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
       showOnlyCurrent: true,
       includeChildren: true,
     }),
-    ImageBlock,
-    Footnote,
-    MathInline,
-    MathBlock,
-    SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {} }),
+    ImageBlock.configure({ nodeView: views.image ?? null }),
+    Footnote.configure({ nodeView: views.footnote ?? null }),
+    MathInline.configure({ nodeView: views.mathInline ?? null }),
+    MathBlock.configure({ nodeView: views.mathBlock ?? null }),
+    SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
   ];
   return options.transform ? options.transform(list) : list;

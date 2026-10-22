@@ -2,8 +2,8 @@ import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/re
 import { useEffect } from "react";
 import { useStore } from "zustand";
 
-import { useEditorPorts, useEditorStrings } from "../ports/context";
-import { toggleStoreFor } from "./toggleStore";
+import { useEditorPorts, useEditorStrings } from "../context";
+import { toggleStoreFor } from "../stores/toggleStore";
 
 /**
  * 토글 블록의 화면: 왼쪽 화살표로 열고 닫는다. 닫으면 제목 줄(첫 문단)만 남기고 나머지는 CSS로 숨긴다.

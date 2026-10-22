@@ -1,11 +1,9 @@
 import { Extension } from "@tiptap/core";
 import type { ResolvedPos } from "@tiptap/pm/model";
 import { type EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
-import { ReactRenderer } from "@tiptap/react";
 import Suggestion, { type SuggestionKeyDownProps } from "@tiptap/suggestion";
 
-import { placeMenu } from "../menuPlace";
-import { CompletionMenuList, type CompletionMenuHandle } from "./CompletionMenuList";
+import type { SuggestionRender } from "../ports/ui";
 import { cachedKeywords, completionLanguage, ensureKeywords } from "./keywordStore";
 import { buildCandidates, type Candidate, currentWord, manualWord, MAX_MANUAL_CANDIDATES, MIN_PREFIX } from "./words";
 
@@ -21,8 +19,10 @@ export function isCompletionOpen(state: EditorState): boolean {
  * mermaid 블록은 직접 쓴 목록(다이어그램 종류와 종류별 말)을 쓴다. 언어를 모르거나 일반 텍스트면 뜨지 않는다.
  * ↑↓/Enter/Tab으로 고르고 Esc로 닫는다. **Ctrl+Space**로는 글자 수와 상관없이(빈 단어여도) 언제든 후보를 연다.
  */
-export const CodeCompletion = Extension.create({
+export const CodeCompletion = Extension.create<{ render: SuggestionRender | null }>({
   name: "codeCompletion",
+
+  addOptions: () => ({ render: null }),
 
   // 메뉴가 열려 있을 때 Tab·Enter를 코드 블록의 들여쓰기보다 먼저 받도록 가장 앞에 둔다.
   priority: 1000,
@@ -90,36 +90,20 @@ export const CodeCompletion = Extension.create({
         command: ({ editor: e, range, props }) => {
           e.view.dispatch(e.state.tr.insertText(props.word, range.from, range.to));
         },
+        // 메뉴를 어떻게 그릴지는 소비자가 주입한다(`createCoreExtensions({ menus: { codeCompletion } })`). 없으면 메뉴가 뜨지 않는다.
+        // 닫힐 때 Ctrl+Space로 부른 단어 위치를 비우는 일은 core의 몫이라 주입된 render를 감싼다.
         render: () => {
-          let renderer: ReactRenderer<CompletionMenuHandle> | null = null;
-
+          const inner = this.options.render?.();
           return {
-            onStart: (props) => {
-              renderer = new ReactRenderer(CompletionMenuList, {
-                props: { items: props.items, command: props.command },
-                editor: props.editor,
-              });
-              const element = renderer.element as HTMLElement;
-              element.style.position = "fixed";
-              element.style.zIndex = "60";
-              document.body.appendChild(element);
-              placeMenu(element, props);
-            },
-            onUpdate: (props) => {
-              renderer?.updateProps({ items: props.items, command: props.command });
-              requestAnimationFrame(() => {
-                if (renderer) placeMenu(renderer.element as HTMLElement, props);
-              });
-            },
+            onStart: (props) => inner?.onStart?.(props),
+            onUpdate: (props) => inner?.onUpdate?.(props),
             onKeyDown: (props: SuggestionKeyDownProps) => {
               if (props.event.isComposing || props.event.keyCode === 229) return false;
-              return renderer?.ref?.onKeyDown(props.event) ?? false;
+              return inner?.onKeyDown?.(props) ?? false;
             },
-            onExit: () => {
+            onExit: (props) => {
               manualFrom = null;
-              renderer?.element.remove();
-              renderer?.destroy();
-              renderer = null;
+              inner?.onExit?.(props);
             },
           };
         },

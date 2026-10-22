@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import * as Y from "yjs";
 
 import {
-  createCoreExtensions,
+  createReactExtensions,
   EditorPortsProvider,
   FootnoteEditorHost,
   MathEditorHost,
@@ -51,7 +51,7 @@ const ports = memoryPorts({
 
 const collab = new URLSearchParams(window.location.search).has("collab");
 const ydoc = collab ? new Y.Doc() : null;
-const extensions = createCoreExtensions(ydoc, { ports });
+const extensions = createReactExtensions(ydoc, { ports });
 if (ydoc) prosemirrorJSONToYXmlFragment(getSchema(extensions), DEMO_DOC, ydoc.getXmlFragment("default"));
 
 const editor = new Editor({

@@ -2,8 +2,8 @@ import { createContext, type ReactNode, useContext } from "react";
 
 import { koStrings } from "../strings/ko";
 import type { EditorStrings } from "../strings/types";
-import { memoryPorts } from "./memory";
-import type { EditorPorts } from "./types";
+import { memoryPorts } from "../ports/memory";
+import type { EditorPorts } from "../ports/types";
 
 const fallbackPorts = memoryPorts();
 const EditorPortsContext = createContext<EditorPorts>(fallbackPorts);

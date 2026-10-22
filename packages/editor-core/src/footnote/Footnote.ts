@@ -1,12 +1,10 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { FootnoteView } from "./FootnoteView";
-import { openFootnoteEditor } from "./footnoteEdit";
+import { stringsOf, uiOf } from "../ports/editorPorts";
 import { collectFootnotes, transactionMayChangeFootnotes } from "./footnotes";
-import { stringsOf } from "../ports/editorPorts";
+import type { NodeViewOptions } from "../ports/ui";
 
 const listKey = new PluginKey<string[]>("footnoteList");
 
@@ -15,8 +13,11 @@ const listKey = new PluginKey<string[]>("footnoteList");
  * 앞에 각주를 끼우거나 지우면 번호가 저절로 바뀐다. 페이지 맨 끝에 각주들이 목록으로 모여 보인다(저장되는 것이 아니라 그려지는 것).
  * 내용은 번호를 눌러 열리는 입력 창에서 고친다. `/각주`로 만든다. 미주는 같은 기능으로 본다(페이지 끝에 모인다).
  */
-export const Footnote = Node.create({
+export const Footnote = Node.create<NodeViewOptions>({
   name: "footnote",
+
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions: () => ({ nodeView: null }),
   group: "inline",
   inline: true,
   atom: true,
@@ -41,7 +42,7 @@ export const Footnote = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(FootnoteView, { as: "sup" });
+    return this.options.nodeView;
   },
 
   addProseMirrorPlugins() {
@@ -63,7 +64,7 @@ export const Footnote = Node.create({
         item.textContent = text === "" ? strings().empty : text;
         item.addEventListener("click", () => {
           const current = collectFootnotes(view.state.doc)[index];
-          if (current) openFootnoteEditor(editor, current.pos);
+          if (current) uiOf(editor).openFootnoteEditor(editor, current.pos);
         });
         list.appendChild(item);
       });

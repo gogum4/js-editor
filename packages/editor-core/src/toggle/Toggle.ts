@@ -1,7 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+import type { NodeViewOptions } from "../ports/ui";
 
-import { ToggleView } from "./ToggleView";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -17,8 +16,11 @@ declare module "@tiptap/core" {
  * 열림 여부는 문서에 저장하지 않는다 — 이 컴퓨터의 설정에 블록 id별로 둔다(`toggleStore`, `@9um4/editor-schema/toggleState`).
  * `/토글`로 만든다. 제목 줄 끝에서 Enter를 치면 내용의 첫 문단이 생긴다.
  */
-export const Toggle = Node.create({
+export const Toggle = Node.create<NodeViewOptions>({
   name: "toggle",
+
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions: () => ({ nodeView: null }),
   group: "block",
   content: "paragraph block*",
   defining: true,
@@ -32,7 +34,7 @@ export const Toggle = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ToggleView);
+    return this.options.nodeView;
   },
 
   addCommands() {

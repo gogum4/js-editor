@@ -1,7 +1,7 @@
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 
-import { openFootnoteEditor } from "./footnoteEdit";
-import { useEditorStrings } from "../ports/context";
+import { openFootnoteEditor } from "../stores/footnoteEditStore";
+import { useEditorStrings } from "../context";
 
 /**
  * 문장 안의 각주 번호. 번호 글자는 CSS 카운터가 문서 순서대로 붙인다(`.footnote-ref::after`).

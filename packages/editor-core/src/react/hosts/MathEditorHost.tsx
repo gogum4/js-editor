@@ -12,13 +12,15 @@ import {
   skipCloserEdit,
   suggest,
   tabJump,
-} from "../lib/latexAssist";
-import type { LatexCommand } from "../lib/latexCommands";
-import { MAX_LATEX_CHARS, useMathHtml } from "../lib/math";
+} from "../../lib/latexAssist";
+import type { LatexCommand } from "../../lib/latexCommands";
+import { MAX_LATEX_CHARS } from "../../lib/math";
+import { useMathHtml } from "../hooks/useMathHtml";
 import { computeMenuPosition } from "@9um4/editor-schema/menuPosition";
-import { LatexCompletionMenu } from "./LatexCompletionMenu";
-import { closeMathEditor, type MathEditState, setMathLatex, useMathEditStore } from "./mathEdit";
-import { useEditorStrings } from "../ports/context";
+import { LatexCompletionMenu } from "../menus/LatexCompletionMenu";
+import { type MathEditState, setMathLatex } from "../../math/mathEdit";
+import { closeMathEditor, useMathEditStore } from "../stores/mathEditStore";
+import { useEditorStrings } from "../context";
 
 const WIDTH = 420;
 /** 후보 목록(설명 칸 포함)이 차지하는 높이. 아래에 이만큼 자리가 없으면 위에 띄운다. */

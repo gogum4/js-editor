@@ -1,7 +1,6 @@
 import { InputRule, mergeAttributes, Node } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+import type { NodeViewOptions } from "../ports/ui";
 
-import { MathInlineView } from "./MathView";
 
 /** 닫는 `$`를 치는 순간 `$…$`를 인라인 수식으로 바꾼다. 여는 `$` 바로 뒤와 닫는 `$` 바로 앞은 공백이 아니어야 한다(문장 속 `$`와 구별). */
 export const INLINE_MATH_PATTERN = /(?:^|[\s(])\$([^$\s](?:[^$\n]*[^$\s])?)\$$/;
@@ -15,8 +14,11 @@ export function looksLikeMoney(text: string): boolean {
  * 문장 안의 LaTeX 수식. 본문에는 **LaTeX 글자(`latex`)만** 저장하고 그림은 KaTeX가 그때그때 그린다.
  * 한 덩어리(atom)라서 커서가 안으로 들어가지 않고, 누르면 에디터 바깥의 편집 창이 열린다. `$x^2$`를 치거나 `/인라인수식`으로 만든다.
  */
-export const MathInline = Node.create({
+export const MathInline = Node.create<NodeViewOptions>({
   name: "mathInline",
+
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions: () => ({ nodeView: null }),
   group: "inline",
   inline: true,
   atom: true,
@@ -41,7 +43,7 @@ export const MathInline = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(MathInlineView, { as: "span" });
+    return this.options.nodeView;
   },
 
   addInputRules() {

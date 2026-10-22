@@ -6,8 +6,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { createCoreExtensions } from "./coreExtensions";
-import { EditorPortsProvider } from "./ports/context";
+import { createReactExtensions } from "./react/createReactExtensions";
+import { EditorPortsProvider } from "./react/context";
 import { memoryPorts } from "./ports/memory";
 import type { AssetStore } from "./ports/types";
 import { editorDom, formatDom, withFixedIds } from "./testing/mountGolden";
@@ -95,7 +95,7 @@ async function settled(predicate: () => boolean) {
 
 async function mount(content: object = DOC): Promise<Editor> {
   const ports = memoryPorts({ assets: neverAssets });
-  editor = new Editor({ extensions: createCoreExtensions(null, { ports }), content });
+  editor = new Editor({ extensions: createReactExtensions(null, { ports }), content });
   root = createRoot(container);
   await act(async () => {
     root!.render(createElement(EditorPortsProvider, { ports, children: createElement(EditorContent, { editor }) }));

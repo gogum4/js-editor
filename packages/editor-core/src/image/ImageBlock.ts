@@ -1,10 +1,9 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import { insertImageFiles } from "./insertImages";
-import { ImageView } from "./ImageView";
+import type { NodeViewOptions } from "../ports/ui";
 
 /**
  * 첨부 이미지 블록. **이미지 바이트는 저장소(`assets`)에 있고 본문에는 내용의 해시(`hash`)와 형식(`mime`), 대체 글자(`alt`)만** 들어간다.
@@ -12,8 +11,11 @@ import { ImageView } from "./ImageView";
  * 한 덩어리(atom)라서 커서가 안으로 들어가지 않고, 선택하고 Backspace로 지우거나 끌어서 옮긴다.
  * 이미지 파일을 붙여넣거나 끌어다 놓으면 저장소에 넣고 이 블록으로 끼운다.
  */
-export const ImageBlock = Node.create({
+export const ImageBlock = Node.create<NodeViewOptions>({
   name: "image",
+
+  // 노드 뷰는 소비자가 주입한다(`createCoreExtensions({ views })`). 없으면 renderHTML 기본 렌더.
+  addOptions: () => ({ nodeView: null }),
   group: "block",
   atom: true,
   draggable: true,
@@ -56,7 +58,7 @@ export const ImageBlock = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ImageView);
+    return this.options.nodeView;
   },
 
   addProseMirrorPlugins() {

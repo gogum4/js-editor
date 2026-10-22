@@ -1,13 +1,12 @@
 import type { Editor } from "@tiptap/core";
-import { create } from "zustand";
 
 export const MATH_INLINE_NODE = "mathInline";
 export const MATH_BLOCK_NODE = "mathBlock";
 
-const isMathNode = (name: string) => name === MATH_INLINE_NODE || name === MATH_BLOCK_NODE;
+export const isMathNode = (name: string) => name === MATH_INLINE_NODE || name === MATH_BLOCK_NODE;
 
 /**
- * 열려 있는 수식 편집 창. 입력창은 에디터 바깥(`MathEditorHost`)에 그려서 한글 조합이 에디터 안의 중첩 편집과 섞이지 않게 한다
+ * 열려 있는 수식 편집 창의 상태(저장소는 화면 쪽 `mathEditStore.ts`). 입력창은 에디터 바깥(`MathEditorHost`)에 그려서 한글 조합이 에디터 안의 중첩 편집과 섞이지 않게 한다
  * (각주 창과 같은 방식).
  */
 export interface MathEditState {
@@ -19,28 +18,6 @@ export interface MathEditState {
   /** 열 때의 LaTeX. 비어 있으면 방금 만든 수식이다. */
   original: string;
   rect: { left: number; top: number; bottom: number };
-}
-
-export const useMathEditStore = create<{ edit: MathEditState | null }>()(() => ({ edit: null }));
-
-/** 수식 노드의 위치에서 편집 창을 연다. 그 자리에 수식이 없으면 아무 일도 하지 않는다. */
-export function openMathEditor(editor: Editor, pos: number): void {
-  const node = editor.state.doc.nodeAt(pos);
-  if (!node || !isMathNode(node.type.name)) return;
-  const { left, top, bottom } = editor.view.coordsAtPos(pos);
-  useMathEditStore.setState({
-    edit: {
-      editor,
-      pos,
-      display: node.type.name === MATH_BLOCK_NODE,
-      original: String(node.attrs.latex ?? ""),
-      rect: { left, top, bottom },
-    },
-  });
-}
-
-export function closeMathEditor(): void {
-  useMathEditStore.setState({ edit: null });
 }
 
 /** 수식의 LaTeX를 바꾼다. 빈 글자면 수식을 지운다. 그 자리에 수식이 없으면 false. */
