@@ -1,18 +1,15 @@
 // core 후보 에디터 코드에 화면에 보이는 한글이 하드코딩돼 있지 않은지 검사한다(docs/EDITOR-PACKAGE.md P2-7).
-// 화면 글은 `src/features/editor/strings/`의 사전(ko·en)에 둔다. 검사에서 빼는 것: 주석, 개발자용 콘솔 출력(console.*),
-// 앱 계층(위키·저장·동기화), 사전 폴더, 시험 파일. 슬래시 항목의 기본(한국어) 글은 `src/lib/slashItems.ts`에 있어 여기 대상이 아니다.
+// 화면 글은 `packages/editor-core/src/strings/`의 사전(ko·en)에 둔다. 검사에서 빼는 것: 주석, 개발자용 콘솔 출력(console.*),
+// 사전 폴더(strings/), 시험 파일, 한국어가 데이터인 파일(DATA_FILES). `packages/editor-core/src/`만 본다(앱 계층은 패키지 밖이다).
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = fileURLToPath(new URL("../src/features/editor", import.meta.url));
-const APP_LAYER = [
-  "usePageDoc.ts", "docSaver.ts", "docJournal.ts", "journalRecovery.ts", "docAccess.ts", "docLocks.ts", "openDocs.ts",
-  "saverRegistry.ts", "snapshotRegistry.ts", "PageEditor.tsx", "PageBody.tsx", "SaveIndicator.tsx", "currentEditor.ts",
-  "blockIdMigration.ts", "blockIndexBackfill.ts", "unknownNodes.ts", "ydocToJson.ts", "editorFocus.ts",
-  "pagelink/", "pageblock/", "extensions/BlockLinkCopy.ts", "appPorts.ts", "editorExtensions.ts", "strings/",
-];
-const isApp = (rel) => APP_LAYER.some((a) => (a.endsWith("/") ? rel.startsWith(a) : rel === a));
+const root = fileURLToPath(new URL("../packages/editor-core/src", import.meta.url));
+const SKIP_DIRS = ["strings/"];
+// 한국어가 데이터인 파일: 슬래시 항목의 기본(한국어) 글, LaTeX 명령 설명·검색어 표, 한글 입력 판별 정규식. 다른 언어는 사전으로 덮는다(슬래시) 또는 아직 없다(LaTeX 설명).
+const DATA_FILES = new Set(["lib/slashItems.ts", "lib/latexCommands.ts", "lib/latexAssist.ts"]);
+const isApp = (rel) => DATA_FILES.has(rel) || SKIP_DIRS.some((dir) => rel.startsWith(dir));
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -37,7 +34,7 @@ for (const file of walk(root)) {
 }
 
 if (found.length > 0) {
-  console.error(`화면 글 한글 하드코딩 ${found.length}건 — src/features/editor/strings/ 사전으로 옮긴다:\n  ${found.join("\n  ")}`);
+  console.error(`화면 글 한글 하드코딩 ${found.length}건 — packages/editor-core/src/strings/ 사전으로 옮긴다:\n  ${found.join("\n  ")}`);
   process.exit(1);
 }
 console.log("화면 글 하드코딩 OK");

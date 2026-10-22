@@ -7,7 +7,15 @@ import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const ALLOWED_PACKAGES = { "editor-schema": [] };
+const ALLOWED_PACKAGES = {
+  "editor-schema": [],
+  // 에디터 코어: TipTap·Yjs·React 계열과 schema만. 앱(`src/`)·Tauri·서버는 안 된다.
+  "editor-core": [
+    "@9um4/editor-schema", "@tiptap/core", "@tiptap/extension-code-block", "@tiptap/extension-collaboration", "@tiptap/extension-list",
+    "@tiptap/extension-table", "@tiptap/extensions", "@tiptap/pm", "@tiptap/react", "@tiptap/starter-kit", "@tiptap/suggestion",
+    "@tiptap/y-tiptap", "highlight.js", "katex", "lowlight", "mermaid", "react", "react-dom", "yjs", "zustand",
+  ],
+};
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -18,7 +26,7 @@ function walk(dir, out = []) {
   return out;
 }
 
-const specifier = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)["']([^"']+)["']/g;
+const specifier = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)["']([^"'\n]+)["']/g;
 const violations = [];
 
 for (const [pkg, allowed] of Object.entries(ALLOWED_PACKAGES)) {
@@ -36,7 +44,7 @@ for (const [pkg, allowed] of Object.entries(ALLOWED_PACKAGES)) {
         if (!target.startsWith(pkgDir)) violations.push(`${relative(root, file)}: 패키지 밖 상대 경로 ${spec}`);
         continue;
       }
-      if (/\.test\.tsx?$/.test(file) && spec === "vitest") continue;
+      if (/\.test\.tsx?$/.test(file) && (spec === "vitest" || spec.startsWith("highlight.js/"))) continue;
       if (allowed.some((a) => spec === a || spec.startsWith(`${a}/`))) continue;
       violations.push(`${relative(root, file)}: 허용되지 않은 import ${spec}`);
     }
