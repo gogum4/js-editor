@@ -1,7 +1,7 @@
-import { mergeAttributes, Node } from "@tiptap/core";
+import { InputRule, mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { type CalloutType, DEFAULT_CALLOUT_TYPE, normalizeCalloutType } from "@9um4/editor-schema/callout";
+import { type CalloutType, calloutTypeFromName, DEFAULT_CALLOUT_TYPE, normalizeCalloutType } from "@9um4/editor-schema/callout";
 import { CalloutView } from "./CalloutView";
 
 declare module "@tiptap/core" {
@@ -40,6 +40,27 @@ export const Callout = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(CalloutView);
+  },
+
+  /**
+   * Markdown처럼 `> `로 인용을 만든 뒤 첫 줄에 `[!NOTE] `(종류 이름 뒤에 공백)를 치면 그 인용이 콜아웃이 된다.
+   * 인용 안 **첫 문단의 맨 앞**에서만 동작한다. 모르는 이름이나 다른 자리에서는 아무것도 하지 않는다(글자 그대로 남는다).
+   */
+  addInputRules() {
+    return [
+      new InputRule({
+        find: /^\[!([A-Za-z]+)\]\s$/,
+        handler: ({ state, range, match }) => {
+          const type = calloutTypeFromName(match[1] ?? "");
+          if (type === null) return null;
+          const $from = state.doc.resolve(range.from);
+          const depth = $from.depth;
+          if (depth < 2 || $from.parent.type.name !== "paragraph") return null;
+          if ($from.node(depth - 1).type.name !== "blockquote" || $from.index(depth - 1) !== 0) return null;
+          state.tr.delete(range.from, range.to).setNodeMarkup($from.before(depth - 1), this.type, { type });
+        },
+      }),
+    ];
   },
 
   addCommands() {

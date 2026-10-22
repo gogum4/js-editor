@@ -13,7 +13,7 @@
 import { Lexer, type Token, type Tokens } from "marked";
 
 import { blockIdFromForeign, isBlockIdType } from "@9um4/editor-schema/blockId";
-import { normalizeCalloutType } from "@9um4/editor-schema/callout";
+import { calloutTypeFromName, normalizeCalloutType } from "@9um4/editor-schema/callout";
 import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
@@ -547,11 +547,9 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   return paragraphsAround(inlineNodes(tokens, [], state));
 }
 
-/** 콜아웃 종류 이름(`NOTE`, `info`, `Warning` …)을 이 앱의 5종 가운데 하나로. */
+/** 콜아웃 종류 이름(`NOTE`, `info`, `Warning` …)을 이 앱의 5종 가운데 하나로(모르는 이름은 기본 종류). */
 function calloutType(name: string): string {
-  const lowered = name.toLowerCase();
-  const alias: Record<string, string> = { info: "note", abstract: "note", summary: "note", todo: "note", question: "note", quote: "note", example: "note", hint: "tip", success: "tip", check: "tip", done: "tip", attention: "warning", failure: "caution", fail: "caution", missing: "caution", danger: "caution", error: "caution", bug: "caution" };
-  return normalizeCalloutType(alias[lowered] ?? lowered);
+  return calloutTypeFromName(name) ?? normalizeCalloutType(name);
 }
 
 function blockquoteBlocks(token: Tokens.Blockquote, state: State): PmNode[] {
