@@ -31,6 +31,12 @@
   },
   "peerDependencies": {
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "mermaid": "^12.2.0"
+  },
+  "peerDependenciesMeta": {
+    "mermaid": {
+      "optional": true
+    }
   }
 }

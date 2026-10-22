@@ -43,6 +43,8 @@ export interface RenderOptions {
   blockAnchors?: boolean;
   /** 제목에 앵커 id를 달지. 기본 켜짐. */
   headingIds?: boolean;
+  /** mermaid 테마(브라우저에서 그릴 때). 기본 `default`. */
+  mermaidTheme?: "default" | "dark" | "neutral" | "forest";
   strings?: RenderStrings;
   /** 바깥 `<div>`의 class에 더할 이름. 기본 클래스는 `md-doc`. */
   className?: string;

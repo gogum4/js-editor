@@ -5,6 +5,7 @@ import { blockIdOf } from "@9um4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
+import { MermaidDiagram } from "./client/MermaidDiagram.tsx";
 import { hastToReact } from "./highlight.tsx";
 import { collectHeadings, textOf } from "./slug.ts";
 import { koRenderStrings, type RenderStrings } from "./strings.ts";
@@ -156,10 +157,12 @@ function renderCode(node: PmNode, ctx: Context, key: number): ReactNode {
   const id = anchorId(node, ctx);
   // mermaid는 브라우저에서 그린다. 서버는 소스를 그대로 담은 `<pre class="mermaid">`를 낸다.
   if (language.toLowerCase() === "mermaid") {
-    return (
-      <pre key={key} id={id} className="mermaid">
-        {code}
-      </pre>
+    return id === undefined ? (
+      <MermaidDiagram key={key} source={code} theme={ctx.options.mermaidTheme} />
+    ) : (
+      <div key={key} id={id}>
+        <MermaidDiagram source={code} theme={ctx.options.mermaidTheme} />
+      </div>
     );
   }
   const highlighted = ctx.options.prepared?.code.get(codeKey(language, code));

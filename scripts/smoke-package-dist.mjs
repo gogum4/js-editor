@@ -2,11 +2,19 @@
 // 확장자 누락(`./x`)이나 import 시점의 브라우저 API 사용이 있으면 여기서 깬다 — 블로그 서버(Next.js)가 겪을 문제다.
 // `@9um4/editor-*` import는 dist로 돌려서(scripts/dist-resolve-hooks.mjs) 배포된 모양 그대로 검증한다.
 // 먼저 `pnpm build:packages`가 필요하다.
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { register } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 register("./dist-resolve-hooks.mjs", import.meta.url);
+
+/** 하위 폴더까지 .js 파일을 모두 모은다. */
+function jsFiles(dir) {
+  return readdirSync(dir).flatMap((name) => {
+    const path = dir + name;
+    return statSync(path).isDirectory() ? jsFiles(path + "/") : name.endsWith(".js") ? [path] : [];
+  });
+}
 
 const PACKAGES = ["editor-schema", "editor-markdown", "editor-render"];
 let total = 0;
@@ -16,8 +24,8 @@ for (const name of PACKAGES) {
     console.error(`${name}/dist가 없다. 먼저 \`pnpm build:packages\`를 실행한다.`);
     process.exit(1);
   }
-  const files = readdirSync(dist).filter((n) => n.endsWith(".js"));
-  for (const file of files) await import(pathToFileURL(dist + file).href);
+  const files = jsFiles(dist);
+  for (const file of files) await import(pathToFileURL(file).href);
   console.log(`${name}: dist 모듈 ${files.length}개를 Node에서 불러왔다`);
   total += files.length;
 }
@@ -36,3 +44,11 @@ for (const expected of ["<h1", "<strong>굵게</strong>", 'href="https://example
   }
 }
 console.log("dist로 Markdown → HTML 렌더 OK");
+
+// 클라이언트 컴포넌트의 "use client" 지시어는 컴파일 뒤에도 파일 맨 앞에 남아야 Next.js가 클라이언트 경계로 인식한다.
+const client = fileURLToPath(new URL("../packages/editor-render/dist/client/MermaidDiagram.js", import.meta.url));
+if (!/^\s*"use client";/.test(readFileSync(client, "utf8"))) {
+  console.error("MermaidDiagram.js 맨 앞에 \"use client\" 지시어가 없다");
+  process.exit(1);
+}
+console.log('dist의 "use client" 지시어 OK');
