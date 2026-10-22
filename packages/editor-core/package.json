@@ -6,9 +6,11 @@
   "description": "에디터 코어 — TipTap 확장, 포트 인터페이스, NodeView, 화면 글 사전. 위키·저장·동기화는 없다(docs/EDITOR-PACKAGE.md)",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/typing.ts"
   },
   "dependencies": {
+    "@9um4/editor-markdown": "workspace:*",
     "@9um4/editor-schema": "workspace:*",
     "@tiptap/core": "^3.32.0",
     "@tiptap/extension-code-block": "^3.32.0",
