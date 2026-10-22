@@ -35,16 +35,17 @@ export function altFromFileName(name: string): string {
   return name.trim().replace(/\.[A-Za-z0-9]{1,5}$/, "").replace(/\s+/g, " ").trim();
 }
 
-export type ImageFileCheck = { ok: true } | { ok: false; reason: string };
+/** `code`로 사유를 구분하고(다른 언어의 안내를 만들 때), `reason`은 한국어 기본 문장이다. */
+export type ImageFileCheck = { ok: true } | { ok: false; code: "type" | "empty" | "size"; reason: string };
 
 /** 붙이기 전에 화면에서 미리 확인한다(저장소도 바이트로 다시 확인한다). */
 export function checkImageFile(file: { type: string; size: number; name: string }): ImageFileCheck {
   if (!isSupportedImageType(file.type)) {
-    return { ok: false, reason: "이미지는 PNG·JPEG·GIF·WebP만 붙일 수 있어요." };
+    return { ok: false, code: "type", reason: "이미지는 PNG·JPEG·GIF·WebP만 붙일 수 있어요." };
   }
-  if (file.size === 0) return { ok: false, reason: "빈 파일은 붙일 수 없어요." };
+  if (file.size === 0) return { ok: false, code: "empty", reason: "빈 파일은 붙일 수 없어요." };
   if (file.size > MAX_ASSET_BYTES) {
-    return { ok: false, reason: `이미지는 ${MAX_ASSET_BYTES / 1024 / 1024}MB까지 붙일 수 있어요.` };
+    return { ok: false, code: "size", reason: `이미지는 ${MAX_ASSET_BYTES / 1024 / 1024}MB까지 붙일 수 있어요.` };
   }
   return { ok: true };
 }
