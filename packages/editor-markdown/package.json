@@ -1,0 +1,15 @@
+{
+  "name": "@9um4/editor-markdown",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "본문(ProseMirror JSON) ↔ Markdown 변환 — 내보내기·가져오기·frontmatter. TipTap·DOM·앱 비의존(docs/MARKDOWN-DIALECT.md)",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@9um4/editor-schema": "workspace:*",
+    "marked": "16.4.2"
+  }
+}

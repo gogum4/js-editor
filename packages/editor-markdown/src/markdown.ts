@@ -1,0 +1,436 @@
+/**
+ * 본문(ProseMirror JSON)을 Markdown으로 바꾼다. 순수 함수라서 화면 없이 시험할 수 있다.
+ *
+ * 이 파일은 내보내기 쪽이고 반대 방향은 `markdownImport.ts`다. 노트 앱의 원본은 Yjs/JSON이고 Markdown은 거기서 만든 파생물이다.
+ * Markdown으로 온전히 표현되지 않는 부분은 `notices`로 알려서 화면에 보여 줄 수 있게 한다.
+ */
+
+import { assetFileName, isAssetHash } from "@9um4/editor-schema/assets";
+import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
+import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
+
+export interface MarkdownOptions {
+  /** 페이지 id로 제목을 찾는다. 삭제됐거나 없는 페이지는 null. */
+  pageTitle: (pageId: string) => string | null;
+  /**
+   * 이미지 파일의 (이 Markdown 파일에서 본) 경로. 주지 않으면 `assets/<파일 이름>`이고,
+   * 이때는 "assets 폴더의 파일을 가리킨다"는 안내가 붙는다(전체 내보내기는 경로를 직접 주므로 안내가 없다).
+   */
+  assetPath?: (hash: string, mime: string) => string;
+  /**
+   * 동기화 블록(숨김 페이지)의 본문 블록들. 주면 그 내용을 **그 자리에 복사해** 내보낸다(내보낸 파일에서는 서로 동기화되지 않는다).
+   * 주지 않거나 null이면 그 블록은 빼고 안내한다.
+   */
+  syncedContent?: (pageId: string) => PmNode[] | null;
+}
+
+export interface MarkdownResult {
+  markdown: string;
+  /** 손실이나 대체가 있었다면 사람이 읽을 안내. 없으면 빈 배열. */
+  notices: string[];
+  /** 본문이 쓰는 이미지들(해시 기준으로 중복 없이, 문서 순서). */
+  images: Array<{ hash: string; mime: string }>;
+}
+
+export const MISSING_PAGE_TITLE = "삭제된 페이지";
+
+const CALLOUT_LABELS: Record<string, string> = {
+  note: "NOTE",
+  tip: "TIP",
+  important: "IMPORTANT",
+  warning: "WARNING",
+  caution: "CAUTION",
+};
+
+/** 글자 속에서 Markdown 문법으로 읽힐 수 있는 문자를 막는다. 과하게 막아도 보이는 글자는 같다. */
+export function escapeInline(text: string): string {
+  return text.replace(/[\\`*_[\]<~]/g, "\\$&");
+}
+
+/** 줄 맨 앞의 `#`, `-`, `+`, `>`, `1.`이 블록 문법으로 읽히지 않게 한다. */
+function escapeLineStart(line: string): string {
+  if (/^(#{1,6}(\s|$)|[-+>])/.test(line)) return `\\${line}`;
+  return line.replace(/^(\d+)([.)])(\s|$)/, "$1\\$2$3");
+}
+
+/** 문자열 안의 가장 긴 연속 `ch` 길이. */
+function longestRun(text: string, ch: string): number {
+  let longest = 0;
+  let current = 0;
+  for (const c of text) {
+    current = c === ch ? current + 1 : 0;
+    if (current > longest) longest = current;
+  }
+  return longest;
+}
+
+function renderCode(text: string): string {
+  const fence = "`".repeat(longestRun(text, "`") + 1);
+  // 안쪽이 백틱으로 시작·끝나면 구분용 공백이 필요하다.
+  const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
+  return `${fence}${pad}${text}${pad}${fence}`;
+}
+
+function renderLinkHref(href: string): string {
+  return /[\s()<>]/.test(href) ? `<${href.replace(/[<>]/g, encodeURIComponent)}>` : href;
+}
+
+/** 각주 정의의 본문: 줄바꿈이 있으면 이어지는 줄을 네 칸 들여 써서 같은 각주에 속하게 한다. */
+function footnoteDefinition(index: number, text: string): string {
+  const lines = text.split("\n").map((line) => line.trimEnd());
+  return `[^${index}]: ${lines[0] ?? ""}${lines
+    .slice(1)
+    .map((line) => (line === "" ? "\n" : `\n    ${line}`))
+    .join("")}`;
+}
+
+class Renderer {
+  readonly notices = new Set<string>();
+  readonly images = new Map<string, string>();
+  /** 문서에 나온 순서대로의 각주 내용 (`[^1]`, `[^2]` …로 내보내고 끝에 정의를 모은다). */
+  readonly footnotes: string[] = [];
+  private readonly linkedTitles = new Map<string, Set<string>>();
+  private missingLinks = 0;
+
+  constructor(private readonly options: MarkdownOptions) {}
+
+  finish(): string[] {
+    const duplicated = [...this.linkedTitles.entries()]
+      .filter(([, ids]) => ids.size > 1)
+      .map(([title]) => title);
+    const notices = [...this.notices];
+    if (duplicated.length > 0) {
+      notices.push(
+        `제목이 같은 서로 다른 페이지로 가는 링크(${duplicated.map((t) => `"${t}"`).join(", ")})는 Markdown의 [[제목]]에서 구별되지 않아요.`,
+      );
+    }
+    if (this.missingLinks > 0) {
+      notices.push(`삭제됐거나 없는 페이지로 가는 링크 ${this.missingLinks}개는 [[${MISSING_PAGE_TITLE}]]로 내보냈어요.`);
+    }
+    return notices;
+  }
+
+  /** 인라인 노드들(글자, 줄바꿈, 페이지 링크)을 한 문자열로. */
+  inline(nodes: PmNode[] | undefined): string {
+    return (nodes ?? []).map((node) => this.inlineNode(node)).join("");
+  }
+
+  private inlineNode(node: PmNode): string {
+    switch (node.type) {
+      case "text":
+        return this.text(node);
+      case "hardBreak":
+        return "\\\n";
+      case "pageLink":
+        return this.pageLink(node);
+      case "mathInline": {
+        // 인라인 수식은 `$…$`. 줄바꿈은 공백으로, 앞뒤 공백은 없앤다(`$ x $`는 수식으로 읽히지 않는다).
+        const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.replace(/\s+/g, " ").trim() : "";
+        return latex === "" ? "" : `$${latex}$`;
+      }
+      case "footnote": {
+        // 각주는 `[^번호]`로 쓰고 내용은 문서 끝에 모은다(GFM·Obsidian 문법). 내용이 빈 각주는 내보내지 않는다.
+        const text = typeof node.attrs?.text === "string" ? node.attrs.text.trim() : "";
+        if (text === "") return "";
+        this.footnotes.push(text);
+        return `[^${this.footnotes.length}]`;
+      }
+      default:
+        // 모르는 인라인 노드는 안에 든 글자만 내보낸다.
+        this.notices.add(`지원하지 않는 인라인 요소(${node.type})는 글자만 내보냈어요.`);
+        return this.inline(node.content);
+    }
+  }
+
+  private pageLink(node: PmNode): string {
+    const id = typeof node.attrs?.pageId === "string" ? node.attrs.pageId : "";
+    // 블록 링크는 그 페이지로 가는 링크로 내보낸다(블록 표시(`^id`)를 Markdown에 남기지 않는다).
+    if (node.type === "pageLink" && typeof node.attrs?.blockId === "string" && node.attrs.blockId !== "") {
+      this.notices.add("블록 링크는 그 페이지로 가는 링크로 내보냈어요.");
+    }
+    const title = id ? this.options.pageTitle(id) : null;
+    if (title === null) {
+      this.missingLinks += 1;
+      return `[[${MISSING_PAGE_TITLE}]]`;
+    }
+    const shown = title.trim() === "" ? "제목 없음" : title;
+    const ids = this.linkedTitles.get(shown) ?? new Set<string>();
+    ids.add(id);
+    this.linkedTitles.set(shown, ids);
+    // `[[…]]` 안에서 대괄호는 구분자와 헷갈리므로 뺀다.
+    return `[[${shown.replace(/[[\]]/g, "").replace(/\s+/g, " ")}]]`;
+  }
+
+  private text(node: PmNode): string {
+    const raw = node.text ?? "";
+    const marks = node.marks ?? [];
+    if (raw === "") return "";
+
+    const isCode = marks.some((m) => m.type === "code");
+    // 서식 기호가 공백에 붙으면 Markdown이 인식하지 못하므로 앞뒤 공백은 기호 밖에 둔다.
+    const lead = /^\s*/.exec(raw)?.[0] ?? "";
+    const trail = raw.length > lead.length ? (/\s*$/.exec(raw)?.[0] ?? "") : "";
+    const core = raw.slice(lead.length, raw.length - trail.length);
+    if (core === "") return raw;
+
+    let out = isCode ? renderCode(core) : escapeInline(core);
+    const has = (type: string) => marks.some((m) => m.type === type);
+    if (has("underline")) {
+      out = `<u>${out}</u>`;
+      this.notices.add("밑줄은 Markdown에 없어서 <u>…</u>로 내보냈어요.");
+    }
+    if (has("strike")) out = `~~${out}~~`;
+    if (has("italic")) out = `*${out}*`;
+    if (has("bold")) out = `**${out}**`;
+    const link = marks.find((m) => m.type === "link");
+    if (link && typeof link.attrs?.href === "string" && link.attrs.href !== "") {
+      out = `[${out}](${renderLinkHref(link.attrs.href)})`;
+    }
+    return lead + out + trail;
+  }
+
+  /** 블록들을 빈 줄로 이어 붙인다. 문서 끝의 빈 문단(에디터가 항상 두는 것)은 버린다. */
+  blocks(nodes: PmNode[] | undefined, dropTrailingEmpty = false): string {
+    let list = nodes ?? [];
+    if (dropTrailingEmpty) {
+      while (list.length > 0 && isEmptyParagraph(list[list.length - 1])) list = list.slice(0, -1);
+    }
+    const parts: string[] = [];
+    for (const node of list) {
+      const rendered = this.block(node);
+      if (rendered !== null) parts.push(this.aligned(node, rendered));
+    }
+    return parts.join("\n\n");
+  }
+
+  /**
+   * 가운데·오른쪽·양쪽 정렬한 문단·제목·이미지는 HTML `<div align="…">`로 감싼다(Markdown에는 정렬이 없다).
+   * 안쪽 Markdown이 그대로 읽히도록 여는 태그와 닫는 태그 앞뒤에 빈 줄을 둔다. 목록 항목·표 셀 안의 블록은 감싸지 않는다(`blocks`를 거치지 않는다).
+   * 이미지는 양쪽 맞춤이 없어서(왼쪽으로 본다) 가운데·오른쪽만 감싼다.
+   */
+  private aligned(node: PmNode, rendered: string): string {
+    if (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image") return rendered;
+    const align = normalizeTextAlign(node.attrs?.textAlign);
+    if (align === null || (node.type === "image" && align === "justify")) return rendered;
+    this.notices.add("가운데·오른쪽·양쪽 정렬은 Markdown에 없어서 HTML(<div align>)로 내보냈어요. 목록·표 안의 정렬은 내보내지 않아요.");
+    return `<div align="${align}">\n\n${rendered}\n\n</div>`;
+  }
+
+  private block(node: PmNode): string | null {
+    switch (node.type) {
+      case "paragraph": {
+        const text = this.inline(node.content);
+        if (text.trim() === "") return null; // 빈 문단은 Markdown에서 의미가 없다.
+        return text.split("\n").map(escapeLineStart).join("\n");
+      }
+      case "heading": {
+        const level = Math.min(Math.max(Number(node.attrs?.level) || 1, 1), 6);
+        return `${"#".repeat(level)} ${this.inline(node.content).replace(/\n/g, " ")}`.trimEnd();
+      }
+      case "bulletList":
+        return this.list(node, () => "- ");
+      case "orderedList": {
+        const start = Number(node.attrs?.start) || 1;
+        return this.list(node, (index) => `${start + index}. `);
+      }
+      case "taskList":
+        return this.list(node, (_index, item) => (item.attrs?.checked ? "- [x] " : "- [ ] "));
+      case "blockquote":
+        return prefixLines(this.blocks(node.content), "> ");
+      case "callout": {
+        const label = CALLOUT_LABELS[String(node.attrs?.type)] ?? "NOTE";
+        const body = this.blocks(node.content);
+        return prefixLines(body === "" ? `[!${label}]` : `[!${label}]\n${body}`, "> ");
+      }
+      case "codeBlock":
+        return this.codeBlock(node);
+      case "horizontalRule":
+        return "---";
+      case "image":
+        return this.image(node);
+      case "mathBlock": {
+        // 블록 수식은 `$$` 줄 사이에 LaTeX를 그대로 둔다. 내용이 빈 수식은 내보내지 않는다.
+        const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.trim() : "";
+        return latex === "" ? null : `$$\n${latex}\n$$`;
+      }
+      case "table":
+        return this.table(node);
+      case "toggle":
+        return this.toggle(node);
+      case "pageBlock": {
+        if (node.attrs?.mode === "synced") return this.syncedBlock(node);
+        // 카드는 링크 한 줄, 임베드는 Obsidian의 ![[…]] (본문을 끼우는 문법)로 내보낸다.
+        const link = this.pageLink(node);
+        return node.attrs?.mode === "embed" ? `!${link}` : link;
+      }
+      default:
+        this.notices.add(`지원하지 않는 블록(${node.type})은 안의 내용만 내보냈어요.`);
+        return this.blocks(node.content) || null;
+    }
+  }
+
+  /**
+   * 표는 GFM 표로 내보낸다. Markdown 표는 병합 셀과 머리글 없는 표를 표현하지 못해서, 병합 셀은 풀어서(남는 칸은 빈 칸) 쓰고
+   * 첫 줄을 머리글로 삼는다(그렇게 한 경우 안내한다). 셀 안의 문단은 <br>로 잇고 | 는 \| 로 쓴다.
+   */
+  private table(node: PmNode): string | null {
+    const rows = node.content ?? [];
+    const grid: string[][] = [];
+    const taken: boolean[][] = [];
+    let merged = false;
+    rows.forEach((row, r) => {
+      grid[r] ??= [];
+      taken[r] ??= [];
+      let c = 0;
+      for (const cell of row.content ?? []) {
+        while (taken[r]![c]) c++;
+        const colspan = Math.max(1, Number(cell.attrs?.colspan) || 1);
+        const rowspan = Math.max(1, Number(cell.attrs?.rowspan) || 1);
+        if (colspan > 1 || rowspan > 1) merged = true;
+        const text = this.cellText(cell);
+        for (let dr = 0; dr < rowspan; dr++) {
+          for (let dc = 0; dc < colspan; dc++) {
+            (taken[r + dr] ??= [])[c + dc] = true;
+            (grid[r + dr] ??= [])[c + dc] = dr === 0 && dc === 0 ? text : "";
+          }
+        }
+        c += colspan;
+      }
+    });
+    const columns = Math.max(0, ...grid.map((cells) => cells.length));
+    if (grid.length === 0 || columns === 0) return null;
+    if (merged) this.notices.add("병합된 표 셀은 풀어서 내보냈어요(Markdown 표는 셀 병합을 표현하지 못해요).");
+    const firstRow = rows[0]?.content ?? [];
+    if (!firstRow.every((cell) => cell.type === "tableHeader")) {
+      this.notices.add("머리글 행이 없는 표는 첫 줄을 머리글로 내보냈어요.");
+    }
+    const line = (cells: string[]) => "| " + Array.from({ length: columns }, (_, i) => cells[i] ?? "").join(" | ") + " |";
+    return [line(grid[0]!), "| " + Array(columns).fill("---").join(" | ") + " |", ...grid.slice(1).map(line)].join("\n");
+  }
+
+  /** 표 셀의 글자: 문단들을 <br>로 잇고, 줄바꿈은 <br>로, 세로선은 이스케이프한다. */
+  private cellText(cell: PmNode): string {
+    return (cell.content ?? [])
+      .map((paragraph) => this.inline(paragraph.content).replace(/\\\n|\n/g, "<br>").replace(/\|/g, "\\|"))
+      .filter((text) => text.trim() !== "")
+      .join("<br>");
+  }
+
+  /** 토글은 HTML <details>로 내보낸다(제목 줄이 <summary>, 나머지는 안의 내용). */
+  private toggle(node: PmNode): string | null {
+    const [title, ...rest] = node.content ?? [];
+    const summary = title ? this.inline(title.content).replace(/\\\n|\n/g, " ").trim() : "";
+    const body = this.blocks(rest);
+    if (summary === "" && body === "") return null;
+    return body === "" ? "<details>\n<summary>" + summary + "</summary>\n</details>" : "<details>\n<summary>" + summary + "</summary>\n\n" + body + "\n\n</details>";
+  }
+
+  /** 동기화 블록: 숨김 페이지의 내용을 그 자리에 복사해 쓴다. 내용을 모르면 빼고 안내한다. */
+  private syncedBlock(node: PmNode): string | null {
+    const id = typeof node.attrs?.pageId === "string" ? node.attrs.pageId : "";
+    const blocks = id ? (this.options.syncedContent?.(id) ?? null) : null;
+    if (!blocks) {
+      this.notices.add("동기화 블록의 내용을 가져오지 못해 내보내지 않았어요.");
+      return null;
+    }
+    this.notices.add("동기화 블록은 내용을 그 자리에 복사해 내보냈어요(내보낸 파일에서는 서로 동기화되지 않아요).");
+    const text = this.blocks(blocks, true);
+    return text === "" ? null : text;
+  }
+
+  /** `![대체 글자](경로)`. 해시가 올바르지 않은 이미지는 빼고 안내한다. */
+  private image(node: PmNode): string | null {
+    const hash = node.attrs?.hash;
+    const mime = typeof node.attrs?.mime === "string" ? node.attrs.mime : "";
+    if (!isAssetHash(hash)) {
+      this.notices.add("이미지 정보가 올바르지 않은 블록은 내보내지 못했어요.");
+      return null;
+    }
+    this.images.set(hash, mime);
+    // `|`는 크기 구분자로 쓰므로 설명 글자에서는 뺀다.
+    const alt = String(node.attrs?.alt ?? "").replace(/[[\]|\n]/g, " ").replace(/\s+/g, " ").trim();
+    // 크기는 Obsidian 문법(`![설명|너비](경로)`). 다른 편집기에서는 설명 글자에 `|너비`가 붙어 보일 수 있다.
+    const width = normalizeImageWidth(node.attrs?.width);
+    if (width !== null) this.notices.add("이미지 크기는 Obsidian 형식(![설명|너비](…))으로 내보냈어요. 다른 편집기에서는 크기가 적용되지 않을 수 있어요.");
+    const label = width === null ? alt : `${alt}|${width}`;
+    const path = this.options.assetPath ? this.options.assetPath(hash, mime) : `assets/${assetFileName(hash, mime)}`;
+    if (!this.options.assetPath) {
+      this.notices.add("이미지는 assets 폴더의 파일을 가리켜요. 파일은 설정의 전체 내보내기에서 함께 내보내요.");
+    }
+    return `![${label}](${path})`;
+  }
+
+  private codeBlock(node: PmNode): string {
+    const code = (node.content ?? []).map((n) => n.text ?? "").join("");
+    const fence = "`".repeat(Math.max(3, longestRun(code, "`") + 1));
+    const language = typeof node.attrs?.language === "string" ? node.attrs.language.trim() : "";
+    return `${fence}${language}\n${code}\n${fence}`;
+  }
+
+  private list(node: PmNode, marker: (index: number, item: PmNode) => string): string {
+    const items = node.content ?? [];
+    return items
+      .map((item, index) => {
+        const bullet = marker(index, item);
+        const indent = " ".repeat(bullet.length);
+        const parts: string[] = [];
+        let previous: PmNode | null = null;
+        for (const child of item.content ?? []) {
+          const rendered = this.block(child);
+          if (rendered === null) continue;
+          // 목록이 이어질 때는 붙여 쓰고, 문단·코드 등은 빈 줄로 나눈다.
+          const sep = previous === null ? "" : isList(child) ? "\n" : "\n\n";
+          parts.push(sep + rendered);
+          previous = child;
+        }
+        const body = parts.join("");
+        if (body === "") return bullet.trimEnd();
+        return bullet + body.split("\n").map((line, i) => (i === 0 || line === "" ? line : indent + line)).join("\n");
+      })
+      .join("\n");
+  }
+}
+
+function isList(node: PmNode): boolean {
+  return node.type === "bulletList" || node.type === "orderedList" || node.type === "taskList";
+}
+
+function isEmptyParagraph(node: PmNode): boolean {
+  return node.type === "paragraph" && (node.content ?? []).length === 0;
+}
+
+function prefixLines(text: string, prefix: string): string {
+  return text
+    .split("\n")
+    .map((line) => (line === "" ? prefix.trimEnd() : prefix + line))
+    .join("\n");
+}
+
+/** 문서(ProseMirror JSON의 `doc`)를 Markdown으로. 내용이 없으면 빈 문자열. */
+export function docToMarkdown(doc: PmNode, options: MarkdownOptions): MarkdownResult {
+  const renderer = new Renderer(options);
+  let body = renderer.blocks(doc.content, true);
+  if (renderer.footnotes.length > 0) {
+    const definitions = renderer.footnotes.map((text, i) => footnoteDefinition(i + 1, text)).join("\n");
+    body = body === "" ? definitions : `${body}\n\n${definitions}`;
+  }
+  return {
+    markdown: body === "" ? "" : `${body}\n`,
+    notices: renderer.finish(),
+    images: [...renderer.images].map(([hash, mime]) => ({ hash, mime })),
+  };
+}
+
+/** 저장 대화상자의 기본 파일 이름. 파일 이름에 못 쓰는 문자를 빼고 `.md`를 붙인다. */
+export function defaultMarkdownFileName(title: string): string {
+  const cleaned = title
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[. ]+$/, "");
+  const base = cleaned === "" ? "제목 없음" : cleaned.slice(0, 80).trim();
+  // Windows 예약 이름(CON, NUL …)은 피한다.
+  const safe = /^(con|prn|aux|nul|com\d|lpt\d)$/i.test(base) ? `${base}_` : base;
+  return `${safe}.md`;
+}

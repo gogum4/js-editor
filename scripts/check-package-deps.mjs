@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const ALLOWED_PACKAGES = {
   "editor-schema": [],
+  // Markdown 변환: schema와 marked만(순수 함수라 TipTap·DOM이 필요 없다).
+  "editor-markdown": ["@9um4/editor-schema", "marked"],
   // 에디터 코어: TipTap·Yjs·React 계열과 schema만. 앱(`src/`)·Tauri·서버는 안 된다.
   "editor-core": [
     "@9um4/editor-schema", "@tiptap/core", "@tiptap/extension-code-block", "@tiptap/extension-collaboration", "@tiptap/extension-list",
