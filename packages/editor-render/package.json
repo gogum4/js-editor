@@ -32,7 +32,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-dts-imports.mjs dist"
   },
   "dependencies": {
     "@9um4/editor-markdown": "workspace:*",
