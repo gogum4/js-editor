@@ -1,6 +1,6 @@
 # 에디터 패키지 분리 설계 (초안)
 
-이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다. **P1·P2는 끝났고 P3는 샘플 검증(3-6)만 남았다**(§8): `packages/editor-schema`·`editor-core`·`editor-markdown`이 있고 앱이 그것을 쓴다.
+이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다. **P1·P2·P4는 끝났고 P3는 샘플 검증(3-6)만 남았다**(§8): `packages/editor-schema`·`editor-core`·`editor-markdown`·`editor-render`가 있고 앱과 Next.js 샘플이 그것을 쓴다.
 
 ## 1. 목적과 결정
 
@@ -179,7 +179,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | P1 ✅ (dist 컴파일·Node 로드 시험 포함) | **경계 만들기**: `packages/`와 `editor-schema`로 순수 모듈 이동, 의존 방향 검사를 CI에 추가 | 기존 시험이 모두 통과하고, schema가 앱 코드를 import하지 않는다 |
 | P2 ✅ | **core 포트화**: `createEditorExtensions(options)`, 자산·키값·알림 포트, Collaboration 선택화, 문자열 사전, `import.meta.glob` 제거 | core 폴더에 `lib/api`·`tree/store` import가 0개 |
 | P3 | **markdown**: 방언 명세, 골든 왕복 시험, 붙여넣기 변환, 입력 규칙 빈틈 메우기, 실제 Notion·Obsidian 파일로 검증 | 골든 시험 통과, 알려진 손실 목록 확정 |
-| P4 | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
+| P4 ✅ | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
 | P5 | **react**: 메뉴·NodeView·CSS 분리, 데모 페이지 | 노트 앱이 패키지만으로 같은 화면을 낸다 |
 | P6 | **시범 소비자**: 캘린더 Markdown 부분에 도입하고 API 빈틈을 기록한다 | 빈틈 목록을 반영했다 |
 | P7 | **PlanBench 도입**: 확장 지점으로 스키마·표 노드를 얹는다 | PlanBench 고유 기능이 그대로 동작한다 |
@@ -259,7 +259,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 **확인에서 나온 수정** (사람이 앱에서 확인해 알려 준 실패): 붙여넣기 직후 Ctrl+Z가 원문으로 돌아가지 않고 붙여넣기 전체를 취소했다. 원인은 ① `MarkdownPaste`와 Collaboration의 우선순위가 둘 다 1000이었고 TipTap은 같은 우선순위에서 **나중에 등록된 확장의 단축키를 먼저** 실행해 Yjs가 Ctrl+Z를 가져간 것, ② 원문으로 "바꿔 넣는" 편집을 기록에 더하면 두 번째 Ctrl+Z가 변환된 내용을 되살리는 것이었다. 우선순위를 1100으로 올리고, 첫 Ctrl+Z는 "표준 되돌리기로 붙여넣기 취소 → 원문을 새 편집으로 삽입"으로 바꿨으며, 붙여넣기가 앞선 입력과 한 되돌리기 단계로 합쳐지지 않게 끊는다. 화면 없는 시험이 Yjs 없이 돌아서 못 잡았으므로 `happy-dom`을 개발 의존성에 더하고 실제 Yjs + 마운트된 에디터 시험(`markdownPaste.collab.test.ts`)을 추가했다 — 옛 설정으로 돌리면 이 시험이 실패하는 것을 확인했다.
 
-### P4 상세 계획 (2026-10-23 결정)
+### P4 상세 계획 (2026-10-23 결정, 같은 날 구현 완료)
 
 결정: ① **파이프라인은 하나**: `Markdown → markdownToDoc → 본문 JSON → React 요소`. 원안의 unified(remark/rehype) 플러그인은 만들지 않는다 — 콜아웃·토글·각주·수식·블록 id의 해석을 두 곳에 구현하면 편집기와 블로그가 어긋나기 때문이다(대신 remark/rehype 생태계 플러그인은 쓸 수 없다). ② **Next.js 샘플 앱을 만들고 CI에서 `next build`도 돌린다**. ③ **mermaid는 브라우저에서 그린다**(서버는 `<pre class="mermaid">`).
 
@@ -275,7 +275,22 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 4-7 | **Next.js 샘플** `examples/next-blog`(App Router, `generateStaticParams`) + `next build` + 산출 HTML 검사 + CI | 빌드·HTML 검사 |
 | 4-8 | 문서와 남은 것 | — |
 
-하지 않는 것: mermaid의 빌드 시점 SVG(브라우저 엔진 필요), 위키 링크의 의미 있는 해석(블로그에 위키가 없다 — 소비자가 `references` 해석기를 주면 링크로 만든다).
+하지 않는 것: mermaid의 빌드 시점 SVG(브라우저 엔진 필요), 위키 링크의 의미 있는 해석(블로그에 위키가 없다 — 소비자가 `pageLink` 해석기를 주면 링크로 만든다).
+
+**결과** (4-0~4-8 끝, 커밋은 `git log --grep "P4-"`):
+- **`@9um4/editor-render`**: `renderDoc`(본문 JSON→React 요소, 훅·브라우저 API 없음), `prepareRender`(서버에서 수식→KaTeX HTML·코드→lowlight 강조, 렌더는 동기), `renderMarkdown`(frontmatter·본문 변환·준비·렌더·목차·안내를 한 번에), `/html` 진입점(`react-dom/server` 문자열; Next 서버 컴포넌트와 섞지 않으려고 분리), `MermaidDiagram`(`"use client"`, 서버는 `<pre class="mermaid">`, 브라우저에서만 mermaid를 동적 import — 선택 peer), 스타일 3개(`styles.css`·`highlight.css`·`katex.css`; CSS 변수, 시스템 다크 모드 + `data-theme`).
+- **파이프라인은 하나**(결정 ①): Markdown→`markdownToDoc`→본문 JSON→React. 편집기와 블로그가 같은 해석을 쓴다. 이를 위해 가져오기에 `remoteImages` 옵션을 더했다(블로그는 `![](https://…)`를 이미지로 읽는다).
+- **HTML 골든**: `editor-markdown`의 Markdown 골든 픽스처 15개를 그대로 렌더해 `fixtures/*.html`로 고정(같은 문서가 Markdown으로도 HTML로도 고정된다) + 서버 준비 골든 2개. 보안 시험: HTML 이스케이프, `javascript:`·`data:` 링크·이미지 차단, KaTeX `trust: false`.
+- **배포 모양**(`pnpm check:dist`, CI `packages` 작업): 세 패키지를 tsc로 컴파일하고 ① `pnpm pack` 결과의 `exports`가 dist를 가리키는지·`workspace:`가 없는지, ② 소비자 프로젝트가 배포된 `.d.ts`를 `skipLibCheck: false`로 번들러·nodenext 해석 둘 다에서 컴파일하는지, ③ dist끼리의 import(로더 훅)로 순수 Node에서 Markdown→HTML이 끝까지 되는지, ④ `"use client"`가 컴파일 뒤에도 남는지 확인한다. 이 검사들이 실제 문제를 잡았다: 렌더 패키지 상대 import의 확장자 누락(dist에서 모듈 못 찾음), `gen:languages`가 P2 이동 뒤에도 옛 경로에 쓰던 것.
+- **Next.js 샘플** `examples/next-blog`(Next 16, App Router, Turbopack): 글 3편이 서버 컴포넌트에서 `generateStaticParams`로 SSG되고, `pnpm --filter next-blog-example verify`가 산출 HTML(제목 앵커·목차·콜아웃·토글·각주·표·KaTeX·코드 강조·위키 링크 해석·이미지)과 번들 CSS를 확인한다. 클린 클론에서 `next build` 성공.
+
+**P4에서 확인하지 못했거나 남은 것**:
+1. **샘플 앱은 패키지의 TS 소스를 `transpilePackages`로 쓴다.** 배포된 dist를 번들러(Turbopack)가 읽는 경로는 위 ①~④로만 간접 검증했고 샘플 앱으로는 못 했다. 문제가 생기면 패키지 `exports`에 `source` 조건을 두는 방식을 검토한다.
+2. **눈으로 확인하지 못했다**: 스타일(밝은/어두운), mermaid가 브라우저에서 실제로 그려지는지(시험은 happy-dom + mermaid 모의), 수식 글꼴. `cd examples/next-blog && pnpm dev`로 확인한다.
+3. **GitHub Actions `packages` 작업은 아직 한 번도 돌지 않았다.**
+4. 렌더되지 않는 것: 저장소 해시 이미지(소비자가 `imageUrl`로 주소를 줘야 보인다), 위키의 동기화 블록·페이지 임베드 본문. 블록 id 앵커는 `blockAnchors` 옵션을 켜야 나온다.
+5. Markdown 변환 안내(`notices`)는 한국어뿐이다. 렌더 문구(각주, 콜아웃 이름)는 ko·en이 있다.
+6. 모든 패키지가 `private: true`다 — 배포(레지스트리, 버전, Changesets)는 P8.
 
 ## 9. 결정 기록과 미결 질문
 
