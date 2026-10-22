@@ -1,0 +1,110 @@
+/*
+ * @9um4/editor-render 코드 강조 색. 클래스 이름(hljs-*)은 highlight.js가 붙인다.
+ * 기본은 시스템 설정을 따르고, `.md-doc[data-theme="light|dark"]`로 고정할 수 있다.
+ */
+
+.md-doc {
+  --md-hl-comment: #6a737d;
+  --md-hl-keyword: #d73a49;
+  --md-hl-title: #6f42c1;
+  --md-hl-literal: #005cc5;
+  --md-hl-string: #032f62;
+  --md-hl-builtin: #e36209;
+  --md-hl-name: #22863a;
+  --md-hl-bullet: #735c0f;
+  --md-hl-add-fg: #22863a;
+  --md-hl-add-bg: #f0fff4;
+  --md-hl-del-fg: #b31d28;
+  --md-hl-del-bg: #ffeef0;
+}
+@media (prefers-color-scheme: dark) {
+  .md-doc:not([data-theme="light"]) {
+    --md-hl-comment: #8b949e;
+    --md-hl-keyword: #ff7b72;
+    --md-hl-title: #d2a8ff;
+    --md-hl-literal: #79c0ff;
+    --md-hl-string: #a5d6ff;
+    --md-hl-builtin: #ffa657;
+    --md-hl-name: #7ee787;
+    --md-hl-bullet: #f2cc60;
+    --md-hl-add-fg: #aff5b4;
+    --md-hl-add-bg: #033a16;
+    --md-hl-del-fg: #ffdcd7;
+    --md-hl-del-bg: #67060c;
+  }
+}
+.md-doc[data-theme="dark"] {
+  --md-hl-comment: #8b949e;
+  --md-hl-keyword: #ff7b72;
+  --md-hl-title: #d2a8ff;
+  --md-hl-literal: #79c0ff;
+  --md-hl-string: #a5d6ff;
+  --md-hl-builtin: #ffa657;
+  --md-hl-name: #7ee787;
+  --md-hl-bullet: #f2cc60;
+  --md-hl-add-fg: #aff5b4;
+  --md-hl-add-bg: #033a16;
+  --md-hl-del-fg: #ffdcd7;
+  --md-hl-del-bg: #67060c;
+}
+
+.md-doc .hljs-comment,
+.md-doc .hljs-quote {
+  color: var(--md-hl-comment);
+  font-style: italic;
+}
+.md-doc .hljs-keyword,
+.md-doc .hljs-doctag,
+.md-doc .hljs-template-tag,
+.md-doc .hljs-template-variable,
+.md-doc .hljs-type,
+.md-doc .hljs-variable.language_ {
+  color: var(--md-hl-keyword);
+}
+.md-doc .hljs-title,
+.md-doc .hljs-title.class_,
+.md-doc .hljs-title.function_ {
+  color: var(--md-hl-title);
+}
+.md-doc .hljs-attr,
+.md-doc .hljs-attribute,
+.md-doc .hljs-literal,
+.md-doc .hljs-meta,
+.md-doc .hljs-number,
+.md-doc .hljs-operator,
+.md-doc .hljs-variable,
+.md-doc .hljs-selector-attr,
+.md-doc .hljs-selector-class,
+.md-doc .hljs-selector-id {
+  color: var(--md-hl-literal);
+}
+.md-doc .hljs-regexp,
+.md-doc .hljs-string,
+.md-doc .hljs-meta .hljs-string {
+  color: var(--md-hl-string);
+}
+.md-doc .hljs-built_in,
+.md-doc .hljs-symbol {
+  color: var(--md-hl-builtin);
+}
+.md-doc .hljs-name,
+.md-doc .hljs-selector-tag {
+  color: var(--md-hl-name);
+}
+.md-doc .hljs-bullet {
+  color: var(--md-hl-bullet);
+}
+.md-doc .hljs-addition {
+  color: var(--md-hl-add-fg);
+  background: var(--md-hl-add-bg);
+}
+.md-doc .hljs-deletion {
+  color: var(--md-hl-del-fg);
+  background: var(--md-hl-del-bg);
+}
+.md-doc .hljs-emphasis {
+  font-style: italic;
+}
+.md-doc .hljs-strong {
+  font-weight: 700;
+}

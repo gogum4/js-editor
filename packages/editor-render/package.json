@@ -6,17 +6,24 @@
   "description": "읽기 전용 렌더링 — 본문 JSON/Markdown → React 요소·HTML. 서버 컴포넌트(Next.js App Router)에서 훅 없이 동작한다(docs/EDITOR-PACKAGE.md P4)",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "styles"
   ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./styles.css": "./styles/render.css",
+    "./highlight.css": "./styles/highlight.css",
+    "./katex.css": "./styles/katex.css"
   },
   "publishConfig": {
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
-      }
+      },
+      "./styles.css": "./styles/render.css",
+      "./highlight.css": "./styles/highlight.css",
+      "./katex.css": "./styles/katex.css"
     }
   },
   "scripts": {

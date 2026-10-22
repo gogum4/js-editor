@@ -1,0 +1,2 @@
+/* KaTeX 스타일(글꼴 포함). 수식을 서버에서 그렸다면 이 파일을 꼭 불러온다 — 없으면 수식이 겹쳐 보인다. */
+@import "katex/dist/katex.min.css";
