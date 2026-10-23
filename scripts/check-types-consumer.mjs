@@ -58,7 +58,7 @@ export const bad: RenderOptions = { noSuchOption: true };
 
 // 에디터: core(React 없음)와 editor-react의 공개 API도 같은 방식으로 해석돼야 한다. 표 명령 타입(addRowAfter 등)은 core 안에서 풀린다.
 export function editor() {
-  const options: CoreExtensionsOptions = { strings: koStrings };
+  const options: CoreExtensionsOptions = { strings: koStrings, raw: true };
   const strings: EditorStrings = koStrings;
   const extensions = createReactExtensions(new Y.Doc(), options);
   const plain = createCoreExtensions(null);

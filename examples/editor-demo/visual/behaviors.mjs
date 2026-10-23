@@ -291,6 +291,45 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "raw 상자: 칸에서 원문을 고치면 본문에 반영되고 Ctrl+Z로 돌아간다 (Yjs 경로)",
+    async run({ page, open }) {
+      await open({ collab: true, raw: true });
+      const rawText = () => page.evaluate(() => window.__demo.editor.getJSON().content.find((n) => n.type === "raw").attrs.text);
+      eq(await rawText(), ":::fold{h=1}\n안쪽 줄\n:::", "처음 원문");
+      const before = JSON.stringify((await json(page)).content.filter((n) => n.type !== "raw"));
+      // 칸 안의 키 입력은 에디터 본문이 아니라 칸에 들어간다.
+      await page.click("textarea.md-raw-source");
+      await page.keyboard.press("Control+End");
+      await page.keyboard.type("\nZ");
+      await page.click("textarea.md-raw-source", { position: { x: 5, y: 5 } }); // 같은 칸(블러 없음)
+      await page.waitForTimeout(600); // 입력이 멈춘 뒤 반영(400ms)
+      eq(await rawText(), ":::fold{h=1}\n안쪽 줄\n:::\nZ", "고친 뒤 원문");
+      eq(JSON.stringify((await json(page)).content.filter((n) => n.type !== "raw")), before, "칸 밖의 본문");
+      // 칸 밖을 눌러 벗어난 뒤 에디터의 되돌리기가 원문 변경을 되돌린다.
+      await page.click(".ProseMirror > p");
+      await page.keyboard.press("Control+z");
+      await page.waitForTimeout(100);
+      eq(await rawText(), ":::fold{h=1}\n안쪽 줄\n:::", "되돌린 뒤 원문");
+      eq(await page.inputValue("textarea.md-raw-source"), ":::fold{h=1}\n안쪽 줄\n:::", "되돌린 뒤 칸");
+    },
+  },
+  {
+    name: "raw 상자: 글 중간 디렉티브를 더블클릭해서 고친다",
+    async run({ page, open }) {
+      await open({ raw: true });
+      await page.dblclick("code.md-raw-inline");
+      await page.keyboard.press("Control+a");
+      await page.keyboard.type(":postlink[새 글]{slug=b}");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(100);
+      const inline = await page.evaluate(() => {
+        const p = window.__demo.editor.getJSON().content.at(-1);
+        return p.content.find((n) => n.type === "rawInline").attrs.text;
+      });
+      eq(inline, ":postlink[새 글]{slug=b}", "고친 원문");
+    },
+  },
+  {
     name: "Yjs 경로와 보통 경로의 본문 DOM이 같다",
     async run({ page, open, dump }) {
       await open();

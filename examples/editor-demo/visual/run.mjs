@@ -55,8 +55,9 @@ async function main() {
         const text = message.text();
         if (message.type() === "error" && !/Failed to load resource/.test(text)) errors.push(`console.error: ${text}`);
       });
-      const open = async ({ collab = false } = {}) => {
-        await page.goto(url + (plain ? "plain.html" : "") + (collab ? "?collab=1" : ""));
+      const open = async ({ collab = false, raw = false } = {}) => {
+        const query = [collab ? "collab=1" : "", raw ? "raw=1" : ""].filter(Boolean).join("&");
+        await page.goto(url + (plain ? "plain.html" : "") + (query ? `?${query}` : ""));
         await waitReady(page);
       };
       const dump = (selector) => page.evaluate(dumpSubtree, { selector, props: PROPS, inherited: INHERITED });

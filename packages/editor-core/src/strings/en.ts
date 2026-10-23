@@ -46,6 +46,7 @@ export const enStrings: EditorStrings = {
     types: { note: "Info", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution" },
   },
   codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed" },
+  raw: { blockLabel: "Source (syntax the editor does not know)", sourceLabel: "Edit source", inlineTitle: "Double-click to edit the source" },
   languagePicker: {
     title: "Choose language",
     plainText: "Plain text",

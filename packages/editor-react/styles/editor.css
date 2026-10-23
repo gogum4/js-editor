@@ -777,3 +777,57 @@
 .md-editor .toggle-block[data-readonly="true"] > .toggle-arrow {
   pointer-events: none;
 }
+
+/* 에디터가 모르는 문법을 원문 그대로 담는 상자(`raw`·`rawInline` 노드, core의 `raw` 옵션을 켠 소비자만 그려진다). */
+.md-editor .md-raw {
+  margin: 0.5rem 0;
+  border: 1px dashed #d4d4d4;
+  border-radius: 6px;
+  background: #fafafa;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+.md-editor .md-raw-label {
+  margin-bottom: 0.125rem;
+  font-size: 11px;
+  color: #a3a3a3;
+  user-select: none;
+}
+.md-editor .md-raw-source {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  width: 100%;
+  resize: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875em;
+  line-height: 1.5;
+  color: #525252;
+  white-space: pre;
+  overflow-x: auto;
+  outline-style: none;
+}
+.md-editor .md-raw-inline {
+  border-radius: 4px;
+  background: #f5f5f5;
+  padding: 0 0.25em;
+  font-size: 0.875em;
+  color: #737373;
+}
+.md-editor .md-raw-inline-input {
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid #a3a3a3;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0 0.25em;
+  font: inherit;
+  color: #404040;
+  outline-style: none;
+}
+.md-editor .ProseMirror-selectednode.md-raw,
+.md-editor .ProseMirror-selectednode.md-raw-inline {
+  outline: 2px solid #a3a3a3;
+}

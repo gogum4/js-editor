@@ -17,6 +17,8 @@ export interface EditorStrings {
   completion: { label: string; kinds: Readonly<Record<WordKind, string>> };
   callout: { changeLabel: (current: string) => string; changeTitle: string; types: Readonly<Record<CalloutType, string>> };
   codeBlock: { show: string; hide: string; copy: string; copied: string; copyFailed: string };
+  /** 에디터가 모르는 문법을 원문 그대로 담는 상자(`raw`·`rawInline` 노드, 기본 꺼짐). */
+  raw: { blockLabel: string; sourceLabel: string; inlineTitle: string };
   languagePicker: {
     title: string;
     plainText: string;

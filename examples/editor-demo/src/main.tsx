@@ -41,14 +41,27 @@ const ports = memoryPorts({
   },
 });
 
-const collab = new URLSearchParams(window.location.search).has("collab");
+const params = new URLSearchParams(window.location.search);
+const collab = params.has("collab");
+// `?raw=1`이면 모르는 문법을 원문 그대로 담는 `raw` 노드를 켜고 끝에 예를 붙인다(동작 시험 전용; 기준 스타일에는 영향이 없다).
+const raw = params.has("raw");
+const doc = raw
+  ? {
+      ...DEMO_DOC,
+      content: [
+        ...DEMO_DOC.content,
+        { type: "raw", attrs: { text: ":::fold{h=1}\n안쪽 줄\n:::" } },
+        { type: "paragraph", content: [{ type: "text", text: "앞 " }, { type: "rawInline", attrs: { text: ":postlink[글]{slug=a}" } }, { type: "text", text: " 뒤" }] },
+      ],
+    }
+  : DEMO_DOC;
 const ydoc = collab ? new Y.Doc() : null;
-const extensions = createReactExtensions(ydoc, { ports });
-if (ydoc) prosemirrorJSONToYXmlFragment(getSchema(extensions), DEMO_DOC, ydoc.getXmlFragment("default"));
+const extensions = createReactExtensions(ydoc, { ports, raw });
+if (ydoc) prosemirrorJSONToYXmlFragment(getSchema(extensions), doc, ydoc.getXmlFragment("default"));
 
 const editor = new Editor({
   extensions,
-  ...(ydoc ? {} : { content: DEMO_DOC }),
+  ...(ydoc ? {} : { content: doc }),
   editorProps: { attributes: { class: "md-editor", "aria-label": "본문" } },
 });
 

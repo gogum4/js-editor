@@ -20,6 +20,7 @@ import { CodeBlock } from "./extensions/CodeBlock";
 import { TextAlign } from "./extensions/TextAlign";
 import { Footnote } from "./footnote/Footnote";
 import { MathBlock } from "./math/MathBlock";
+import { Raw, RawInline } from "./raw/Raw";
 import { MathInline } from "./math/MathInline";
 import { LinkOpener } from "./extensions/LinkOpener";
 import { MarkdownCopy, type MarkdownCopyOptions } from "./extensions/MarkdownCopy";
@@ -47,6 +48,12 @@ export interface CoreExtensionsOptions {
   views?: EditorViews;
   menus?: EditorMenus;
   ui?: EditorUi;
+  /**
+   * 에디터가 모르는 Markdown 문법(디렉티브)을 원문 그대로 담는 `raw`·`rawInline` 노드를 스키마에 넣는다(기본 꺼짐, docs/EDITOR-PACKAGE.md P6-1).
+   * 켜면 붙여넣기 변환도 그 문법을 `raw`로 읽는다(`markdown.rawDirectives`). **노드를 더하는 것이므로** 본문을 저장하는 소비자는 본문 스키마 버전을 올려야 한다 —
+   * 노트 앱은 켜지 않는다.
+   */
+  raw?: boolean;
   /** 화면 글 사전. 기본은 한국어. */
   strings?: EditorStrings;
   /** 슬래시 메뉴 항목을 바꾼다(기본 항목을 받아 앱의 항목을 끼워 넣어 돌려준다). */
@@ -84,7 +91,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
       },
     }),
     LinkOpener,
-    MarkdownPaste.configure({ context: options.markdown ?? {} }),
+    MarkdownPaste.configure({ context: { ...(options.raw ? { rawDirectives: true } : {}), ...options.markdown } }),
     MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,
@@ -115,6 +122,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     Footnote.configure({ nodeView: views.footnote ?? null }),
     MathInline.configure({ nodeView: views.mathInline ?? null }),
     MathBlock.configure({ nodeView: views.mathBlock ?? null }),
+    ...(options.raw ? [Raw, RawInline] : []),
     SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
   ];

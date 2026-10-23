@@ -27,6 +27,7 @@ export { enStrings, type EditorStrings, koStrings } from "./strings/index";
 
 // `@9um4/editor-react`가 쓰는 내부 (수식·각주 편집, 수식 렌더 로더, 자동완성 계산, mermaid 도구, 이미지 캐시)
 export type { Candidate } from "./completion/words";
+export { Raw, RawInline } from "./raw/Raw";
 export { setFootnoteText } from "./footnote/footnoteEdit";
 export type { FootnoteEditState } from "./footnote/footnoteEdit";
 export { FOOTNOTE_NODE, collectFootnotes } from "./footnote/footnotes";
