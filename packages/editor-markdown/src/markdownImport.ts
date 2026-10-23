@@ -13,6 +13,7 @@
 import { Lexer, type Token, type Tokens } from "marked";
 
 import { blockIdFromForeign, isBlockIdType } from "@9um4/editor-schema/blockId";
+import type { ReferenceTarget } from "@9um4/editor-schema/reference";
 import { calloutTypeFromName, normalizeCalloutType } from "@9um4/editor-schema/callout";
 import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
@@ -20,6 +21,7 @@ import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
 
 import { BLOG_CALLOUT_TO_TYPE, type MarkdownDialect } from "./dialect.ts";
+import { parseReferenceLine } from "./referenceDirective.ts";
 import { findRawBlocks, INLINE_DIRECTIVE, scanDirectiveLines } from "./rawDirectives.ts";
 
 // ───────────────────────── frontmatter ─────────────────────────
@@ -118,6 +120,8 @@ type Placeholder =
   | { kind: "rawBlock"; text: string; raw: string }
   | { kind: "rawInline"; text: string; raw: string }
   /** 블로그 방언의 컨테이너 디렉티브 여는 줄(`head`가 원문)과 닫는 줄. 안쪽은 구조로 읽는다. */
+  /** 참조 노드로 읽은 한 줄(`ImportContext.references`). */
+  | { kind: "reference"; target: ReferenceTarget; raw: string }
   | { kind: "dirOpen"; head: string; raw: string }
   | { kind: "dirClose"; raw: string };
 
@@ -182,10 +186,31 @@ const BLOCK_ID_AT_END = /(^|[ \t])\^([A-Za-z0-9][A-Za-z0-9-]{2,})[ \t]*$/;
  * `marked`가 망가뜨릴 것들을 자리표시자로 바꾼다: 위키 링크, 수식(`_`·`*`가 기울임으로 읽힌다), 각주 정의와 참조.
  * 코드 블록(``` 울타리)과 인라인 코드 안은 그대로 둔다. 블록 수식(`$$ … $$`)은 자기 문단이 되도록 앞뒤에 빈 줄을 둔다.
  */
-function protect(source: string, rawDirectives = false, blog = false): Protected {
+function protect(source: string, rawDirectives = false, blog = false, references: ImportContext["references"] = false): Protected {
   let lines = source.replace(/\r\n/g, "\n").split("\n");
   const store: Placeholder[] = [];
   const footnotes = new Map<string, string>();
+
+  // 참조 노드: 한 줄 전체가 참조 표기인 줄은 자기 문단이 되는 자리표시자로 바꾼다(코드 울타리 안은 건드리지 않는다). 디렉티브 처리보다 먼저다.
+  if (references) {
+    const parse = typeof references === "function" ? references : parseReferenceLine;
+    const replaced: string[] = [];
+    let inFence: string | null = null;
+    for (const line of lines) {
+      const fenceMatch = FENCE.exec(line);
+      if (fenceMatch) {
+        const marker = fenceMatch[1]!;
+        if (inFence === null) inFence = marker;
+        else if (marker[0] === inFence[0] && marker.length >= inFence.length) inFence = null;
+        replaced.push(line);
+        continue;
+      }
+      const target = inFence === null ? parse(line) : null;
+      if (target === null) replaced.push(line);
+      else replaced.push("", `${store.push({ kind: "reference", target, raw: line }) - 1}`, "");
+    }
+    lines = replaced;
+  }
 
   // 0) 모르는 디렉티브 구간은 원문 그대로 자리표시자 한 줄로 바꾼다(앞뒤에 빈 줄을 두어 자기 문단이 되게 한다). 아래 단계가 안을 건드리지 못한다.
   if (blog) {
@@ -323,6 +348,11 @@ export interface ImportContext {
    * 위키 링크·`^id`·`> [!NOTE]`·HTML은 블로그에 없는 문법이라 읽지 않고 글자(HTML은 원문 그대로 `raw`)로 둔다. `rawDirectives`는 자동으로 켜진다.
    */
   dialect?: MarkdownDialect;
+  /**
+   * 참조 노드(`reference`)로 읽을 줄. `true`면 기본 표기 `::ref{kind=… id=…}`, 함수면 소비자의 표기(한 줄을 받아 대상이거나 null).
+   * 끄면(기본) 글자로 읽는다. `createCoreExtensions({ reference: true })`와 짝이다.
+   */
+  references?: boolean | ((line: string) => ReferenceTarget | null);
 }
 
 export interface MarkdownImportResult {
@@ -435,7 +465,7 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     if (p.kind === "wiki") nodes.push(wikiNode(p, marks, state));
     else if (p.kind === "blockId") state.foundId = p.id;
     else if (p.kind === "rawInline") nodes.push({ type: "rawInline", attrs: { text: p.text } });
-    else if (p.kind === "rawBlock" || p.kind === "dirOpen" || p.kind === "dirClose") nodes.push(textNode(p.raw, marks));
+    else if (p.kind === "rawBlock" || p.kind === "dirOpen" || p.kind === "dirClose" || p.kind === "reference") nodes.push(textNode(p.raw, marks));
     else if (p.kind === "footnote") nodes.push({ type: "footnote", attrs: { text: state.footnotes.get(p.id) ?? "" } });
     else nodes.push({ type: "mathInline", attrs: { latex: p.latex } });
   }
@@ -620,6 +650,7 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   const only = /^(\d+)$/.exec(token.text.trim());
   const placeholder = only ? state.store[Number(only[1])] : undefined;
   if (placeholder?.kind === "mathBlock") return [{ type: "mathBlock", attrs: { latex: placeholder.latex } }];
+  if (placeholder?.kind === "reference") return [{ type: "reference", attrs: { ...placeholder.target } }];
   if (placeholder?.kind === "rawBlock") return [{ type: "raw", attrs: { text: placeholder.text } }];
   if (placeholder?.kind === "blockId") {
     // 자기 줄에 홀로 있는 `^id`는 바로 앞 블록의 id다(코드·표·수식 같은 줄 끝에 못 붙이는 블록).
@@ -918,7 +949,7 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
  */
 export function markdownToDoc(markdown: string, ctx: ImportContext, fromDir: string): MarkdownImportResult {
   const blog = ctx.dialect === "blog";
-  const { text, store, footnotes } = protect(markdown, ctx.rawDirectives === true || blog, blog);
+  const { text, store, footnotes } = protect(markdown, ctx.rawDirectives === true || blog, blog, ctx.references ?? false);
   const state: State = { ctx, blog, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
   const tokens = new Lexer({ gfm: true, breaks: false }).lex(text);
   const content = convertBlocks(tokens, state);

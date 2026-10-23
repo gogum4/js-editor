@@ -98,7 +98,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
       },
     }),
     LinkOpener,
-    MarkdownPaste.configure({ context: { ...(options.raw ? { rawDirectives: true } : {}), ...options.markdown } }),
+    MarkdownPaste.configure({ context: { ...(options.raw ? { rawDirectives: true } : {}), ...(options.reference ? { references: true } : {}), ...options.markdown } }),
     MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,

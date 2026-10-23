@@ -11,6 +11,7 @@ import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
 
+import { formatReference } from "./referenceDirective.ts";
 import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
 
 export interface MarkdownOptions {
@@ -37,6 +38,11 @@ export interface MarkdownOptions {
    * `directive` 노드는 여는 줄 원문 그대로. 블로그에 없는 것(이미지 크기·토글·밑줄·양쪽 정렬)은 평범한 글로 내보내고 안내한다.
    */
   dialect?: MarkdownDialect;
+  /**
+   * 참조 노드(`reference`)의 내보내기. `toMarkdown(kind, id)`가 글자(한 줄 이상)를 돌려주면 그것을, `null`이면 내보내지 않고(안내함), `undefined`면 기본 표기
+   * `::ref{kind=… id=…}`를 쓴다. 블로그처럼 해석기가 없는 소비자는 기본 표기나 대체 표현을 고른다.
+   */
+  references?: { toMarkdown?: (kind: string, id: string) => string | null | undefined };
 }
 
 export interface MarkdownResult {
@@ -342,6 +348,21 @@ class Renderer {
         const head = typeof node.attrs?.head === "string" && node.attrs.head !== "" ? node.attrs.head : ":::note";
         const inner = this.blocks(node.content);
         return inner === "" ? `${head}\n:::` : `${head}\n${inner}\n:::`;
+      }
+      case "reference": {
+        const kind = String(node.attrs?.kind ?? "");
+        const id = String(node.attrs?.id ?? "");
+        const custom = this.options.references?.toMarkdown?.(kind, id);
+        if (custom === null) {
+          this.notices.add(`참조(${kind})를 Markdown으로 내보내지 않았어요.`);
+          return null;
+        }
+        const text = custom ?? formatReference(kind, id);
+        if (text === null) {
+          this.notices.add("참조 정보가 올바르지 않은 블록은 내보내지 못했어요.");
+          return null;
+        }
+        return text;
       }
       case "raw":
         // 에디터가 모르는 블록 디렉티브: 원문 그대로(한 글자도 바꾸지 않는다). 빈 원문은 내보내지 않는다.
