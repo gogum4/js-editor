@@ -19,6 +19,8 @@ import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
 
+import { findRawBlocks, INLINE_DIRECTIVE } from "./rawDirectives.ts";
+
 // ───────────────────────── frontmatter ─────────────────────────
 
 export type FrontmatterValue = string | string[];
@@ -110,7 +112,10 @@ type Placeholder =
   | { kind: "mathBlock"; latex: string; raw: string }
   | { kind: "footnote"; id: string; raw: string }
   /** 줄 끝의 `^블록id`(Obsidian). 글자에서는 빠지고 그 블록의 id가 된다. */
-  | { kind: "blockId"; id: string; raw: string };
+  | { kind: "blockId"; id: string; raw: string }
+  /** 모르는 디렉티브(`ImportContext.rawDirectives`): 블록(`raw` 노드)과 글 중간(`rawInline` 노드). `text`가 원문 그대로다. */
+  | { kind: "rawBlock"; text: string; raw: string }
+  | { kind: "rawInline"; text: string; raw: string };
 
 interface Protected {
   text: string;
@@ -139,12 +144,13 @@ function looksLikeMoney(latex: string): boolean {
   return /^\s*\d[\d.,]*\s*$/.test(latex);
 }
 
-function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>): string {
+function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>, rawDirectives = false): string {
   const put = (placeholder: Placeholder) => `${OPEN}${store.push(placeholder) - 1}${CLOSE}`;
   const joined = splitCodeSpans(line)
     .map((part) => {
       if (part.code) return part.text;
-      return part.text
+      const text = rawDirectives ? part.text.replace(INLINE_DIRECTIVE, (raw) => put({ kind: "rawInline", text: raw, raw })) : part.text;
+      return text
         .replace(/(!?)\[\[([^[\]\n]+?)\]\]/g, (raw, bang: string, inner: string) => {
           // `이름#위치|표시 글자` (위치는 `제목` 또는 `^블록`).
           const [target = "", alias] = (inner as string).split("|", 2) as [string, string | undefined];
@@ -169,10 +175,26 @@ const BLOCK_ID_AT_END = /(^|[ \t])\^([A-Za-z0-9][A-Za-z0-9-]{2,})[ \t]*$/;
  * `marked`가 망가뜨릴 것들을 자리표시자로 바꾼다: 위키 링크, 수식(`_`·`*`가 기울임으로 읽힌다), 각주 정의와 참조.
  * 코드 블록(``` 울타리)과 인라인 코드 안은 그대로 둔다. 블록 수식(`$$ … $$`)은 자기 문단이 되도록 앞뒤에 빈 줄을 둔다.
  */
-function protect(source: string): Protected {
-  const lines = source.replace(/\r\n/g, "\n").split("\n");
+function protect(source: string, rawDirectives = false): Protected {
+  let lines = source.replace(/\r\n/g, "\n").split("\n");
   const store: Placeholder[] = [];
   const footnotes = new Map<string, string>();
+
+  // 0) 모르는 디렉티브 구간은 원문 그대로 자리표시자 한 줄로 바꾼다(앞뒤에 빈 줄을 두어 자기 문단이 되게 한다). 아래 단계가 안을 건드리지 못한다.
+  if (rawDirectives) {
+    const regions = findRawBlocks(lines);
+    if (regions.length > 0) {
+      const replaced: string[] = [];
+      let at = 0;
+      for (const region of regions) {
+        replaced.push(...lines.slice(at, region.start));
+        replaced.push("", `${store.push({ kind: "rawBlock", text: region.text, raw: region.text }) - 1}`, "");
+        at = region.end;
+      }
+      replaced.push(...lines.slice(at));
+      lines = replaced;
+    }
+  }
 
   // 1) 각주 정의(`[^id]: 내용`, 이어지는 줄은 들여쓴다)를 떼어 낸다.
   const kept: string[] = [];
@@ -236,7 +258,7 @@ function protect(source: string): Protected {
         }
         if (!closed) {
           // 닫히지 않은 `$$`는 수식이 아니라 그냥 글자다.
-          out.push(protectInline(line, store, footnotes));
+          out.push(protectInline(line, store, footnotes, rawDirectives));
           continue;
         }
         latex = body.join("\n").trim();
@@ -246,7 +268,7 @@ function protect(source: string): Protected {
       out.push("", ref, "");
       continue;
     }
-    out.push(protectInline(line, store, footnotes));
+    out.push(protectInline(line, store, footnotes, rawDirectives));
   }
   return { text: out.join("\n"), store, footnotes };
 }
@@ -264,6 +286,11 @@ export interface ImportContext {
    * 읽기 전용 렌더링(블로그)을 위한 옵션이다 — 노트 앱의 가져오기는 이미지를 저장소에 넣어야 해서 켜지 않는다.
    */
   remoteImages?: boolean;
+  /**
+   * 참이면 에디터가 모르는 디렉티브(`::이름{…}`·`:::이름 … :::`·`:이름[글]{…}`)를 `raw`·`rawInline` 노드에 **원문 그대로** 담는다.
+   * 끄면(기본) 일반 글자로 읽는다. 노트 앱은 쓰지 않는다 — 이 노드는 `createCoreExtensions({ raw: true })`를 켠 소비자(블로그)를 위한 것이다.
+   */
+  rawDirectives?: boolean;
 }
 
 export interface MarkdownImportResult {
@@ -365,6 +392,8 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     if (!p) continue;
     if (p.kind === "wiki") nodes.push(wikiNode(p, marks, state));
     else if (p.kind === "blockId") state.foundId = p.id;
+    else if (p.kind === "rawInline") nodes.push({ type: "rawInline", attrs: { text: p.text } });
+    else if (p.kind === "rawBlock") nodes.push(textNode(p.text, marks));
     else if (p.kind === "footnote") nodes.push({ type: "footnote", attrs: { text: state.footnotes.get(p.id) ?? "" } });
     else nodes.push({ type: "mathInline", attrs: { latex: p.latex } });
   }
@@ -537,6 +566,7 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   const only = /^(\d+)$/.exec(token.text.trim());
   const placeholder = only ? state.store[Number(only[1])] : undefined;
   if (placeholder?.kind === "mathBlock") return [{ type: "mathBlock", attrs: { latex: placeholder.latex } }];
+  if (placeholder?.kind === "rawBlock") return [{ type: "raw", attrs: { text: placeholder.text } }];
   if (placeholder?.kind === "blockId") {
     // 자기 줄에 홀로 있는 `^id`는 바로 앞 블록의 id다(코드·표·수식 같은 줄 끝에 못 붙이는 블록).
     state.orphanId = placeholder.id;
@@ -791,7 +821,7 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
  * 이미지 노드는 `importPath`만 가지고 있다 — 이미지를 저장소에 넣은 뒤 `finalizeImages`로 해시와 형식을 채운다.
  */
 export function markdownToDoc(markdown: string, ctx: ImportContext, fromDir: string): MarkdownImportResult {
-  const { text, store, footnotes } = protect(markdown);
+  const { text, store, footnotes } = protect(markdown, ctx.rawDirectives === true);
   const state: State = { ctx, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
   const tokens = new Lexer({ gfm: true, breaks: false }).lex(text);
   const content = convertBlocks(tokens, state);

@@ -131,6 +131,9 @@ class Renderer {
         return "\\\n";
       case "pageLink":
         return this.pageLink(node);
+      case "rawInline":
+        // 에디터가 모르는 글 중간 디렉티브: 원문 그대로.
+        return typeof node.attrs?.text === "string" ? node.attrs.text : "";
       case "mathInline": {
         // 인라인 수식은 `$…$`. 줄바꿈은 공백으로, 앞뒤 공백은 없앤다(`$ x $`는 수식으로 읽히지 않는다).
         const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.replace(/\s+/g, " ").trim() : "";
@@ -288,6 +291,9 @@ class Renderer {
         const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.trim() : "";
         return latex === "" ? null : `$$\n${latex}\n$$`;
       }
+      case "raw":
+        // 에디터가 모르는 블록 디렉티브: 원문 그대로(한 글자도 바꾸지 않는다). 빈 원문은 내보내지 않는다.
+        return typeof node.attrs?.text === "string" && node.attrs.text !== "" ? node.attrs.text : null;
       case "table":
         return this.table(node);
       case "toggle":
