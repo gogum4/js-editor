@@ -831,3 +831,28 @@
 .md-editor .ProseMirror-selectednode.md-raw-inline {
   outline: 2px solid #a3a3a3;
 }
+
+/* 컨테이너 디렉티브(`directive` 노드): 여는 줄 입력칸 아래에 안쪽 내용이 들여 쓰인다. */
+.md-editor .md-directive {
+  margin: 0.5rem 0;
+  border-left: 3px solid #d4d4d4;
+  padding-left: 0.75rem;
+}
+.md-editor .md-directive-head {
+  margin-bottom: 0.125rem;
+}
+.md-editor .md-directive-input {
+  box-sizing: border-box;
+  margin: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  color: #a3a3a3;
+  outline-style: none;
+}
+.md-editor .md-directive-input:focus {
+  color: #525252;
+}

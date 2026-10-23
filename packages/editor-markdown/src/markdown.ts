@@ -11,6 +11,8 @@ import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
 import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
 
+import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
+
 export interface MarkdownOptions {
   /** 페이지 id로 제목을 찾는다. 삭제됐거나 없는 페이지는 null. */
   pageTitle: (pageId: string) => string | null;
@@ -30,6 +32,11 @@ export interface MarkdownOptions {
    * 기본은 꺼짐(한 페이지 내보내기는 id가 지저분하므로). 전체 내보내기가 켠다.
    */
   blockIds?: boolean;
+  /**
+   * 내보낼 방언. 기본 `obsidian`. `blog`이면 블로그의 `remark-directive` 문법으로 쓴다: 콜아웃은 `:::note`…`:::`, 정렬은 `:::center|right`…`:::`,
+   * `directive` 노드는 여는 줄 원문 그대로. 블로그에 없는 것(이미지 크기·토글·밑줄·양쪽 정렬)은 평범한 글로 내보내고 안내한다.
+   */
+  dialect?: MarkdownDialect;
 }
 
 export interface MarkdownResult {
@@ -101,6 +108,10 @@ class Renderer {
   private missingLinks = 0;
 
   constructor(private readonly options: MarkdownOptions) {}
+
+  private get blog(): boolean {
+    return this.options.dialect === "blog";
+  }
 
   finish(): string[] {
     const duplicated = [...this.linkedTitles.entries()]
@@ -189,8 +200,11 @@ class Renderer {
     let out = isCode ? renderCode(core) : escapeInline(core);
     const has = (type: string) => marks.some((m) => m.type === type);
     if (has("underline")) {
-      out = `<u>${out}</u>`;
-      this.notices.add("밑줄은 Markdown에 없어서 <u>…</u>로 내보냈어요.");
+      if (this.blog) this.notices.add("밑줄은 블로그 문법에 없어서 일반 글자로 내보냈어요.");
+      else {
+        out = `<u>${out}</u>`;
+        this.notices.add("밑줄은 Markdown에 없어서 <u>…</u>로 내보냈어요.");
+      }
     }
     if (has("strike")) out = `~~${out}~~`;
     if (has("italic")) out = `*${out}*`;
@@ -209,6 +223,12 @@ class Renderer {
       while (list.length > 0 && isEmptyParagraph(list[list.length - 1])) list = list.slice(0, -1);
     }
     const parts: string[] = [];
+    // 블로그 방언: 이어지는 같은 정렬(가운데·오른쪽)의 블록은 `:::center`…`:::` 하나로 묶는다.
+    let run: { align: string; texts: string[] } | null = null;
+    const flushRun = () => {
+      if (run !== null) parts.push(`:::${run.align}\n${run.texts.join("\n\n")}\n:::`);
+      run = null;
+    };
     let previousFamily: ReturnType<typeof listFamily> = null;
     let flip = false;
     for (const node of list) {
@@ -217,12 +237,30 @@ class Renderer {
       this.flipList = flip;
       const rendered = this.block(node);
       this.flipList = false;
-      if (rendered !== null) {
-        parts.push(this.aligned(node, rendered));
-        previousFamily = family;
+      if (rendered === null) continue;
+      previousFamily = family;
+      const align = this.blog ? this.blogAlign(node) : null;
+      if (align !== null) {
+        if (run !== null && run.align === align) run.texts.push(rendered);
+        else {
+          flushRun();
+          run = { align, texts: [rendered] };
+        }
+        continue;
       }
+      flushRun();
+      parts.push(this.aligned(node, rendered));
     }
+    flushRun();
     return parts.join("\n\n");
+  }
+
+  /** 블로그 방언에서 이 블록을 감쌀 정렬 컨테이너 이름(`center`·`right`). 양쪽 정렬은 블로그에 없어 안내만 하고 일반 블록으로 둔다. */
+  private blogAlign(node: PmNode): "center" | "right" | null {
+    if (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image") return null;
+    const align = normalizeTextAlign(node.attrs?.textAlign);
+    if (align === "justify") this.notices.add("양쪽 정렬은 블로그 문법에 없어서 왼쪽 정렬로 내보냈어요.");
+    return align === "center" || align === "right" ? align : null;
   }
 
   /**
@@ -231,7 +269,7 @@ class Renderer {
    * 이미지는 양쪽 맞춤이 없어서(왼쪽으로 본다) 가운데·오른쪽만 감싼다.
    */
   private aligned(node: PmNode, rendered: string): string {
-    if (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image") return rendered;
+    if (this.blog || (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image")) return rendered;
     const align = normalizeTextAlign(node.attrs?.textAlign);
     if (align === null || (node.type === "image" && align === "justify")) return rendered;
     this.notices.add("가운데·오른쪽·양쪽 정렬은 Markdown에 없어서 HTML(<div align>)로 내보냈어요. 목록·표 안의 정렬은 내보내지 않아요.");
@@ -276,6 +314,11 @@ class Renderer {
       case "blockquote":
         return prefixLines(this.blocks(node.content), "> ");
       case "callout": {
+        if (this.blog) {
+          const name = TYPE_TO_BLOG_CALLOUT[String(node.attrs?.type)] ?? "note";
+          const inner = this.blocks(node.content);
+          return inner === "" ? `:::${name}\n:::` : `:::${name}\n${inner}\n:::`;
+        }
         const label = CALLOUT_LABELS[String(node.attrs?.type)] ?? "NOTE";
         const body = this.blocks(node.content);
         return prefixLines(body === "" ? `[!${label}]` : `[!${label}]\n${body}`, "> ");
@@ -290,6 +333,12 @@ class Renderer {
         // 블록 수식은 `$$` 줄 사이에 LaTeX를 그대로 둔다. 내용이 빈 수식은 내보내지 않는다.
         const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.trim() : "";
         return latex === "" ? null : `$$\n${latex}\n$$`;
+      }
+      case "directive": {
+        // 여는 줄은 원문 그대로, 닫는 줄은 `:::`(블로그가 바깥 펜스의 콜론 수를 알아서 맞춘다).
+        const head = typeof node.attrs?.head === "string" && node.attrs.head !== "" ? node.attrs.head : ":::note";
+        const inner = this.blocks(node.content);
+        return inner === "" ? `${head}\n:::` : `${head}\n${inner}\n:::`;
       }
       case "raw":
         // 에디터가 모르는 블록 디렉티브: 원문 그대로(한 글자도 바꾸지 않는다). 빈 원문은 내보내지 않는다.
@@ -360,6 +409,13 @@ class Renderer {
   /** 토글은 HTML <details>로 내보낸다(제목 줄이 <summary>, 나머지는 안의 내용). */
   private toggle(node: PmNode): string | null {
     const [title, ...rest] = node.content ?? [];
+    if (this.blog) {
+      // 블로그에는 토글이 없다(HTML도 그려지지 않는다) → 제목 줄을 굵은 문단으로 두고 내용을 이어 쓴다.
+      this.notices.add("토글은 블로그 문법에 없어서 제목 문단과 내용으로 풀어 내보냈어요.");
+      const head = title ? this.inline(title.content).replace(/\\\n|\n/g, " ").trim() : "";
+      const inner = this.blocks(rest);
+      return [head === "" ? "" : `**${head}**`, inner].filter((part) => part !== "").join("\n\n") || null;
+    }
     const summary = title ? this.inline(title.content).replace(/\\\n|\n/g, " ").trim() : "";
     const body = this.blocks(rest);
     if (summary === "" && body === "") return null;
@@ -391,7 +447,7 @@ class Renderer {
     // `|`는 크기 구분자로 쓰므로 설명 글자에서는 뺀다.
     const alt = String(node.attrs?.alt ?? "").replace(/[[\]|\n]/g, " ").replace(/\s+/g, " ").trim();
     // 크기는 Obsidian 문법(`![설명|너비](경로)`). 다른 편집기에서는 설명 글자에 `|너비`가 붙어 보일 수 있다.
-    const width = normalizeImageWidth(node.attrs?.width);
+    const width = this.blog ? null : normalizeImageWidth(node.attrs?.width);
     if (width !== null) this.notices.add("이미지 크기는 Obsidian 형식(![설명|너비](…))으로 내보냈어요. 다른 편집기에서는 크기가 적용되지 않을 수 있어요.");
     const label = width === null ? alt : `${alt}|${width}`;
     const path = this.options.assetPath ? this.options.assetPath(hash, mime) : `assets/${assetFileName(hash, mime)}`;

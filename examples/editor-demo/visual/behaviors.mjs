@@ -314,6 +314,24 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "directive: 여는 줄 입력칸을 고치고, 안쪽 글은 평소처럼 입력한다",
+    async run({ page, open }) {
+      await open({ raw: true });
+      const node = () => page.evaluate(() => window.__demo.editor.getJSON().content.find((n) => n.type === "directive"));
+      await page.click("input.md-directive-input");
+      await page.keyboard.press("Control+a");
+      await page.keyboard.type(":::indent{n=3}");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(100);
+      eq((await node()).attrs.head, ":::indent{n=3}", "고친 여는 줄");
+      await page.click(".md-directive-body p");
+      await page.keyboard.press("End");
+      await page.keyboard.type("!");
+      await page.waitForTimeout(100);
+      eq(textOf(await node()), "디렉티브 안쪽!", "안쪽 글");
+    },
+  },
+  {
     name: "raw 상자: 글 중간 디렉티브를 더블클릭해서 고친다",
     async run({ page, open }) {
       await open({ raw: true });

@@ -12,6 +12,11 @@ const TAIL = String.raw`(?:\[[^\n]*\])?(?:\{[^\n]*\})?[ \t]*$`;
 const LEAF = new RegExp(String.raw`^ {0,3}::[A-Za-z][\w-]*` + TAIL);
 /** 컨테이너 디렉티브의 여는 줄: `:::이름[제목]{속성}` — 콜론 셋 이상, 이름이 있어야 한다. */
 const OPENER = new RegExp(String.raw`^ {0,3}:{3,}[A-Za-z][\w-]*` + TAIL);
+/** 컨테이너 디렉티브의 여는 줄로 올바른 글자인지(편집기에서 고친 값을 검사한다). */
+export function isContainerOpener(text: string): boolean {
+  return OPENER.test(text);
+}
+
 /** 컨테이너의 닫는 줄: 콜론 셋 이상만. */
 const CLOSER = /^ {0,3}:{3,}[ \t]*$/;
 
@@ -79,3 +84,45 @@ function containerEnd(lines: readonly string[], open: number): number {
  * `[`나 `{`가 없는 `:이름`은 이모티콘·시각 표기와 구별할 수 없어 디렉티브로 보지 않는다.
  */
 export const INLINE_DIRECTIVE = /(?<![\w:])(:[A-Za-z][\w-]*(?:\[[^\]\n]*\](?:\{[^}\n]*\})?|\{[^}\n]*\}))/g;
+
+/** `scanDirectiveLines`가 돌려주는 줄 하나의 역할. */
+export type DirectiveLine =
+  /** 한 줄짜리(leaf) 디렉티브, 또는 닫히지 않은 컨테이너의 여는 줄: 원문 그대로 `raw`로 둔다. */
+  | { kind: "raw"; line: number }
+  /** 짝이 맞는 컨테이너의 여는 줄: 안쪽을 구조로 읽는다. */
+  | { kind: "open"; line: number }
+  /** 짝이 맞는 컨테이너의 닫는 줄. */
+  | { kind: "close"; line: number };
+
+/**
+ * 컨테이너 안쪽까지 구조로 읽기 위해, 최상위 구간이 아니라 **줄 하나씩** 역할을 매긴다(블로그 방언).
+ * 짝은 가장 최근에 연 컨테이너부터 닫는 규칙이다(블로그의 `normalizeContainerFences`와 같다). 코드 울타리 안은 건너뛴다.
+ * 짝 없는 닫는 줄은 디렉티브가 아니라 글자로 남는다.
+ */
+export function scanDirectiveLines(lines: readonly string[]): DirectiveLine[] {
+  const out: DirectiveLine[] = [];
+  const stack: number[] = []; // out에서 열린 컨테이너의 위치
+  let fence: string | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const fenceMatch = FENCE.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1]!;
+      if (fence === null) fence = marker;
+      else if (marker[0] === fence[0] && marker.length >= fence.length) fence = null;
+      continue;
+    }
+    if (fence !== null) continue;
+    if (LEAF.test(line)) out.push({ kind: "raw", line: i });
+    else if (OPENER.test(line)) {
+      stack.push(out.length);
+      out.push({ kind: "open", line: i });
+    } else if (CLOSER.test(line) && stack.length > 0) {
+      stack.pop();
+      out.push({ kind: "close", line: i });
+    }
+  }
+  // 끝까지 닫히지 않은 여는 줄은 원문 그대로 둔다.
+  for (const at of stack) out[at] = { kind: "raw", line: (out[at] as { line: number }).line };
+  return out;
+}

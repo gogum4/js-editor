@@ -19,7 +19,8 @@ import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
 
-import { findRawBlocks, INLINE_DIRECTIVE } from "./rawDirectives.ts";
+import { BLOG_CALLOUT_TO_TYPE, type MarkdownDialect } from "./dialect.ts";
+import { findRawBlocks, INLINE_DIRECTIVE, scanDirectiveLines } from "./rawDirectives.ts";
 
 // ───────────────────────── frontmatter ─────────────────────────
 
@@ -115,7 +116,10 @@ type Placeholder =
   | { kind: "blockId"; id: string; raw: string }
   /** 모르는 디렉티브(`ImportContext.rawDirectives`): 블록(`raw` 노드)과 글 중간(`rawInline` 노드). `text`가 원문 그대로다. */
   | { kind: "rawBlock"; text: string; raw: string }
-  | { kind: "rawInline"; text: string; raw: string };
+  | { kind: "rawInline"; text: string; raw: string }
+  /** 블로그 방언의 컨테이너 디렉티브 여는 줄(`head`가 원문)과 닫는 줄. 안쪽은 구조로 읽는다. */
+  | { kind: "dirOpen"; head: string; raw: string }
+  | { kind: "dirClose"; raw: string };
 
 interface Protected {
   text: string;
@@ -144,7 +148,7 @@ function looksLikeMoney(latex: string): boolean {
   return /^\s*\d[\d.,]*\s*$/.test(latex);
 }
 
-function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>, rawDirectives = false): string {
+function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>, rawDirectives = false, blog = false): string {
   const put = (placeholder: Placeholder) => `${OPEN}${store.push(placeholder) - 1}${CLOSE}`;
   const joined = splitCodeSpans(line)
     .map((part) => {
@@ -152,6 +156,8 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
       const text = rawDirectives ? part.text.replace(INLINE_DIRECTIVE, (raw) => put({ kind: "rawInline", text: raw, raw })) : part.text;
       return text
         .replace(/(!?)\[\[([^[\]\n]+?)\]\]/g, (raw, bang: string, inner: string) => {
+          // 블로그에는 위키 링크가 없다: `[[글]]`은 그냥 글자다.
+          if (blog) return raw;
           // `이름#위치|표시 글자` (위치는 `제목` 또는 `^블록`).
           const [target = "", alias] = (inner as string).split("|", 2) as [string, string | undefined];
           const hash = target.indexOf("#");
@@ -166,6 +172,7 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
     })
     .join("");
   // 줄 끝의 `^블록id`. 글자가 있는 id만(`x ^2` 같은 지수 표기가 id로 읽히지 않게 3글자 이상, 글자 포함).
+  if (blog) return joined; // 블로그에는 `^id`가 없다: 줄 끝의 `^abc`는 글자다.
   return joined.replace(BLOCK_ID_AT_END, (raw, _lead: string, id: string) => (/[A-Za-z]/.test(id) ? put({ kind: "blockId", id, raw }) : raw));
 }
 
@@ -175,13 +182,27 @@ const BLOCK_ID_AT_END = /(^|[ \t])\^([A-Za-z0-9][A-Za-z0-9-]{2,})[ \t]*$/;
  * `marked`가 망가뜨릴 것들을 자리표시자로 바꾼다: 위키 링크, 수식(`_`·`*`가 기울임으로 읽힌다), 각주 정의와 참조.
  * 코드 블록(``` 울타리)과 인라인 코드 안은 그대로 둔다. 블록 수식(`$$ … $$`)은 자기 문단이 되도록 앞뒤에 빈 줄을 둔다.
  */
-function protect(source: string, rawDirectives = false): Protected {
+function protect(source: string, rawDirectives = false, blog = false): Protected {
   let lines = source.replace(/\r\n/g, "\n").split("\n");
   const store: Placeholder[] = [];
   const footnotes = new Map<string, string>();
 
   // 0) 모르는 디렉티브 구간은 원문 그대로 자리표시자 한 줄로 바꾼다(앞뒤에 빈 줄을 두어 자기 문단이 되게 한다). 아래 단계가 안을 건드리지 못한다.
-  if (rawDirectives) {
+  if (blog) {
+    // 블로그 방언: 컨테이너는 여는 줄·닫는 줄을 따로 자리표시자로 바꾸고 안쪽은 평소처럼 읽는다(구조는 `convertBlocks`가 짝지어 만든다).
+    const roles = new Map(scanDirectiveLines(lines).map((r) => [r.line, r.kind]));
+    if (roles.size > 0) {
+      const replaced: string[] = [];
+      lines.forEach((line, index) => {
+        const role = roles.get(index);
+        if (role === undefined) return void replaced.push(line);
+        const placeholder: Placeholder =
+          role === "open" ? { kind: "dirOpen", head: line.trim(), raw: line } : role === "close" ? { kind: "dirClose", raw: line } : { kind: "rawBlock", text: line, raw: line };
+        replaced.push("", `${store.push(placeholder) - 1}`, "");
+      });
+      lines = replaced;
+    }
+  } else if (rawDirectives) {
     const regions = findRawBlocks(lines);
     if (regions.length > 0) {
       const replaced: string[] = [];
@@ -243,6 +264,11 @@ function protect(source: string, rawDirectives = false): Protected {
       let latex: string;
       if (closedOnSameLine) {
         latex = closedOnSameLine[1]!.trim();
+        if (blog) {
+          // 블로그에서 한 줄짜리 `$$…$$`는 블록 수식이 아니라 글 속 수식으로 그려진다 → 구별되지 않게 원문 그대로 둔다.
+          out.push("", `${store.push({ kind: "rawBlock", text: line, raw: line }) - 1}`, "");
+          continue;
+        }
       } else {
         const body: string[] = first.trim() === "" ? [] : [first];
         let closed = false;
@@ -258,7 +284,7 @@ function protect(source: string, rawDirectives = false): Protected {
         }
         if (!closed) {
           // 닫히지 않은 `$$`는 수식이 아니라 그냥 글자다.
-          out.push(protectInline(line, store, footnotes, rawDirectives));
+          out.push(protectInline(line, store, footnotes, rawDirectives, blog));
           continue;
         }
         latex = body.join("\n").trim();
@@ -268,7 +294,7 @@ function protect(source: string, rawDirectives = false): Protected {
       out.push("", ref, "");
       continue;
     }
-    out.push(protectInline(line, store, footnotes, rawDirectives));
+    out.push(protectInline(line, store, footnotes, rawDirectives, blog));
   }
   return { text: out.join("\n"), store, footnotes };
 }
@@ -291,6 +317,12 @@ export interface ImportContext {
    * 끄면(기본) 일반 글자로 읽는다. 노트 앱은 쓰지 않는다 — 이 노드는 `createCoreExtensions({ raw: true })`를 켠 소비자(블로그)를 위한 것이다.
    */
   rawDirectives?: boolean;
+  /**
+   * Markdown 방언. 기본 `obsidian`. `blog`이면 블로그의 `remark-directive` 문법으로 읽는다: `:::note|info|tip|warning|danger`는 콜아웃,
+   * `:::center|right`는 정렬, 그 밖의 컨테이너는 `directive` 노드(안쪽을 고칠 수 있다), 한 줄짜리·글 중간 디렉티브는 `raw`/`rawInline`으로 보존한다.
+   * 위키 링크·`^id`·`> [!NOTE]`·HTML은 블로그에 없는 문법이라 읽지 않고 글자(HTML은 원문 그대로 `raw`)로 둔다. `rawDirectives`는 자동으로 켜진다.
+   */
+  dialect?: MarkdownDialect;
 }
 
 export interface MarkdownImportResult {
@@ -315,6 +347,7 @@ export const NOTICE = {
 
 interface State {
   ctx: ImportContext;
+  blog: boolean;
   fromDir: string;
   store: Placeholder[];
   footnotes: Map<string, string>;
@@ -379,6 +412,11 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
   const push = (value: string) => {
     if (value === "") return;
     // 줄바꿈은 눈에 보이는 줄바꿈으로 둔다(Obsidian의 기본 보기와 같다).
+    if (state.blog) {
+      // 블로그는 줄바꿈 한 개를 공백으로 그린다(문단 안의 줄바꿈은 눈에 보이는 줄바꿈이 아니다) → 글자 속 `\n`로 둔다.
+      if (value !== "") nodes.push(textNode(decodeEntities(value), marks));
+      return;
+    }
     value.split("\n").forEach((piece, index) => {
       if (index > 0) nodes.push({ type: "hardBreak" });
       if (piece !== "") nodes.push(textNode(decodeEntities(piece), marks));
@@ -393,7 +431,7 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     if (p.kind === "wiki") nodes.push(wikiNode(p, marks, state));
     else if (p.kind === "blockId") state.foundId = p.id;
     else if (p.kind === "rawInline") nodes.push({ type: "rawInline", attrs: { text: p.text } });
-    else if (p.kind === "rawBlock") nodes.push(textNode(p.text, marks));
+    else if (p.kind === "rawBlock" || p.kind === "dirOpen" || p.kind === "dirClose") nodes.push(textNode(p.raw, marks));
     else if (p.kind === "footnote") nodes.push({ type: "footnote", attrs: { text: state.footnotes.get(p.id) ?? "" } });
     else nodes.push({ type: "mathInline", attrs: { latex: p.latex } });
   }
@@ -419,7 +457,7 @@ function imageNode(href: string, rawAlt: string, state: State): PmNode {
   // `설명|300`·`설명|300x200`·`300`(Obsidian): 너비만 쓴다.
   let alt = rawAlt;
   let width: number | null = null;
-  const sized = /^(.*?)\|\s*(\d+)(?:x\d+)?\s*$/.exec(rawAlt);
+  const sized = state.blog ? null : /^(.*?)\|\s*(\d+)(?:x\d+)?\s*$/.exec(rawAlt);
   if (sized) {
     alt = sized[1]!.trim();
     width = normalizeImageWidth(Number(sized[2]));
@@ -592,7 +630,7 @@ function calloutType(name: string): string {
 
 function blockquoteBlocks(token: Tokens.Blockquote, state: State): PmNode[] {
   const first = token.tokens[0];
-  const header = first && first.type === "paragraph" ? /^\[!([A-Za-z]+)\][+-]?[ \t]*([^\n]*)(?:\n([\s\S]*))?$/.exec((first as Tokens.Paragraph).text) : null;
+  const header = first && first.type === "paragraph" && !state.blog ? /^\[!([A-Za-z]+)\][+-]?[ \t]*([^\n]*)(?:\n([\s\S]*))?$/.exec((first as Tokens.Paragraph).text) : null;
   if (!header) {
     const content = convertBlocks(token.tokens, state);
     return [{ type: "blockquote", content: content.length > 0 ? content : [{ type: "paragraph" }] }];
@@ -701,8 +739,12 @@ function tokenBlocksWithoutId(token: Token, state: State): PmNode[] {
       return blockquoteBlocks(token as Tokens.Blockquote, state);
     case "list":
       return listBlocks(token as Tokens.List, state);
-    case "table":
-      return [tableBlock(token as Tokens.Table, state)];
+    case "table": {
+      const table = token as Tokens.Table;
+      // 블로그는 표 열 정렬(`:---`·`---:`)을 그린다. 에디터의 표에는 열 정렬이 없어서 원문 그대로 둔다.
+      if (state.blog && table.align.some((a) => a !== null)) return [{ type: "raw", attrs: { text: restoreRaw(table.raw, state).replace(/\n+$/, "") } }];
+      return [tableBlock(table, state)];
+    }
     case "hr":
       return [{ type: "horizontalRule" }];
     case "space":
@@ -720,7 +762,8 @@ function tokenBlocksWithoutId(token: Token, state: State): PmNode[] {
 type Frame =
   | { kind: "root"; nodes: PmNode[] }
   | { kind: "div"; nodes: PmNode[]; align: string | null }
-  | { kind: "details"; nodes: PmNode[]; title: PmNode[] | null };
+  | { kind: "details"; nodes: PmNode[]; title: PmNode[] | null }
+  | { kind: "directive"; nodes: PmNode[]; head: string };
 
 /** 정렬이 필요한 문단·제목·이미지에 `textAlign`을 단다(이미지는 양쪽 맞춤이 없다). */
 function alignNodes(nodes: PmNode[], align: string): PmNode[] {
@@ -792,13 +835,46 @@ function closeDetails(stack: Frame[]): void {
   stack[stack.length - 1]!.nodes.push({ type: "toggle", content: [title, ...frame.nodes] });
 }
 
+/**
+ * 블로그 컨테이너 디렉티브 하나를 노드로: 이름만 있는 콜아웃(`:::note` …)은 콜아웃, `:::center`·`:::right`는 안쪽 문단·제목·이미지의 정렬,
+ * 그 밖(제목이 있는 콜아웃·`indent`·`fold`·속성이 있는 것)은 여는 줄 원문을 간직한 `directive` 노드다.
+ */
+function directiveNode(head: string, nodes: PmNode[]): PmNode[] {
+  const content = nodes.length > 0 ? nodes : [{ type: "paragraph" }];
+  const name = /^:{3,}([A-Za-z][\w-]*)$/.exec(head)?.[1];
+  const calloutType = name ? BLOG_CALLOUT_TO_TYPE[name] : undefined;
+  if (calloutType) return [{ type: "callout", attrs: { type: calloutType }, content }];
+  if ((name === "center" || name === "right") && content.every((n) => n.type === "paragraph" || n.type === "heading" || n.type === "image")) {
+    return alignNodes(content, name);
+  }
+  return [{ type: "directive", attrs: { head }, content }];
+}
+
 /** 블록 토큰들을 본문 블록들로. `<div align>`과 `<details>`는 짝이 맞는 구간을 묶어서 정렬 속성·토글로 만든다. */
 function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
   const stack: Frame[] = [{ kind: "root", nodes: [] }];
   for (const token of tokens) {
     if (token.type === "html") {
-      handleHtml((token as Tokens.HTML).raw, stack, state);
+      // 블로그는 HTML을 그리지 않는다 → 내용을 잃지 않게 원문 그대로 둔다.
+      if (state.blog) stack[stack.length - 1]!.nodes.push({ type: "raw", attrs: { text: (token as Tokens.HTML).raw.replace(/\n+$/, "") } });
+      else handleHtml((token as Tokens.HTML).raw, stack, state);
       continue;
+    }
+    if (state.blog && token.type === "paragraph") {
+      const only = /^(\d+)$/.exec((token as Tokens.Paragraph).text.trim());
+      const placeholder = only ? state.store[Number(only[1])] : undefined;
+      if (placeholder?.kind === "dirOpen") {
+        stack.push({ kind: "directive", nodes: [], head: placeholder.head });
+        continue;
+      }
+      if (placeholder?.kind === "dirClose") {
+        const top = stack[stack.length - 1]!;
+        if (top.kind === "directive") {
+          stack.pop();
+          stack[stack.length - 1]!.nodes.push(...directiveNode(top.head, top.nodes));
+          continue;
+        }
+      }
     }
     const frame = stack[stack.length - 1]!;
     state.orphanId = null;
@@ -810,8 +886,12 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
   }
   // 닫히지 않은 구간은 닫는다.
   while (stack.length > 1) {
-    if (stack[stack.length - 1]!.kind === "details") closeDetails(stack);
-    else popDiv(stack);
+    const top = stack[stack.length - 1]!;
+    if (top.kind === "details") closeDetails(stack);
+    else if (top.kind === "directive") {
+      stack.pop();
+      stack[stack.length - 1]!.nodes.push(...directiveNode(top.head, top.nodes));
+    } else popDiv(stack);
   }
   return stack[0]!.nodes;
 }
@@ -821,8 +901,9 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
  * 이미지 노드는 `importPath`만 가지고 있다 — 이미지를 저장소에 넣은 뒤 `finalizeImages`로 해시와 형식을 채운다.
  */
 export function markdownToDoc(markdown: string, ctx: ImportContext, fromDir: string): MarkdownImportResult {
-  const { text, store, footnotes } = protect(markdown, ctx.rawDirectives === true);
-  const state: State = { ctx, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
+  const blog = ctx.dialect === "blog";
+  const { text, store, footnotes } = protect(markdown, ctx.rawDirectives === true || blog, blog);
+  const state: State = { ctx, blog, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
   const tokens = new Lexer({ gfm: true, breaks: false }).lex(text);
   const content = convertBlocks(tokens, state);
   return {

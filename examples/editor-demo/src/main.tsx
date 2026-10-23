@@ -51,6 +51,7 @@ const doc = raw
       content: [
         ...DEMO_DOC.content,
         { type: "raw", attrs: { text: ":::fold{h=1}\n안쪽 줄\n:::" } },
+        { type: "directive", attrs: { head: ":::indent{n=1}" }, content: [{ type: "paragraph", content: [{ type: "text", text: "디렉티브 안쪽" }] }] },
         { type: "paragraph", content: [{ type: "text", text: "앞 " }, { type: "rawInline", attrs: { text: ":postlink[글]{slug=a}" } }, { type: "text", text: " 뒤" }] },
       ],
     }

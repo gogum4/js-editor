@@ -20,6 +20,7 @@ import { CodeBlock } from "./extensions/CodeBlock";
 import { TextAlign } from "./extensions/TextAlign";
 import { Footnote } from "./footnote/Footnote";
 import { MathBlock } from "./math/MathBlock";
+import { Directive } from "./raw/Directive";
 import { Raw, RawInline } from "./raw/Raw";
 import { MathInline } from "./math/MathInline";
 import { LinkOpener } from "./extensions/LinkOpener";
@@ -122,7 +123,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     Footnote.configure({ nodeView: views.footnote ?? null }),
     MathInline.configure({ nodeView: views.mathInline ?? null }),
     MathBlock.configure({ nodeView: views.mathBlock ?? null }),
-    ...(options.raw ? [Raw, RawInline] : []),
+    ...(options.raw ? [Raw, RawInline, Directive] : []),
     SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
   ];
