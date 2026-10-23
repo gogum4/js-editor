@@ -13,6 +13,13 @@ export const koStrings: EditorStrings = {
     types: { note: "정보", tip: "팁", important: "중요", warning: "경고", caution: "주의" },
   },
   codeBlock: { show: "코드 보기", hide: "코드 접기", copy: "복사", copied: "복사됨", copyFailed: "복사 실패" },
+  reference: {
+    loading: "불러오는 중…",
+    missing: "삭제됐거나 찾을 수 없는 항목이에요",
+    unresolved: "불러오지 못했어요",
+    unknownKind: (kind) => `알 수 없는 참조(${kind})`,
+    openLabel: (title) => `${title} 열기`,
+  },
   raw: { blockLabel: "원문 (편집기가 모르는 문법)", sourceLabel: "원문 편집", inlineTitle: "더블클릭하여 원문 편집", directiveLabel: "블록 문법의 여는 줄" },
   languagePicker: {
     title: "언어 선택",

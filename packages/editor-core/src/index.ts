@@ -20,7 +20,7 @@ export type { SlashHandlers } from "./slash/runSlashCommand";
 export { EditorPortsExtension, portsOf, stringsOf, uiOf } from "./ports/editorPorts";
 export { type EditorMenus, type EditorUi, type EditorViews, type NodeViewOptions, noUi, type SuggestionRender } from "./ports/ui";
 export { browserUrlOpener, consoleNotifier, memoryKeyValue, memoryPorts, noAssets } from "./ports/memory";
-export type { AssetStore, EditorPorts, KeyValueStore, Notifier, StoredAsset, UrlOpener } from "./ports/types";
+export type { AssetStore, EditorPorts, KeyValueStore, Notifier, ReferenceInfo, ReferenceResolver, StoredAsset, UrlOpener } from "./ports/types";
 
 // 화면 글 사전
 export { enStrings, type EditorStrings, koStrings } from "./strings/index";
@@ -28,6 +28,7 @@ export { enStrings, type EditorStrings, koStrings } from "./strings/index";
 // `@9um4/editor-react`가 쓰는 내부 (수식·각주 편집, 수식 렌더 로더, 자동완성 계산, mermaid 도구, 이미지 캐시)
 export type { Candidate } from "./completion/words";
 export { Raw, RawInline, SoftBreak } from "./raw/Raw";
+export { Reference } from "./reference/Reference";
 export { Directive } from "./raw/Directive";
 export { setFootnoteText } from "./footnote/footnoteEdit";
 export type { FootnoteEditState } from "./footnote/footnoteEdit";

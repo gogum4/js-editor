@@ -46,6 +46,13 @@ export const enStrings: EditorStrings = {
     types: { note: "Info", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution" },
   },
   codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed" },
+  reference: {
+    loading: "Loading…",
+    missing: "This item was deleted or cannot be found",
+    unresolved: "Could not load",
+    unknownKind: (kind) => `Unknown reference (${kind})`,
+    openLabel: (title) => `Open ${title}`,
+  },
   raw: { blockLabel: "Source (syntax the editor does not know)", sourceLabel: "Edit source", inlineTitle: "Double-click to edit the source", directiveLabel: "Opening line of the block syntax" },
   languagePicker: {
     title: "Choose language",

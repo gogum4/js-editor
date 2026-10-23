@@ -21,6 +21,8 @@ export interface EditorViews {
   toggle?: NodeViewRenderer;
   mathInline?: NodeViewRenderer;
   mathBlock?: NodeViewRenderer;
+  /** 참조 노드. 주입하지 않으면 코어의 DOM 화면(해석기 기반 카드)을 쓴다. */
+  reference?: NodeViewRenderer;
 }
 
 /** `@tiptap/suggestion`의 `render`(메뉴를 띄우고 갱신하고 닫는 훅 묶음). */

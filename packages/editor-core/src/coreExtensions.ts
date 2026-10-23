@@ -22,6 +22,7 @@ import { Footnote } from "./footnote/Footnote";
 import { MathBlock } from "./math/MathBlock";
 import { Directive } from "./raw/Directive";
 import { Raw, RawInline, SoftBreak } from "./raw/Raw";
+import { Reference } from "./reference/Reference";
 import { MathInline } from "./math/MathInline";
 import { LinkOpener } from "./extensions/LinkOpener";
 import { MarkdownCopy, type MarkdownCopyOptions } from "./extensions/MarkdownCopy";
@@ -55,6 +56,11 @@ export interface CoreExtensionsOptions {
    * 노트 앱은 켜지 않는다.
    */
   raw?: boolean;
+  /**
+   * 일반 참조 노드(`reference`: 다른 개체를 `kind`·`id`로만 가리키는 카드)를 스키마에 넣는다(기본 꺼짐, docs/EDITOR-PACKAGE.md P7).
+   * 카드의 내용은 `ports.references[kind]`(해석기)가 채운다. **노드를 더하는 것이므로** 본문을 저장하는 소비자는 본문 스키마 버전을 올려야 한다 — 노트 앱은 켜지 않는다.
+   */
+  reference?: boolean;
   /** 화면 글 사전. 기본은 한국어. */
   strings?: EditorStrings;
   /** 슬래시 메뉴 항목을 바꾼다(기본 항목을 받아 앱의 항목을 끼워 넣어 돌려준다). */
@@ -124,6 +130,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     MathInline.configure({ nodeView: views.mathInline ?? null }),
     MathBlock.configure({ nodeView: views.mathBlock ?? null }),
     ...(options.raw ? [Raw, RawInline, Directive, SoftBreak] : []),
+    ...(options.reference ? [Reference.configure({ nodeView: views.reference ?? null })] : []),
     SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
   ];

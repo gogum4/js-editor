@@ -38,6 +38,8 @@ export interface EditorStrings {
     loading: string;
     viewer: { fitShort: string; label: string; hint: string; zoomOut: string; zoomIn: string; fit: string; actualSize: string; close: string; diagram: string };
   };
+  /** 참조 노드(다른 개체를 가리키는 카드). */
+  reference: { loading: string; missing: string; unresolved: string; unknownKind: (kind: string) => string; openLabel: (title: string) => string };
   footnote: {
     heading: string;
     empty: string;
