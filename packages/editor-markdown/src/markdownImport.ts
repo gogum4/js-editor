@@ -413,8 +413,12 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     if (value === "") return;
     // 줄바꿈은 눈에 보이는 줄바꿈으로 둔다(Obsidian의 기본 보기와 같다).
     if (state.blog) {
-      // 블로그는 줄바꿈 한 개를 공백으로 그린다(문단 안의 줄바꿈은 눈에 보이는 줄바꿈이 아니다) → 글자 속 `\n`로 둔다.
-      if (value !== "") nodes.push(textNode(decodeEntities(value), marks));
+      // 블로그는 줄바꿈 한 개를 공백으로 그린다(문단 안의 줄바꿈은 눈에 보이는 줄바꿈이 아니다) → 하드 브레이크가 아니라 `softBreak`로 둔다.
+      // (글자 속 `\n`로 두면 에디터가 그 근처를 고칠 때 DOM을 다시 읽으며 하드 브레이크로 바꿔 버린다.)
+      value.split("\n").forEach((piece, index) => {
+        if (index > 0) nodes.push({ type: "softBreak", ...(marks.length > 0 ? { marks: [...marks] } : {}) });
+        if (piece !== "") nodes.push(textNode(decodeEntities(piece), marks));
+      });
       return;
     }
     value.split("\n").forEach((piece, index) => {

@@ -72,6 +72,7 @@ describe("블로그 방언 가져오기", () => {
     const source = "첫 줄\n둘째 줄\n셋째 줄\n";
     const doc = parse(source);
     expect(JSON.stringify(doc)).not.toContain("hardBreak");
+    expect(JSON.stringify(doc)).toContain("softBreak");
     expect(roundTrip(source)).toBe(source);
   });
 

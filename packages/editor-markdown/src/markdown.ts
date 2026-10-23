@@ -142,6 +142,9 @@ class Renderer {
         return "\\\n";
       case "pageLink":
         return this.pageLink(node);
+      case "softBreak":
+        // 문단 안의 줄바꿈 한 개(블로그는 공백으로 그린다).
+        return "\n";
       case "rawInline":
         // 에디터가 모르는 글 중간 디렉티브: 원문 그대로.
         return typeof node.attrs?.text === "string" ? node.attrs.text : "";

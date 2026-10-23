@@ -203,3 +203,23 @@ export const RawInline = Node.create({
     };
   },
 });
+
+/**
+ * 문단 안의 줄바꿈 한 개(소스에서 줄을 나눈 자리). 블로그의 마크다운은 이것을 공백으로 그리므로 하드 브레이크(`hardBreak`)와 다르다 — 에디터에서는 공백으로 보인다.
+ * 글자 속 `\n`로 두면 에디터가 근처를 고칠 때 DOM을 다시 읽으며 하드 브레이크로 바꿔 버려서 따로 노드로 둔다. `createCoreExtensions({ raw: true })`로 켠다.
+ */
+export const SoftBreak = Node.create({
+  name: "softBreak",
+  group: "inline",
+  inline: true,
+  atom: true,
+  selectable: false,
+
+  parseHTML() {
+    return [{ tag: "span[data-soft-break]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["span", mergeAttributes({ "data-soft-break": "", class: "md-soft-break" }, HTMLAttributes), " "];
+  },
+});
