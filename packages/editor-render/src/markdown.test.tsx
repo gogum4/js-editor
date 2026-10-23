@@ -113,7 +113,7 @@ describe("방언·참조 (P7)", () => {
     const out = renderToStaticMarkup(element as never);
     expect(out).toContain("callout-note");
     expect(out).toContain('data-head=":::indent{n=1}"');
-    expect(out).toContain("<em data-x=\"\">::youtube{id=abc123}</em>");
+    expect(out).toContain("<em data-x=\"true\">::youtube{id=abc123}</em>");
   });
 
   it("참조 표기를 켜면 참조 노드가 되고 renderReference가 그린다", async () => {
