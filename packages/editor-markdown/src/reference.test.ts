@@ -75,3 +75,30 @@ describe("참조 노드 왕복", () => {
     expect(out.notices.length).toBe(1);
   });
 });
+
+describe("참조 설정(props)", () => {
+  it("기본 표기의 나머지 속성이 props가 되고 이름순으로 돌아온다", () => {
+    expect(parseReferenceLine("::ref{kind=table id=Item rows=5 mode=\"a b\"}")).toEqual({ kind: "table", id: "Item", props: { mode: "a b", rows: "5" } });
+    expect(formatReference("table", "Item", { rows: "5", mode: "a b" })).toBe('::ref{kind=table id=Item mode="a b" rows=5}');
+    expect(formatReference("table", "Item", null)).toBe("::ref{kind=table id=Item}");
+  });
+
+  it("왕복: props가 노드 속성으로 읽히고 그대로 나간다", () => {
+    const source = "::ref{kind=table id=Item rows=5}\n";
+    const { doc } = markdownToDoc(source, { ...base, references: true }, "");
+    expect(doc.content?.[0]?.attrs).toEqual({ kind: "table", id: "Item", props: { rows: "5" } });
+    expect(docToMarkdown(doc, noPages).markdown).toBe(source);
+  });
+
+  it("사용자 표기: `{{table:이름 rows=N}}`", () => {
+    const parse = (line: string) => {
+      const m = /^\{\{\s*table:\s*([^\s{}]+)(?:\s+rows=(\d{1,3}))?\s*\}\}$/.exec(line.trim());
+      return m ? { kind: "table", id: m[1]!, ...(m[2] ? { props: { rows: m[2] } } : {}) } : null;
+    };
+    const source = "{{table:EnhanceRate rows=5}}\n\n{{table:Item}}\n";
+    const { doc } = markdownToDoc(source, { ...base, references: parse }, "");
+    expect(doc.content?.map((n) => n.attrs)).toEqual([{ kind: "table", id: "EnhanceRate", props: { rows: "5" } }, { kind: "table", id: "Item" }]);
+    const out = docToMarkdown(doc, { ...noPages, references: { toMarkdown: (kind, id, props) => (kind === "table" ? `{{table:${id}${props?.rows ? ` rows=${props.rows}` : ""}}}` : undefined) } });
+    expect(out.markdown).toBe(source);
+  });
+});

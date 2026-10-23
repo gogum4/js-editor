@@ -20,14 +20,34 @@ export function normalizeReferenceId(value: unknown): string | null {
   return value;
 }
 
+/** 참조에 딸린 설정(예: PlanBench의 `{{table:이름 rows=5}}`의 `rows`). 이름은 `[A-Za-z][\w-]*`, 값은 한 줄 글자(200자 이하), 최대 20개. */
+export type ReferenceProps = Readonly<Record<string, string>>;
+
+const PROP_NAME = /^[A-Za-z][\w-]*$/;
+
+/** 올바른 설정만 남긴다. 하나도 없거나 올바르지 않으면(배열·객체가 아님 등) null. 이름을 정렬해서 같은 값은 같은 모양이 되게 한다. */
+export function normalizeReferenceProps(value: unknown): ReferenceProps | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const entries = Object.entries(value as Record<string, unknown>)
+    // eslint-disable-next-line no-control-regex
+    .filter(([k, v]) => PROP_NAME.test(k) && typeof v === "string" && v.length <= 200 && !/[\u0000-\u001f\u007f]/.test(v))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .slice(0, 20) as Array<[string, string]>;
+  return entries.length === 0 ? null : Object.fromEntries(entries);
+}
+
 export interface ReferenceTarget {
   kind: string;
   id: string;
+  /** 없으면 설정 없음. */
+  props?: ReferenceProps;
 }
 
-/** 두 값이 모두 올바를 때만 대상으로 돌려준다. */
-export function referenceTarget(kind: unknown, id: unknown): ReferenceTarget | null {
+/** 두 값이 모두 올바를 때만 대상으로 돌려준다. 설정(`props`)은 올바른 것만 붙는다. */
+export function referenceTarget(kind: unknown, id: unknown, props?: unknown): ReferenceTarget | null {
   const k = normalizeReferenceKind(kind);
   const i = normalizeReferenceId(id);
-  return k !== null && i !== null ? { kind: k, id: i } : null;
+  if (k === null || i === null) return null;
+  const p = normalizeReferenceProps(props);
+  return p === null ? { kind: k, id: i } : { kind: k, id: i, props: p };
 }

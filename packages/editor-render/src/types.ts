@@ -51,7 +51,7 @@ export interface RenderOptions {
    * 참조 노드(`reference`)를 그린다. 대상 정보는 소비자가 서버에서 미리 읽어 두고 여기서 요소를 돌려준다(렌더는 동기다).
    * `undefined`를 돌려주면 대체 표시(종류·id만 적은 상자), `null`이면 아무것도 그리지 않는다. 옵션이 없으면 대체 표시다.
    */
-  renderReference?: (target: { kind: string; id: string }) => ReactNode | undefined;
+  renderReference?: (target: { kind: string; id: string; props: Readonly<Record<string, string>> | null }) => ReactNode | undefined;
   /**
    * 에디터가 구조를 모르는 문법의 원문(`raw` 블록, `rawInline`)을 그린다(블로그 방언의 `::youtube{…}` 등). `undefined`를 돌려주면 원문을 그대로 보이고,
    * `null`이면 아무것도 그리지 않는다. 옵션이 없으면 원문을 보인다.

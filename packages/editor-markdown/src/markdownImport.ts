@@ -658,7 +658,7 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   const only = /^(\d+)$/.exec(token.text.trim());
   const placeholder = only ? state.store[Number(only[1])] : undefined;
   if (placeholder?.kind === "mathBlock") return [{ type: "mathBlock", attrs: { latex: placeholder.latex } }];
-  if (placeholder?.kind === "reference") return [{ type: "reference", attrs: { ...placeholder.target } }];
+  if (placeholder?.kind === "reference") return [{ type: "reference", attrs: { ...placeholder.target } }]; // props는 있을 때만 붙는다
   if (placeholder?.kind === "rawBlock") return [{ type: "raw", attrs: { text: placeholder.text } }];
   if (placeholder?.kind === "blockId") {
     // 자기 줄에 홀로 있는 `^id`는 바로 앞 블록의 id다(코드·표·수식 같은 줄 끝에 못 붙이는 블록).

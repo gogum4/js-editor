@@ -1,3 +1,5 @@
+import type { ReferenceProps } from "@9um4-utils/editor-schema/reference";
+
 /**
  * 에디터가 바깥(앱)에서 필요로 하는 것들. 에디터 코드는 `lib/api`나 화면 저장소를 직접 부르지 않고 이 포트만 쓴다
  * (docs/EDITOR-PACKAGE.md 4절). 앱은 `appPorts`로, 시험과 다른 소비자는 `memoryPorts`나 자기 구현으로 채운다.
@@ -54,9 +56,9 @@ export interface ReferenceInfo {
  */
 export interface ReferenceResolver {
   /** id의 개체를 읽는다. 없거나 지워졌으면 null(삭제됨으로 보인다). 거절하면 "불러오지 못함"으로 보인다. */
-  resolve(id: string): Promise<ReferenceInfo | null>;
+  resolve(id: string, props?: ReferenceProps): Promise<ReferenceInfo | null>;
   /** 카드를 눌렀을 때(개체 열기). 없으면 눌러도 아무 일이 없다. */
-  open?(id: string): void | Promise<void>;
+  open?(id: string, props?: ReferenceProps): void | Promise<void>;
   /** 개체가 바뀌거나 지워지면 `listener`를 부른다(카드가 다시 읽는다). 해제 함수를 돌려준다. */
   subscribe?(id: string, listener: () => void): () => void;
   /**

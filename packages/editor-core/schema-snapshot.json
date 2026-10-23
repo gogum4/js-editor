@@ -176,7 +176,8 @@
       "atom": true,
       "attrs": {
         "id": "(필수)",
-        "kind": "(필수)"
+        "kind": "(필수)",
+        "props": "(필수)"
       }
     },
     "softBreak": {

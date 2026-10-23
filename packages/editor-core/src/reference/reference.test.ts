@@ -103,7 +103,7 @@ describe("참조 노드 (core)", () => {
     await flush();
     expect(card().querySelector(".md-reference-title")?.textContent).toBe("바뀜");
     card().click();
-    expect(open).toHaveBeenCalledWith("p1");
+    expect(open).toHaveBeenCalledWith("p1", undefined);
     editor!.commands.setContent({ type: "doc", content: [{ type: "paragraph" }] });
     expect(unsubscribe).toHaveBeenCalled();
   });
@@ -114,7 +114,7 @@ describe("참조 노드 (core)", () => {
     await flush();
     editor!.view.dispatch(editor!.state.tr.setNodeMarkup(0, undefined, { kind: "page", id: "b" }));
     await flush();
-    expect(resolve).toHaveBeenCalledWith("b");
+    expect(resolve).toHaveBeenCalledWith("b", undefined);
     expect(card().querySelector(".md-reference-title")?.textContent).toBe("제목 b");
   });
 
@@ -137,5 +137,27 @@ describe("참조 노드 (core)", () => {
     listeners.forEach((listener) => listener()); // 구독을 새로 하면 같은 Set에 다시 들어가 forEach가 끝나지 않는다
     await flush();
     expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("props: 해석기와 열기에 넘기고, props만 바뀌면 구독은 그대로 두고 다시 읽는다", async () => {
+    const resolve = vi.fn(async (_id: string, props?: Record<string, string>) => ({ title: `행 ${props?.rows ?? "-"}` }));
+    const subscribe = vi.fn(() => () => {});
+    const open = vi.fn();
+    mount({ table: { resolve, subscribe, open } }, { type: "doc", content: [{ type: "reference", attrs: { kind: "table", id: "Item", props: { rows: "5" } } }, { type: "paragraph" }] });
+    await flush();
+    expect(resolve).toHaveBeenLastCalledWith("Item", { rows: "5" });
+    expect(card().querySelector(".md-reference-title")?.textContent).toBe("행 5");
+    card().click();
+    expect(open).toHaveBeenCalledWith("Item", { rows: "5" });
+    editor!.view.dispatch(editor!.state.tr.setNodeMarkup(0, undefined, { kind: "table", id: "Item", props: { rows: "10" } }));
+    await flush();
+    expect(card().querySelector(".md-reference-title")?.textContent).toBe("행 10");
+    expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("insertReference는 props를 받고, 올바르지 않은 props는 버린다", () => {
+    mount(undefined, doc("page", "a"));
+    expect(editor!.commands.insertReference("table", "T", { rows: "3", "1bad": "x" } as never)).toBe(true);
+    expect(JSON.stringify(editor!.getJSON())).toContain('"props":{"rows":"3"}');
   });
 });

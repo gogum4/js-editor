@@ -1,7 +1,7 @@
 import { type Editor, mergeAttributes, Node } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 
-import { referenceTarget } from "@9um4-utils/editor-schema/reference";
+import { normalizeReferenceProps, type ReferenceProps, referenceTarget } from "@9um4-utils/editor-schema/reference";
 import { portsOf, stringsOf } from "../ports/editorPorts";
 import type { ReferenceInfo, ReferenceResolver } from "../ports/types";
 import type { NodeViewOptions } from "../ports/ui";
@@ -10,7 +10,7 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     reference: {
       /** 다른 개체를 가리키는 참조 카드를 커서 자리에 끼운다. kind·id가 올바르지 않으면 하지 않는다. */
-      insertReference: (kind: string, id: string) => ReturnType;
+      insertReference: (kind: string, id: string, props?: ReferenceProps) => ReturnType;
     };
   }
 }
@@ -41,6 +41,23 @@ export const Reference = Node.create<NodeViewOptions>({
         parseHTML: (element) => element.getAttribute("data-id") ?? "",
         renderHTML: (attributes) => ({ "data-id": String(attributes.id ?? "") }),
       },
+      /** 참조에 딸린 설정(예: `{ rows: "5" }`). 없으면 null. HTML에는 JSON 글자로 싣는다. */
+      props: {
+        default: null,
+        parseHTML: (element) => {
+          const raw = element.getAttribute("data-props");
+          if (raw === null) return null;
+          try {
+            return normalizeReferenceProps(JSON.parse(raw));
+          } catch {
+            return null;
+          }
+        },
+        renderHTML: (attributes) => {
+          const props = normalizeReferenceProps(attributes.props);
+          return props === null ? {} : { "data-props": JSON.stringify(props) };
+        },
+      },
     };
   },
 
@@ -59,10 +76,10 @@ export const Reference = Node.create<NodeViewOptions>({
   addCommands() {
     return {
       insertReference:
-        (kind, id) =>
+        (kind, id, props) =>
         ({ commands }) => {
-          const target = referenceTarget(kind, id);
-          return target === null ? false : commands.insertContent({ type: this.name, attrs: target });
+          const target = referenceTarget(kind, id, props);
+          return target === null ? false : commands.insertContent({ type: this.name, attrs: { kind: target.kind, id: target.id, props: target.props ?? null } });
         },
     };
   },
@@ -141,6 +158,8 @@ function referenceDomView({ node: initial, editor }: { node: PmNode; editor: Edi
   };
 
   /** 대상의 내용을 (다시) 읽어 그린다. 구독은 건드리지 않는다 — 알림 안에서 다시 구독하면 알림이 끝나지 않을 수 있다. */
+  const propsOf = () => normalizeReferenceProps(node.attrs.props) ?? undefined;
+
   const refresh = () => {
     const mine = ++token;
     const { id } = node.attrs as { id: string };
@@ -149,7 +168,7 @@ function referenceDomView({ node: initial, editor }: { node: PmNode; editor: Edi
       return;
     }
     paint("loading", null);
-    resolver.resolve(id).then(
+    resolver.resolve(id, propsOf()).then(
       (info) => {
         if (mine === token) paint(info === null ? "missing" : "ready", info);
       },
@@ -173,7 +192,7 @@ function referenceDomView({ node: initial, editor }: { node: PmNode; editor: Edi
 
   dom.addEventListener("click", () => {
     const { id } = node.attrs as { id: string };
-    if (dom.getAttribute("data-state") === "ready") void resolver?.open?.(id);
+    if (dom.getAttribute("data-state") === "ready") void resolver?.open?.(id, propsOf());
   });
 
   load();
@@ -183,8 +202,11 @@ function referenceDomView({ node: initial, editor }: { node: PmNode; editor: Edi
     update(next: PmNode) {
       if (next.type !== node.type) return false;
       const changed = next.attrs.kind !== node.attrs.kind || next.attrs.id !== node.attrs.id;
+      // 설정만 바뀌면(예: 보여 줄 행 수) 구독은 그대로 두고 다시 읽는다.
+      const propsChanged = JSON.stringify(next.attrs.props ?? null) !== JSON.stringify(node.attrs.props ?? null);
       node = next;
       if (changed) load();
+      else if (propsChanged) refresh();
       return true;
     },
     stopEvent: () => false,

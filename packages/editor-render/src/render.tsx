@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { CALLOUT_META, normalizeCalloutType } from "@9um4-utils/editor-schema/callout";
 import { blockIdOf } from "@9um4-utils/editor-schema/blockId";
 import type { PmMark, PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import { normalizeReferenceProps } from "@9um4-utils/editor-schema/reference";
 import { isSafeToOpen } from "@9um4-utils/editor-schema/safeLink";
 import { normalizeTextAlign } from "@9um4-utils/editor-schema/textAlign";
 import { MermaidDiagram } from "./client/MermaidDiagram.tsx";
@@ -328,7 +329,7 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       const kind = typeof node.attrs?.kind === "string" ? node.attrs.kind : "";
       const id = typeof node.attrs?.id === "string" ? node.attrs.id : "";
       if (kind === "" || id === "") return null;
-      const custom = ctx.options.renderReference?.({ kind, id });
+      const custom = ctx.options.renderReference?.({ kind, id, props: normalizeReferenceProps(node.attrs?.props) });
       if (custom !== undefined) return custom === null ? null : <Keyed key={key}>{custom}</Keyed>;
       // 해석기가 없는 소비자의 대체 표시: 어떤 개체를 가리키는지만 적는다.
       return (

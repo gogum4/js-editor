@@ -11,6 +11,7 @@ import { normalizeImageWidth } from "@9um4-utils/editor-schema/imageLayout";
 import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
 import { normalizeTextAlign } from "@9um4-utils/editor-schema/textAlign";
 
+import { normalizeReferenceProps, type ReferenceProps } from "@9um4-utils/editor-schema/reference";
 import { formatReference } from "./referenceDirective.ts";
 import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
 
@@ -48,7 +49,7 @@ export interface MarkdownOptions {
    * 참조 노드(`reference`)의 내보내기. `toMarkdown(kind, id)`가 글자(한 줄 이상)를 돌려주면 그것을, `null`이면 내보내지 않고(안내함), `undefined`면 기본 표기
    * `::ref{kind=… id=…}`를 쓴다. 블로그처럼 해석기가 없는 소비자는 기본 표기나 대체 표현을 고른다.
    */
-  references?: { toMarkdown?: (kind: string, id: string) => string | null | undefined };
+  references?: { toMarkdown?: (kind: string, id: string, props: ReferenceProps | null) => string | null | undefined };
 }
 
 export interface MarkdownResult {
@@ -376,12 +377,13 @@ class Renderer {
       case "reference": {
         const kind = String(node.attrs?.kind ?? "");
         const id = String(node.attrs?.id ?? "");
-        const custom = this.options.references?.toMarkdown?.(kind, id);
+        const props = normalizeReferenceProps(node.attrs?.props);
+        const custom = this.options.references?.toMarkdown?.(kind, id, props);
         if (custom === null) {
           this.notices.add(`참조(${kind})를 Markdown으로 내보내지 않았어요.`);
           return null;
         }
-        const text = custom ?? formatReference(kind, id);
+        const text = custom ?? formatReference(kind, id, props);
         if (text === null) {
           this.notices.add("참조 정보가 올바르지 않은 블록은 내보내지 못했어요.");
           return null;
