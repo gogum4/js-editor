@@ -33,9 +33,9 @@ describe("gfm 방언", () => {
     const source = "> [!NOTE]\n> 인용\n\n$x_1 + y_2$ 와 $$z$$ 와 [^1]\n\n[^1]: 각주처럼 보임\n";
     const json = kinds(source);
     for (const word of ["callout", "mathInline", "mathBlock", '"footnote"']) expect(json, word).not.toContain(word);
-    // 글자는 그대로 보인다(`_`·`[` 앞의 `\\`는 렌더 결과가 같은 이스케이프 정규화).
+    // 글자는 그대로 보인다(`[` 앞의 `\\`는 렌더 결과가 같은 이스케이프 정규화, 단어 속 `_`는 이스케이프하지 않는다).
     const again = roundTrip(source);
-    expect(again).toContain("$x\\_1 + y\\_2$");
+    expect(again).toContain("$x_1 + y_2$");
     expect(again).toContain("$$z$$");
   });
 
@@ -69,5 +69,43 @@ describe("gfm 방언", () => {
   it("obsidian 방언은 이전과 같다(위키 링크는 해석된 것만 노드, 콜아웃 읽음)", () => {
     const o: ImportContext = { resolvePage: () => null, resolveImage: () => null };
     expect(JSON.stringify(markdownToDoc("> [!NOTE]\n> a\n", o, "").doc)).toContain("callout");
+  });
+});
+
+describe("gfm 방언의 최소 이스케이프", () => {
+  it("서식이 될 수 없는 자리는 이스케이프하지 않는다", () => {
+    const source = "snake_case_name 와 2 * 3 와 a ~ b 와 x < y 와 1~5\n";
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("서식이 될 수 있는 자리는 이스케이프한다", () => {
+    // 이스케이프한 글자(글자 그대로 `*`·`_`·`~~`·`<b>`·`[x]`)는 내보낼 때 다시 이스케이프한다.
+    const source = "2\\*3\\*4 와 \\_강조처럼\\_ 와 \\~\\~취소처럼\\~\\~ 와 \\<b>태그 와 \\[x\\]\n";
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("obsidian 방언은 예전처럼 항상 이스케이프한다", () => {
+    const o: ImportContext = { resolvePage: () => null, resolveImage: () => null };
+    const out = docToMarkdown(markdownToDoc("a_b ~ c\n", o, "").doc, { pageTitle: () => null }).markdown;
+    expect(out).toBe("a\\_b \\~ c\n");
+  });
+});
+
+describe("gfm 방언: 글머리와 할 일이 섞인 목록", () => {
+  it("한 목록으로 다시 읽히게 같은 기호로 쓴다(글머리 → 할 일, 할 일 → 글머리)", () => {
+    const source = "- 항목\n- [ ] 할 일\n- 항목 둘\n";
+    expect(parse(source).content!.map((n) => n.type)).toEqual(["bulletList", "taskList", "bulletList"]);
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("같은 종류의 목록 둘이 이어지면 기호를 바꿔서 둘로 남긴다", () => {
+    const doc = { type: "doc", content: [{ type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "a" }] }] }] }, { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "b" }] }] }] }] };
+    expect(docToMarkdown(doc, out).markdown).toBe("- a\n\n* b\n");
+  });
+
+  it("obsidian 방언은 예전처럼 글머리·할 일 사이에서 기호를 바꾼다", () => {
+    const o: ImportContext = { resolvePage: () => null, resolveImage: () => null };
+    const md = docToMarkdown(markdownToDoc("- 항목\n- [ ] 할 일\n", o, "").doc, { pageTitle: () => null }).markdown;
+    expect(md).toBe("- 항목\n\n* [ ] 할 일\n");
   });
 });

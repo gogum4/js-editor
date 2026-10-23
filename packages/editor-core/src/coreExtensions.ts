@@ -27,6 +27,7 @@ import { MathInline } from "./math/MathInline";
 import { LinkOpener } from "./extensions/LinkOpener";
 import { MarkdownCopy, type MarkdownCopyOptions } from "./extensions/MarkdownCopy";
 import { MarkdownPaste } from "./extensions/MarkdownPaste";
+import { Settle } from "./extensions/Settle";
 import { CodeHighlight } from "./highlight/CodeHighlight";
 import { ImageBlock } from "./image/ImageBlock";
 import { CORE_SLASH_ITEMS, localizeSlashItems, type SlashItem } from "./lib/slashItems";
@@ -61,6 +62,11 @@ export interface CoreExtensionsOptions {
    * 카드의 내용은 `ports.references[kind]`(해석기)가 채운다. **노드를 더하는 것이므로** 본문을 저장하는 소비자는 본문 스키마 버전을 올려야 한다 — 노트 앱은 켜지 않는다.
    */
   reference?: boolean;
+  /**
+   * 에디터를 만들자마자 문서의 자동 정리(끝 문단 등)를 끝낸다(기본 꺼짐). 켜지 않으면 **처음 원자 노드(링크·카드·원문 상자)를 누를 때** "Selection passed to setSelection…" 오류가 날 수 있다
+   * (`extensions/Settle.ts`). 켜면 열자마자 `onUpdate`가 한 번 불릴 수 있으니, 내보낸 결과를 기준과 비교해서 바뀐 때만 저장하는 소비자가 켠다. 노트 앱은 켜지 않는다.
+   */
+  settle?: boolean;
   /** 화면 글 사전. 기본은 한국어. */
   strings?: EditorStrings;
   /** 슬래시 메뉴 항목을 바꾼다(기본 항목을 받아 앱의 항목을 끼워 넣어 돌려준다). */
@@ -131,6 +137,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     MathBlock.configure({ nodeView: views.mathBlock ?? null }),
     ...(options.raw ? [Raw, RawInline, Directive, SoftBreak] : []),
     ...(options.reference ? [Reference.configure({ nodeView: views.reference ?? null })] : []),
+    ...(options.settle ? [Settle] : []),
     SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
   ];

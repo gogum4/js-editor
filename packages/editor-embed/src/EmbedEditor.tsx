@@ -63,6 +63,8 @@ export function EmbedEditor({ init, readOnly, transport, handle }: Props) {
         ports,
         strings,
         markdown: IMPORT_CONTEXT,
+        // 열자마자 문서 정리를 끝낸다(원자 노드를 처음 누를 때의 선택 오류 방지). 연 직후의 내보낸 글을 기준으로 삼으므로 변경으로 치지 않는다.
+        settle: true,
         slashItems: (core) => allowedSlashItems(core, init.features),
       }),
     [ports, strings, init.features],

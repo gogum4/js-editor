@@ -75,6 +75,30 @@ export function escapeInline(text: string): string {
   return text.replace(/[\\`*_[\]<~]/g, "\\$&");
 }
 
+const isSpace = (c: string | undefined) => c !== undefined && /\s/.test(c);
+const isWordChar = (c: string | undefined) => c !== undefined && /[\p{L}\p{N}]/u.test(c);
+
+/**
+ * 일반 GFM 문서(`gfm` 방언)용 이스케이프: 손으로 쓴 `.md` 파일에 `\`가 마구 붙지 않도록 **서식으로 읽힐 수 있는 자리만** 막는다.
+ * 단어 속 `_`(`snake_case`), 양옆이 공백인 `*`, 홀로 있는 `~`, HTML 시작이 아닌 `<`(`a < b`)는 그대로 둔다(CommonMark·markdown-it에서 서식을 열지 못한다).
+ * 글자 노드의 처음·끝 글자는 이웃을 몰라서 항상 막는다.
+ */
+export function escapeInlineGfm(text: string): string {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    const prev = text[i - 1];
+    const next = text[i + 1];
+    if (c === "\\" || c === "`" || c === "[" || c === "]") out += `\\${c}`;
+    else if (c === "*") out += isSpace(prev) && isSpace(next) ? c : `\\${c}`;
+    else if (c === "_") out += isWordChar(prev) && isWordChar(next) ? c : `\\${c}`;
+    else if (c === "<") out += next !== undefined && /[A-Za-z/!?]/.test(next) ? `\\${c}` : c;
+    else if (c === "~") out += prev === "~" || next === "~" ? `\\${c}` : c;
+    else out += c;
+  }
+  return out;
+}
+
 /** 줄 맨 앞의 `#`, `-`, `+`, `>`, `1.`이 블록 문법으로 읽히지 않게 한다. */
 function escapeLineStart(line: string): string {
   if (/^(#{1,6}(\s|$)|[-+>])/.test(line)) return `\\${line}`;
@@ -231,7 +255,7 @@ class Renderer {
     const core = raw.slice(lead.length, raw.length - trail.length);
     if (core === "") return raw;
 
-    let out = isCode ? renderCode(core) : escapeInline(core);
+    let out = isCode ? renderCode(core) : this.options.dialect === "gfm" ? escapeInlineGfm(core) : escapeInline(core);
     const has = (type: string) => marks.some((m) => m.type === type);
     if (has("underline")) {
       if (this.plain) this.notices.add("밑줄은 이 방언의 문법에 없어서 일반 글자로 내보냈어요.");
@@ -264,9 +288,11 @@ class Renderer {
       run = null;
     };
     let previousFamily: ReturnType<typeof listFamily> = null;
+    const gfm = this.options.dialect === "gfm";
+    let lastFamily: ReturnType<typeof listFamily> = null; // 바로 앞 블록이 목록이면 그 계열
     let flip = false;
     for (const node of list) {
-      const family = listFamily(node);
+      const family = listFamily(node, gfm);
       flip = family !== null && family === previousFamily ? !flip : false;
       this.flipList = flip;
       const rendered = this.block(node);
@@ -283,7 +309,11 @@ class Renderer {
         continue;
       }
       flushRun();
-      parts.push(this.aligned(node, rendered));
+      // 일반 GFM: 글머리 목록과 할 일 목록이 이어지면 같은 기호로 **빈 줄 없이** 붙여 써서 다시 한 목록(촘촘한 목록)으로 읽히게 한다.
+      if (gfm && parts.length > 0 && family !== null && family !== "ordered" && lastFamily !== null && lastFamily !== "ordered" && family !== lastFamily) {
+        parts[parts.length - 1] += `\n${rendered}`;
+      } else parts.push(this.aligned(node, rendered));
+      lastFamily = family;
     }
     flushRun();
     return parts.join("\n\n");
@@ -533,8 +563,8 @@ class Renderer {
         let previous: PmNode | null = null;
         let flip = false;
         for (const child of item.content ?? []) {
-          const family = listFamily(child);
-          flip = family !== null && previous !== null && family === listFamily(previous) ? !flip : false;
+          const family = listFamily(child, this.options.dialect === "gfm");
+          flip = family !== null && previous !== null && family === listFamily(previous, this.options.dialect === "gfm") ? !flip : false;
           this.flipList = flip;
           const rendered = this.block(child);
           this.flipList = false;
@@ -555,9 +585,12 @@ class Renderer {
 /**
  * 이어서 놓이면 Markdown이 한 목록으로 합치는 목록의 계열: 글머리·할 일은 `-`/`*`, 번호는 `.`/`)`. 같은 계열이 바로 이어지면
  * 둘째는 다른 기호(`*`, `)`)로 써서 목록 둘이 한 목록으로 합쳐지지 않게 한다(CommonMark는 기호가 바뀌면 새 목록으로 본다).
+ * `splitTasks`(일반 GFM): 그 방언에서 `- [ ] 할 일`은 그냥 글머리 항목이다 → 글머리 목록과 할 일 목록이 이어져 있으면 원래 한 목록이었으므로
+ * 계열을 나눠서(같은 기호를 쓰게 해서) 다시 한 목록으로 읽히게 한다. 같은 종류끼리 이어진 둘은 여전히 기호를 바꿔 쓴다.
  */
-function listFamily(node: PmNode): "bullet" | "ordered" | null {
-  if (node.type === "bulletList" || node.type === "taskList") return "bullet";
+function listFamily(node: PmNode, splitTasks = false): "bullet" | "task" | "ordered" | null {
+  if (node.type === "bulletList") return "bullet";
+  if (node.type === "taskList") return splitTasks ? "task" : "bullet";
   return node.type === "orderedList" ? "ordered" : null;
 }
 
