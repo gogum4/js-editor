@@ -396,6 +396,23 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 | 7-5 | **다크 모드**: `editor.css`·`ui.css`의 하드코딩 색을 CSS 변수(기본값은 지금 색)로, `data-theme="dark"`용 값 파일 | 계산된 스타일 기준 불변 + 다크 스크린샷 시험 |
 | 7-6 | 문서·6-5 빈틈 표 갱신, `check:dist`·CI | 전부 통과 |
 
+### P6b 상세 계획 (2026-10-23 결정): 캘린더(LunarTask, Flutter)에 Markdown 에디터 넣기
+
+사실: 캘린더(`~/todo`)는 **Flutter 앱**이고(Windows·Android·웹), 일정·할 일의 `description`(문자열)에 Markdown 편집기가 아직 없다. **이 서버에는 Flutter SDK가 없어서 Dart 코드는 빌드·실행할 수 없다**(`~/todo`는 운영 컨테이너 `lunartask-*`의 체크아웃이기도 해서 건드리지 않는다 — 블로그와 같은 규칙). 그래서 **웹 쪽(번들·메시지 규약·시험)을 완성하고 Flutter 연결은 명세와 검증되지 않은 예시로 남긴다**.
+
+결정: ① **React 에디터를 WebView에 올린다**(Flutter에 같은 편집기를 다시 만들지 않는다 — 통일이 이 프로젝트의 목적). ② 번들은 새 워크스페이스 패키지 `packages/editor-embed`(비공개, 앱 번들)가 만든다: Vite 정적 빌드(`index.html` + 에셋, 상대 경로라 `file://`·로컬 에셋 서버·iframe 어디서나 연다). ③ **호스트와의 대화는 버전이 붙은 JSON 메시지 규약**이다(전송 수단은 자동 감지: `flutter_inappwebview` 핸들러, `webview_flutter`의 JavaScriptChannel `EditorHost`, WebView2 `chrome.webview`, 부모 창 `postMessage`(Flutter 웹의 iframe)). ④ 저장 형식은 **Markdown 문자열 그대로**(`description`) — 기존 일반 글 설명은 **열기만 해서는 바뀌지 않는다**(블로그 시각 모드와 같은 규칙: 연 직후의 변환 결과와 같으면 `change`를 보내지 않는다). ⑤ 일반 글의 줄바꿈 한 개는 눈에 보이는 줄바꿈이므로 내보낼 때 `\`가 아니라 그냥 줄바꿈으로 쓴다(`MarkdownOptions.hardBreakStyle: "newline"`).
+
+| 단계 | 내용 | 끝났다고 볼 조건 |
+|---|---|---|
+| 6b-0 | 이 계획 | — |
+| 6b-1 | `editor-markdown`: `hardBreakStyle` 옵션(`"backslash"` 기본 \| `"newline"`) | 골든·왕복 시험 |
+| 6b-2 | `packages/editor-embed`: 메시지 규약(`protocol.ts`: 검증·인코딩), 전송 어댑터 4종(`transport.ts`), 기능 제한 목록(`features.ts`: `/` 메뉴 허용 항목), 앱(`main.tsx`) | 단위 시험 |
+| 6b-3 | 정적 번들 빌드와 **호스트 흉내 페이지**(iframe 부모)로 실제 Chromium 시험: `ready`→`init`→입력→`change`, 열기만 하면 `change` 없음, `setMarkdown`·`setTheme`·`readOnly`, `height` 자동 보고, 링크는 `openLink`로 호스트에 맡김, 키보드 포커스 이벤트 | 시험 통과, 번들 크기 기록 |
+| 6b-4 | `docs/EDITOR-EMBED.md`: 규약 명세, Flutter 연결 지침(플랫폼별 WebView 플러그인·에셋 적재·키보드·IME·다크 모드), 검증되지 않은 Dart 예시, 호스트가 해야 할 사람 확인 목록 | 문서 |
+| 6b-5 | 결과·빈틈 기록(번들 크기, 모바일 IME·가상 키보드는 미확인) | 기록 |
+
+하지 않는 것: `~/todo` 수정, Flutter 위젯의 빌드·실행 검증(SDK 없음), 이미지 첨부(일정 설명에는 이미지가 없다고 보고 `/` 메뉴에서 뺀다), 모바일 실기기 시험.
+
 ## 9. 결정 기록과 미결 질문
 
 ### 해소된 것
