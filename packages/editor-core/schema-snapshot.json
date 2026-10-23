@@ -1,0 +1,290 @@
+{
+  "nodes": {
+    "blockquote": {
+      "content": "block+",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)"
+      }
+    },
+    "bulletList": {
+      "content": "listItem+",
+      "group": "block list",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)"
+      }
+    },
+    "callout": {
+      "content": "block+",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)",
+        "type": "(필수)"
+      }
+    },
+    "codeBlock": {
+      "content": "text*",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)",
+        "language": "(필수)"
+      }
+    },
+    "directive": {
+      "content": "block+",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "head": "(필수)"
+      }
+    },
+    "doc": {
+      "content": "block+",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {}
+    },
+    "footnote": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {
+        "text": "(필수)"
+      }
+    },
+    "hardBreak": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {}
+    },
+    "heading": {
+      "content": "inline*",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)",
+        "level": "(필수)",
+        "textAlign": "(필수)"
+      }
+    },
+    "horizontalRule": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {
+        "id": "(필수)"
+      }
+    },
+    "image": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {
+        "alt": "(필수)",
+        "hash": "(필수)",
+        "id": "(필수)",
+        "mime": "(필수)",
+        "textAlign": "(필수)",
+        "width": "(필수)"
+      }
+    },
+    "listItem": {
+      "content": "paragraph block*",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {}
+    },
+    "mathBlock": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {
+        "id": "(필수)",
+        "latex": "(필수)"
+      }
+    },
+    "mathInline": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {
+        "latex": "(필수)"
+      }
+    },
+    "orderedList": {
+      "content": "listItem+",
+      "group": "block list",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)",
+        "start": "(필수)",
+        "type": "(필수)"
+      }
+    },
+    "paragraph": {
+      "content": "inline*",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)",
+        "textAlign": "(필수)"
+      }
+    },
+    "raw": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {
+        "text": "(필수)"
+      }
+    },
+    "rawInline": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {
+        "text": "(필수)"
+      }
+    },
+    "reference": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {
+        "id": "(필수)",
+        "kind": "(필수)"
+      }
+    },
+    "softBreak": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {}
+    },
+    "table": {
+      "content": "tableRow+",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)"
+      }
+    },
+    "tableCell": {
+      "content": "paragraph+",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "align": "(필수)",
+        "colspan": "(필수)",
+        "colwidth": "(필수)",
+        "rowspan": "(필수)"
+      }
+    },
+    "tableHeader": {
+      "content": "paragraph+",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "align": "(필수)",
+        "colspan": "(필수)",
+        "colwidth": "(필수)",
+        "rowspan": "(필수)"
+      }
+    },
+    "tableRow": {
+      "content": "(tableCell | tableHeader)*",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {}
+    },
+    "taskItem": {
+      "content": "paragraph block*",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "checked": "(필수)"
+      }
+    },
+    "taskList": {
+      "content": "taskItem+",
+      "group": "block list",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)"
+      }
+    },
+    "text": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {}
+    },
+    "toggle": {
+      "content": "paragraph block*",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {
+        "id": "(필수)"
+      }
+    }
+  },
+  "marks": {
+    "bold": {
+      "attrs": {}
+    },
+    "code": {
+      "attrs": {}
+    },
+    "italic": {
+      "attrs": {}
+    },
+    "link": {
+      "attrs": {
+        "class": "(필수)",
+        "href": "(필수)",
+        "rel": "(필수)",
+        "target": "(필수)",
+        "title": "(필수)"
+      }
+    },
+    "strike": {
+      "attrs": {}
+    },
+    "underline": {
+      "attrs": {}
+    }
+  }
+}
