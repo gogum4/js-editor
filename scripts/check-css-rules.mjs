@@ -4,21 +4,21 @@
 // 이 검사는 "사라진 규칙"만 잡는다. 규칙 **순서·우선순위**가 달라지는 것은 못 잡으므로 옮긴 뒤에는 화면 확인이 필요하다.
 //
 // 사용:  node scripts/check-css-rules.mjs            기준과 비교
-//        node scripts/check-css-rules.mjs --write    기준 파일을 현재 `BASELINE_SOURCE`에서 다시 만든다
-import { readFileSync, writeFileSync } from "node:fs";
+//        node scripts/check-css-rules.mjs --write    기준 파일을 현재 `GROUPS`의 원본에서 다시 만든다(원본이 없는 묶음은 이전 기록을 둔다)
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const baselinePath = `${root}scripts/css-rules-baseline.json`;
 
-/** 기준을 만드는 원본. */
-const BASELINE_SOURCE = ["src/index.css", "packages/editor-react/styles/ui.css", "packages/editor-react/styles/editor.css"];
-
 /**
- * 지금 규칙이 들어 있는 파일들. 옮긴 뒤에는 새 파일을 여기에 더하고, 선택자 이름을 바꿨다면 `rewrite`로 옛 이름을 맞춘다
- * (예: `[".md-editor", ".page-editor"]`는 새 파일의 `.md-editor`를 기준의 `.page-editor`로 보고 비교한다).
+ * 기준을 만드는 원본. 묶음마다 따로 기록하고, **원본 파일이 하나라도 없으면 그 묶음은 건너뛴다** — 패키지를 별도 저장소로 떼어도(docs/EDITOR-SPLIT.md)
+ * `app` 묶음(앱의 `src/index.css`)만 빠지고 `packages` 묶음은 그대로 검사된다.
  */
-const CURRENT_SOURCES = BASELINE_SOURCE.map((file) => ({ file, rewrite: [] }));
+const GROUPS = {
+  app: ["src/index.css"],
+  packages: ["packages/editor-react/styles/ui.css", "packages/editor-react/styles/editor.css"],
+};
 
 /** 주석을 지운다. */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -104,21 +104,40 @@ function count(list) {
 }
 
 const read = (file) => readFileSync(`${root}${file}`, "utf8");
+/** 이 묶음의 원본이 모두 있는가(없으면 건너뛴다). */
+const present = (files) => files.every((file) => existsSync(`${root}${file}`));
 
 if (process.argv.includes("--write")) {
-  const rules = BASELINE_SOURCE.flatMap((file) => ruleSet(read(file)));
-  writeFileSync(baselinePath, JSON.stringify(rules.sort(), null, 1) + "\n");
-  console.log(`기준 규칙 ${rules.length}개를 썼다 (${BASELINE_SOURCE.join(", ")})`);
+  // 기준 파일: { 묶음 이름: 규칙 목록 }. 원본이 없는 묶음은 이전 기록을 그대로 둔다.
+  const previous = existsSync(baselinePath) ? JSON.parse(readFileSync(baselinePath, "utf8")) : {};
+  const next = Array.isArray(previous) ? {} : previous;
+  for (const [name, files] of Object.entries(GROUPS)) {
+    if (!present(files)) continue;
+    next[name] = files.flatMap((file) => ruleSet(read(file))).sort();
+  }
+  writeFileSync(baselinePath, JSON.stringify(next, null, 1) + "\n");
+  console.log(`기준 규칙을 썼다: ${Object.entries(next).map(([name, rules]) => `${name} ${rules.length}개`).join(", ")}`);
 } else {
-  const baseline = count(JSON.parse(readFileSync(baselinePath, "utf8")));
-  const current = count(CURRENT_SOURCES.flatMap(({ file, rewrite }) => ruleSet(read(file), rewrite)));
+  const stored = JSON.parse(readFileSync(baselinePath, "utf8"));
+  const groups = Array.isArray(stored) ? { packages: stored } : stored;
   const missing = [];
-  for (const [rule, n] of baseline) if ((current.get(rule) ?? 0) < n) missing.push(rule);
+  let checked = 0;
   let added = 0;
-  for (const [rule, n] of current) if (!baseline.has(rule)) added += n;
+  const skipped = [];
+  for (const [name, files] of Object.entries(GROUPS)) {
+    if (!present(files)) {
+      skipped.push(name);
+      continue;
+    }
+    const baseline = count(groups[name] ?? []);
+    const current = count(files.flatMap((file) => ruleSet(read(file))));
+    checked += baseline.size;
+    for (const [rule, n] of baseline) if ((current.get(rule) ?? 0) < n) missing.push(rule);
+    for (const [rule, n] of current) if (!baseline.has(rule)) added += n;
+  }
   if (missing.length > 0) {
     console.error(`사라졌거나 바뀐 CSS 규칙 ${missing.length}개:\n  ${missing.slice(0, 20).join("\n  ")}${missing.length > 20 ? `\n  … 외 ${missing.length - 20}개` : ""}`);
     process.exit(1);
   }
-  console.log(`CSS 규칙 OK — 기준 ${baseline.size}개 모두 있음 (새로 생긴 규칙 ${added}개)`);
+  console.log(`CSS 규칙 OK — 기준 ${checked}개 모두 있음 (새로 생긴 규칙 ${added}개)${skipped.length ? `, 원본이 없어 건너뜀: ${skipped.join(", ")}` : ""}`);
 }
