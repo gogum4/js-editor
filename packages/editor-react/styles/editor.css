@@ -70,7 +70,7 @@
   min-height: 50vh;
   outline: none;
   line-height: 1.7;
-  color: #262626;
+  color: var(--md-c-262626, #262626);
   word-break: break-word;
 }
 .md-editor > * + * {
@@ -106,18 +106,18 @@
   margin: 0;
 }
 .md-editor blockquote {
-  border-left: 3px solid #d4d4d4;
+  border-left: 3px solid var(--md-c-d4d4d4, #d4d4d4);
   padding-left: 1em;
-  color: #525252;
+  color: var(--md-c-525252, #525252);
 }
 .md-editor code {
-  background: #f1f1f1;
+  background: var(--md-c-f1f1f1, #f1f1f1);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   font-size: 0.9em;
 }
 .md-editor pre {
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
   border-radius: 8px;
   padding: 0.8em 1em;
   overflow-x: auto;
@@ -128,20 +128,20 @@
 }
 /* 링크: 그냥 클릭은 편집이라 글자 커서를 유지하고, Ctrl+클릭으로 연다 */
 .md-editor a {
-  color: #2563eb;
+  color: var(--md-c-2563eb, #2563eb);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: text;
 }
 .md-editor a:hover {
-  color: #1d4ed8;
+  color: var(--md-c-1d4ed8, #1d4ed8);
 }
 
 /* 블록 링크로 이동한 블록을 잠깐 강조 */
 .md-editor .block-flash {
-  background: #fef9c3;
+  background: var(--md-c-fef9c3, #fef9c3);
   border-radius: 4px;
-  box-shadow: 0 0 0 4px #fef9c3;
+  box-shadow: 0 0 0 4px var(--md-c-fef9c3, #fef9c3);
   transition: background 0.4s, box-shadow 0.4s;
 }
 
@@ -150,7 +150,7 @@
   content: attr(data-placeholder);
   float: left;
   height: 0;
-  color: #a3a3a3;
+  color: var(--md-c-a3a3a3, #a3a3a3);
   pointer-events: none;
 }
 
@@ -174,7 +174,7 @@
   min-width: 0;
 }
 .md-editor ul[data-type="taskList"] li[data-checked="true"] > div {
-  color: #9ca3af;
+  color: var(--md-c-9ca3af, #9ca3af);
   text-decoration: line-through;
 }
 
@@ -219,8 +219,8 @@
   flex-direction: column;
   min-width: 7.5rem;
   padding: 0.25rem;
-  background: #fff;
-  border: 1px solid #e5e5e5;
+  background: var(--md-c-fff, #fff);
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   border-radius: 8px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
@@ -236,34 +236,34 @@
 }
 .md-editor .callout-menu button:hover,
 .md-editor .callout-menu button[aria-current="true"] {
-  background: #f1f1f1;
+  background: var(--md-c-f1f1f1, #f1f1f1);
 }
 .md-editor .callout-note {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: var(--md-c-eff6ff, #eff6ff);
+  border-color: var(--md-c-bfdbfe, #bfdbfe);
 }
 .md-editor .callout-tip {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: var(--md-c-f0fdf4, #f0fdf4);
+  border-color: var(--md-c-bbf7d0, #bbf7d0);
 }
 .md-editor .callout-important {
-  background: #faf5ff;
-  border-color: #e9d5ff;
+  background: var(--md-c-faf5ff, #faf5ff);
+  border-color: var(--md-c-e9d5ff, #e9d5ff);
 }
 .md-editor .callout-warning {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--md-c-fffbeb, #fffbeb);
+  border-color: var(--md-c-fde68a, #fde68a);
 }
 .md-editor .callout-caution {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: var(--md-c-fef2f2, #fef2f2);
+  border-color: var(--md-c-fecaca, #fecaca);
 }
 
 /* 코드 블록 막대(언어 선택·복사) */
 .md-editor .code-block {
   position: relative;
   margin: 0.7em 0;
-  background: #f6f8fa;
+  background: var(--md-c-f6f8fa, #f6f8fa);
   border-radius: 8px;
 }
 .md-editor .code-block pre {
@@ -281,7 +281,7 @@
   justify-content: space-between;
   padding: 0.3rem 0.5rem 0;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--md-c-6b7280, #6b7280);
   user-select: none;
 }
 .md-editor .code-block-actions {
@@ -315,12 +315,12 @@
   cursor: zoom-in;
 }
 .md-editor .mermaid-empty {
-  color: #9ca3af;
+  color: var(--md-c-9ca3af, #9ca3af);
   font-size: 0.8125rem;
 }
 .md-editor .mermaid-error {
   text-align: left;
-  color: #b91c1c;
+  color: var(--md-c-b91c1c, #b91c1c);
   font-size: 0.8125rem;
 }
 .md-editor .mermaid-error pre {
@@ -340,22 +340,22 @@
   z-index: 30;
   width: 18rem;
   padding: 0.4rem;
-  background: #fff;
-  border: 1px solid #e5e5e5;
+  background: var(--md-c-fff, #fff);
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-  color: #262626;
+  color: var(--md-c-262626, #262626);
 }
 .md-editor .language-picker-popup input {
   width: 100%;
   padding: 0.35rem 0.5rem;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--md-c-d4d4d4, #d4d4d4);
   border-radius: 6px;
   font-size: 0.8125rem;
   outline: none;
 }
 .md-editor .language-picker-popup input:focus {
-  border-color: #60a5fa;
+  border-color: var(--md-c-60a5fa, #60a5fa);
 }
 .md-editor .language-picker-popup ul {
   max-height: 14rem;
@@ -374,7 +374,7 @@
   cursor: pointer;
 }
 .md-editor .language-picker-popup li[data-active="true"] {
-  background: #f1f1f1;
+  background: var(--md-c-f1f1f1, #f1f1f1);
 }
 .md-editor .language-picker-popup li[aria-selected="true"] {
   font-weight: 600;
@@ -382,7 +382,7 @@
 .md-editor .language-picker-aliases,
 .md-editor .language-picker-count,
 .md-editor .language-picker-empty {
-  color: #9ca3af;
+  color: var(--md-c-9ca3af, #9ca3af);
   font-size: 0.75rem;
 }
 .md-editor .language-picker-count,
@@ -394,7 +394,7 @@
 /* 코드 구문 강조 색 (밝은 테마). 클래스 이름은 highlight.js가 붙인다. */
 .md-editor .hljs-comment,
 .md-editor .hljs-quote {
-  color: #6a737d;
+  color: var(--md-c-6a737d, #6a737d);
   font-style: italic;
 }
 .md-editor .hljs-keyword,
@@ -403,12 +403,12 @@
 .md-editor .hljs-template-variable,
 .md-editor .hljs-type,
 .md-editor .hljs-variable.language_ {
-  color: #d73a49;
+  color: var(--md-c-d73a49, #d73a49);
 }
 .md-editor .hljs-title,
 .md-editor .hljs-title.class_,
 .md-editor .hljs-title.function_ {
-  color: #6f42c1;
+  color: var(--md-c-6f42c1, #6f42c1);
 }
 .md-editor .hljs-attr,
 .md-editor .hljs-attribute,
@@ -420,31 +420,31 @@
 .md-editor .hljs-selector-attr,
 .md-editor .hljs-selector-class,
 .md-editor .hljs-selector-id {
-  color: #005cc5;
+  color: var(--md-c-005cc5, #005cc5);
 }
 .md-editor .hljs-regexp,
 .md-editor .hljs-string,
 .md-editor .hljs-meta .hljs-string {
-  color: #032f62;
+  color: var(--md-c-032f62, #032f62);
 }
 .md-editor .hljs-built_in,
 .md-editor .hljs-symbol {
-  color: #e36209;
+  color: var(--md-c-e36209, #e36209);
 }
 .md-editor .hljs-name,
 .md-editor .hljs-selector-tag {
-  color: #22863a;
+  color: var(--md-c-22863a, #22863a);
 }
 .md-editor .hljs-bullet {
-  color: #735c0f;
+  color: var(--md-c-735c0f, #735c0f);
 }
 .md-editor .hljs-addition {
-  color: #22863a;
-  background: #f0fff4;
+  color: var(--md-c-22863a, #22863a);
+  background: var(--md-c-f0fff4, #f0fff4);
 }
 .md-editor .hljs-deletion {
-  color: #b31d28;
-  background: #ffeef0;
+  color: var(--md-c-b31d28, #b31d28);
+  background: var(--md-c-ffeef0, #ffeef0);
 }
 .md-editor .hljs-emphasis {
   font-style: italic;
@@ -455,7 +455,7 @@
 
 .md-editor hr {
   border: none;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   margin: 1.2em 0;
 }
 
@@ -489,7 +489,7 @@
   margin-left: auto;
 }
 .md-editor .image-frame[data-resizing="true"] img {
-  outline: 2px dashed #3b82f6;
+  outline: 2px dashed var(--md-c-3b82f6, #3b82f6);
   outline-offset: 2px;
 }
 /* 선택한 이미지 위의 정렬·크기 막대와 크기 손잡이 */
@@ -502,9 +502,9 @@
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   border-radius: 6px;
-  background: #fff;
+  background: var(--md-c-fff, #fff);
   box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
   font-size: 0.75rem;
   line-height: 1.2;
@@ -515,25 +515,25 @@
   border-radius: 4px;
   background: none;
   padding: 2px 6px;
-  color: #525252;
+  color: var(--md-c-525252, #525252);
   cursor: pointer;
 }
 .md-editor .image-toolbar button:hover {
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
 }
 .md-editor .image-toolbar button[aria-pressed="true"] {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--md-c-dbeafe, #dbeafe);
+  color: var(--md-c-1d4ed8, #1d4ed8);
 }
 .md-editor .image-toolbar-sep {
   width: 1px;
   align-self: stretch;
   margin: 2px 3px;
-  background: #e5e5e5;
+  background: var(--md-c-e5e5e5, #e5e5e5);
 }
 .md-editor .image-toolbar-size {
   padding: 0 6px;
-  color: #737373;
+  color: var(--md-c-737373, #737373);
 }
 .md-editor .image-resize-handle {
   position: absolute;
@@ -541,10 +541,10 @@
   z-index: 5;
   width: 12px;
   height: 12px;
-  border: 2px solid #fff;
+  border: 2px solid var(--md-c-fff, #fff);
   border-radius: 50%;
-  background: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+  background: var(--md-c-3b82f6, #3b82f6);
+  box-shadow: 0 0 0 1px var(--md-c-3b82f6, #3b82f6);
   touch-action: none;
 }
 .md-editor .image-resize-handle[data-side="left"] {
@@ -557,14 +557,14 @@
 }
 .md-editor .image-block.is-selected img,
 .md-editor .image-block.ProseMirror-selectednode img {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--md-c-3b82f6, #3b82f6);
   outline-offset: 2px;
 }
 .md-editor .image-placeholder {
   padding: 1.5em;
   border-radius: 6px;
-  background: #f5f5f5;
-  color: #737373;
+  background: var(--md-c-f5f5f5, #f5f5f5);
+  color: var(--md-c-737373, #737373);
   font-size: 0.85rem;
   line-height: 1.4;
   text-align: center;
@@ -576,7 +576,7 @@
 }
 .md-editor .footnote-ref {
   counter-increment: footnote;
-  color: #1d4ed8;
+  color: var(--md-c-1d4ed8, #1d4ed8);
   cursor: pointer;
   font-size: 0.75em;
   line-height: 0;
@@ -586,24 +586,24 @@
   content: counter(footnote);
 }
 .md-editor .footnote-ref:hover {
-  background: #dbeafe;
+  background: var(--md-c-dbeafe, #dbeafe);
   border-radius: 3px;
 }
 .md-editor .footnote-ref.is-selected {
-  outline: 2px solid #93c5fd;
+  outline: 2px solid var(--md-c-93c5fd, #93c5fd);
   border-radius: 3px;
 }
 .md-editor .footnote-list {
   margin-top: 2rem;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   padding-top: 0.5rem;
   font-size: 0.875rem;
-  color: #525252;
+  color: var(--md-c-525252, #525252);
 }
 .md-editor .footnote-list-title {
   margin: 0 0 0.25rem;
   font-size: 0.75rem;
-  color: #a3a3a3;
+  color: var(--md-c-a3a3a3, #a3a3a3);
 }
 .md-editor .footnote-list ol {
   margin: 0;
@@ -615,7 +615,7 @@
   white-space: pre-line;
 }
 .md-editor .footnote-list li:hover {
-  color: #1d4ed8;
+  color: var(--md-c-1d4ed8, #1d4ed8);
 }
 
 /* LaTeX 수식(KaTeX): 인라인은 글자 사이에, 블록은 한 줄을 차지하고 가운데 */
@@ -625,11 +625,11 @@
   padding: 0 2px;
 }
 .md-editor .math-inline:hover {
-  background: #eff6ff;
+  background: var(--md-c-eff6ff, #eff6ff);
 }
 .md-editor .math-inline.is-selected,
 .md-editor .math-block.is-selected {
-  outline: 2px solid #93c5fd;
+  outline: 2px solid var(--md-c-93c5fd, #93c5fd);
   border-radius: 4px;
 }
 .md-editor .math-block {
@@ -639,17 +639,17 @@
   text-align: center;
 }
 .md-editor .math-block:hover {
-  background: #f8fafc;
+  background: var(--md-c-f8fafc, #f8fafc);
 }
 .md-editor .math-block .katex-display {
   margin: 0.25rem 0;
 }
 .math-placeholder {
-  color: #a3a3a3;
+  color: var(--md-c-a3a3a3, #a3a3a3);
   font-size: 0.875em;
 }
 .math-error {
-  color: #dc2626;
+  color: var(--md-c-dc2626, #dc2626);
   font-size: 0.75rem;
 }
 
@@ -668,13 +668,13 @@
   position: relative;
   min-width: 3em;
   box-sizing: border-box;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--md-c-d4d4d4, #d4d4d4);
   padding: 0.3em 0.6em;
   vertical-align: top;
   text-align: left;
 }
 .md-editor th {
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
   font-weight: 600;
 }
 .md-editor td > p,
@@ -696,7 +696,7 @@
   bottom: 0;
   z-index: 3;
   width: 4px;
-  background: #60a5fa;
+  background: var(--md-c-60a5fa, #60a5fa);
   pointer-events: none;
 }
 .md-editor.resize-cursor {
@@ -711,9 +711,9 @@
   flex-wrap: wrap;
   gap: 2px;
   padding: 2px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   border-radius: 6px;
-  background: #fff;
+  background: var(--md-c-fff, #fff);
   box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
   font-size: 0.75rem;
   line-height: 1.2;
@@ -725,20 +725,20 @@
   background: none;
   padding: 4px 8px;
   font: inherit;
-  color: #404040;
+  color: var(--md-c-404040, #404040);
   white-space: nowrap;
   cursor: pointer;
 }
 .table-toolbar button:hover:not(:disabled) {
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
 }
 .table-toolbar button:disabled {
-  color: #d4d4d4;
+  color: var(--md-c-d4d4d4, #d4d4d4);
   cursor: default;
 }
 .table-toolbar button.is-danger:hover:not(:disabled) {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--md-c-fef2f2, #fef2f2);
+  color: var(--md-c-dc2626, #dc2626);
 }
 
 /* 토글(접는 블록): 왼쪽 화살표로 열고 닫는다. 닫으면 제목 줄(첫 문단)만 보인다. 열림 상태는 문서가 아니라 설정에 있다 */
@@ -756,7 +756,7 @@
   border: 0;
   border-radius: 4px;
   background: none;
-  color: #737373;
+  color: var(--md-c-737373, #737373);
   font-size: 0.8rem;
   line-height: 1.4rem;
   text-align: center;
@@ -765,7 +765,7 @@
   transition: transform 0.1s;
 }
 .md-editor .toggle-arrow:hover {
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
 }
 .md-editor .toggle-block[data-open="false"] > .toggle-arrow {
   transform: rotate(0deg);
@@ -781,15 +781,15 @@
 /* 에디터가 모르는 문법을 원문 그대로 담는 상자(`raw`·`rawInline` 노드, core의 `raw` 옵션을 켠 소비자만 그려진다). */
 .md-editor .md-raw {
   margin: 0.5rem 0;
-  border: 1px dashed #d4d4d4;
+  border: 1px dashed var(--md-c-d4d4d4, #d4d4d4);
   border-radius: 6px;
-  background: #fafafa;
+  background: var(--md-c-fafafa, #fafafa);
   padding: 0.25rem 0.5rem 0.5rem;
 }
 .md-editor .md-raw-label {
   margin-bottom: 0.125rem;
   font-size: 11px;
-  color: #a3a3a3;
+  color: var(--md-c-a3a3a3, #a3a3a3);
   user-select: none;
 }
 .md-editor .md-raw-source {
@@ -804,38 +804,38 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.875em;
   line-height: 1.5;
-  color: #525252;
+  color: var(--md-c-525252, #525252);
   white-space: pre;
   overflow-x: auto;
   outline-style: none;
 }
 .md-editor .md-raw-inline {
   border-radius: 4px;
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
   padding: 0 0.25em;
   font-size: 0.875em;
-  color: #737373;
+  color: var(--md-c-737373, #737373);
 }
 .md-editor .md-raw-inline-input {
   box-sizing: border-box;
   margin: 0;
-  border: 1px solid #a3a3a3;
+  border: 1px solid var(--md-c-a3a3a3, #a3a3a3);
   border-radius: 4px;
-  background: #fff;
+  background: var(--md-c-fff, #fff);
   padding: 0 0.25em;
   font: inherit;
-  color: #404040;
+  color: var(--md-c-404040, #404040);
   outline-style: none;
 }
 .md-editor .ProseMirror-selectednode.md-raw,
 .md-editor .ProseMirror-selectednode.md-raw-inline {
-  outline: 2px solid #a3a3a3;
+  outline: 2px solid var(--md-c-a3a3a3, #a3a3a3);
 }
 
 /* 컨테이너 디렉티브(`directive` 노드): 여는 줄 입력칸 아래에 안쪽 내용이 들여 쓰인다. */
 .md-editor .md-directive {
   margin: 0.5rem 0;
-  border-left: 3px solid #d4d4d4;
+  border-left: 3px solid var(--md-c-d4d4d4, #d4d4d4);
   padding-left: 0.75rem;
 }
 .md-editor .md-directive-head {
@@ -850,11 +850,11 @@
   padding: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 11px;
-  color: #a3a3a3;
+  color: var(--md-c-a3a3a3, #a3a3a3);
   outline-style: none;
 }
 .md-editor .md-directive-input:focus {
-  color: #525252;
+  color: var(--md-c-525252, #525252);
 }
 .md-editor .md-raw-inline.md-raw-image {
   background: none;
@@ -868,22 +868,22 @@
 /* 참조 노드(`reference`): 다른 개체를 가리키는 카드. 제목·설명은 해석기가 채우고 미리 보기는 소비자가 그린다. */
 .md-editor .md-reference {
   margin: 0.5rem 0;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
   border-radius: 8px;
-  background: #fff;
+  background: var(--md-c-fff, #fff);
   padding: 0.5rem 0.75rem;
 }
 .md-editor .md-reference-clickable {
   cursor: pointer;
 }
 .md-editor .md-reference-clickable:hover {
-  background: #fafafa;
+  background: var(--md-c-fafafa, #fafafa);
 }
 .md-editor .md-reference[data-state="missing"],
 .md-editor .md-reference[data-state="unresolved"],
 .md-editor .md-reference[data-state="unknown"] {
   border-style: dashed;
-  color: #737373;
+  color: var(--md-c-737373, #737373);
 }
 .md-editor .md-reference-head {
   display: flex;
@@ -892,17 +892,17 @@
 }
 .md-editor .md-reference-kind {
   border-radius: 4px;
-  background: #f5f5f5;
+  background: var(--md-c-f5f5f5, #f5f5f5);
   padding: 0 0.375rem;
   font-size: 11px;
-  color: #737373;
+  color: var(--md-c-737373, #737373);
 }
 .md-editor .md-reference-title {
   font-weight: 600;
 }
 .md-editor .md-reference-desc {
   font-size: 0.875em;
-  color: #737373;
+  color: var(--md-c-737373, #737373);
 }
 .md-editor .md-reference-desc:empty,
 .md-editor .md-reference-preview:empty {

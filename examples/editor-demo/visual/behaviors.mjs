@@ -338,6 +338,30 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "다크 모드: 조상에 data-md-theme=dark만 달면 본문·메뉴 색이 바뀌고 지우면 돌아온다",
+    async run({ page, open }) {
+      await open();
+      const colors = () =>
+        page.evaluate(() => {
+          const css = (selector, prop) => getComputedStyle(document.querySelector(selector))[prop];
+          return { pre: css(".ProseMirror .code-block", "backgroundColor"), link: css(".ProseMirror a", "color"), callout: css(".ProseMirror .callout", "backgroundColor") };
+        });
+      const light = await colors();
+      await page.evaluate(() => document.documentElement.setAttribute("data-md-theme", "dark"));
+      const dark = await colors();
+      for (const key of Object.keys(light)) assert(light[key] !== dark[key], `${key}: 다크에서 색이 그대로다 (${light[key]})`);
+      eq(dark.pre, "rgb(31, 35, 40)", "다크 코드 블록 바탕");
+      // 메뉴(body에 뜨는 부품)도 따라간다.
+      await focusScratch(page);
+      await page.keyboard.type("/");
+      await page.waitForSelector(".md-menu");
+      eq(await page.evaluate(() => getComputedStyle(document.querySelector(".md-menu")).backgroundColor), "rgb(23, 23, 23)", "다크 메뉴 바탕");
+      await page.keyboard.press("Escape");
+      await page.evaluate(() => document.documentElement.removeAttribute("data-md-theme"));
+      eq(await colors(), light, "끄면 밝은 모드로 돌아온다");
+    },
+  },
+  {
     name: "directive: 여는 줄 입력칸을 고치고, 안쪽 글은 평소처럼 입력한다",
     async run({ page, open }) {
       await open({ raw: true });

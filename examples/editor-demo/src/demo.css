@@ -19,3 +19,9 @@ body {
   max-width: 760px;
   margin: 0 auto;
 }
+
+/* 다크 모드 확인용(`?`가 아니라 동작 시험·스크린샷이 html에 data-md-theme="dark"를 단다): 페이지 바탕은 소비자 몫이다. */
+[data-md-theme="dark"] body {
+  background: #171717;
+  color: #e5e5e5;
+}

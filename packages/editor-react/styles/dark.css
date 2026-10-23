@@ -1,0 +1,80 @@
+/* 다크 모드 값. 본문(`editor.css`)·화면 부품(`ui.css`)의 모든 색은 `var(--md-c-<값>, <밝은 모드의 값>)`이라서, 아래처럼 토큰만 바꾸면 모양이 바뀐다.
+   켜는 법: 에디터와 메뉴·편집 창이 속한 조상(보통 `<html>`)에 `data-md-theme="dark"`를 달거나, Tailwind·next-themes 관례의 `.dark` 클래스를 단다.
+   메뉴·편집 창은 body에 뜨므로 `<html>`에 다는 것이 안전하다. 끄면(속성·클래스를 지우면) 밝은 모드로 돌아간다 — 이 파일은 아무것도 바꾸지 않는다.
+   토큰 이름은 밝은 모드 값에서 만들었다(`--md-c-f5f5f5` = 밝은 모드의 #f5f5f5). 밝은 값과 짝을 지어 어두운 값을 적는다. */
+[data-md-theme="dark"],
+.dark {
+  color-scheme: dark;
+
+  /* 바탕·구분선(밝은 쪽 → 어두운 쪽으로 뒤집은 단계) */
+  --md-c-fff: #171717;
+  --md-c-fafafa: #1c1c1c;
+  --md-c-f8fafc: #1c1f24;
+  --md-c-f6f8fa: #1f2328;
+  --md-c-f5f5f5: #262626;
+  --md-c-f1f1f1: #2a2a2a;
+  --md-c-e5e5e5: #3f3f3f;
+  --md-c-d4d4d4: #525252;
+
+  /* 글자 */
+  --md-c-262626: #f5f5f5;
+  --md-c-404040: #e5e5e5;
+  --md-c-525252: #d4d4d4;
+  --md-c-737373: #a3a3a3;
+  --md-c-6b7280: #9ca3af;
+  --md-c-a3a3a3: #737373;
+  --md-c-9ca3af: #a3a3a3;
+
+  /* 링크·강조 */
+  --md-c-2563eb: #60a5fa;
+  --md-c-1d4ed8: #93c5fd;
+  --md-c-3b82f6: #60a5fa;
+  --md-c-60a5fa: #60a5fa;
+  --md-c-93c5fd: #3b82f6;
+  --md-c-dbeafe: #1e3a8a;
+  --md-c-fef9c3: #713f12;
+  --md-c-dc2626: #f87171;
+  --md-c-b91c1c: #fca5a5;
+
+  /* 콜아웃(바탕·테두리): 정보 · 팁 · 중요 · 경고 · 주의 */
+  --md-c-eff6ff: #172554;
+  --md-c-bfdbfe: #1e3a8a;
+  --md-c-f0fdf4: #052e16;
+  --md-c-bbf7d0: #166534;
+  --md-c-faf5ff: #3b0764;
+  --md-c-e9d5ff: #6b21a8;
+  --md-c-fffbeb: #451a03;
+  --md-c-fde68a: #92400e;
+  --md-c-fef2f2: #450a0a;
+  --md-c-fecaca: #991b1b;
+
+  /* 코드 구문 강조(GitHub 어두운 테마) */
+  --md-c-d73a49: #f97583;
+  --md-c-6f42c1: #b392f0;
+  --md-c-005cc5: #79b8ff;
+  --md-c-032f62: #9ecbff;
+  --md-c-e36209: #ffab70;
+  --md-c-22863a: #85e89d;
+  --md-c-6a737d: #959da5;
+  --md-c-b31d28: #fdaeb7;
+  --md-c-ffeef0: #3b1219;
+  --md-c-f0fff4: #0f2a17;
+  --md-c-735c0f: #f0d58c;
+
+  /* 메뉴·편집 창(`ui.css`)의 색 */
+  --md-c-oklch-98-5-0-none: oklch(22% 0 none);
+  --md-c-oklch-97-0-none: oklch(26% 0 none);
+  --md-c-oklch-92-2-0-none: oklch(32% 0 none);
+  --md-c-oklch-70-8-0-none: oklch(60% 0 none);
+  --md-c-oklch-55-6-0-none: oklch(70% 0 none);
+  --md-c-oklch-43-9-0-none: oklch(80% 0 none);
+  --md-c-oklch-37-1-0-none: oklch(86% 0 none);
+  --md-c-oklch-26-9-0-none: oklch(96% 0 none);
+  --md-c-oklch-57-7-0-245-27-325: oklch(70% 0.19 22);
+}
+
+/* mermaid가 그린 그림은 밝은 테마의 SVG라서 어두운 바탕에서는 색을 뒤집는다(색상은 되돌려 파랑이 주황이 되지 않게). */
+[data-md-theme="dark"] .md-editor .mermaid-preview svg,
+.dark .md-editor .mermaid-preview svg {
+  filter: invert(0.92) hue-rotate(180deg);
+}

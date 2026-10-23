@@ -18,3 +18,8 @@ body {
   max-width: 760px;
   margin: 0 auto;
 }
+
+[data-md-theme="dark"] body {
+  background: #171717;
+  color: #e5e5e5;
+}

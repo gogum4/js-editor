@@ -59,6 +59,8 @@ async function main() {
         const query = [collab ? "collab=1" : "", raw ? "raw=1" : "", ref ? "ref=1" : ""].filter(Boolean).join("&");
         await page.goto(url + (plain ? "plain.html" : "") + (query ? `?${query}` : ""));
         await waitReady(page);
+        // --dark: 다크 모드로 본다(스크린샷을 눈으로 확인하는 용도 — 계산된 스타일 기준과는 비교하지 않는다).
+        if (flag("--dark")) await page.evaluate(() => document.documentElement.setAttribute("data-md-theme", "dark"));
       };
       const dump = (selector) => page.evaluate(dumpSubtree, { selector, props: PROPS, inherited: INHERITED });
       return { page, errors, open, dump };
@@ -91,7 +93,9 @@ async function main() {
           await ctx.page.close();
         }
       }
-      if (flag("--update")) {
+      if (flag("--dark")) {
+        console.log("--dark: 계산된 스타일 기준과 비교하지 않는다");
+      } else if (flag("--update")) {
         mkdirSync(dirname(baselinePath), { recursive: true });
         writeFileSync(baselinePath, JSON.stringify(current) + "\n");
         console.log(`기준을 썼다: ${baselinePath} (장면 ${Object.keys(current).length}개)`);
