@@ -41,7 +41,7 @@ GitHub Packages는 비공개라서 **읽기 토큰이 필요하다**. 소비 프
 - **노트 앱(이 저장소)**은 워크스페이스(`workspace:*`)로 쓰므로 토큰이 필요 없다.
 - **블로그(Docker 빌드)**는 지금 `vendor/*.tgz`로 설치한다. 레지스트리로 옮기려면 Dockerfile의 deps 단계에서 `.npmrc`와 토큰을 **빌드 시크릿**(`--mount=type=secret`)으로 넘겨야 한다(토큰이 이미지 층에 남지 않게). 옮기면 `vendor/`·`overrides`를 지운다. 그 저장소는 따로 있어 여기서 바꾸지 않았다.
 - **캘린더(Flutter)**는 npm 패키지를 직접 쓰지 않는다 — `editor-embed` 번들(정적 파일)을 쓴다([EDITOR-EMBED.md](EDITOR-EMBED.md)).
-- scope가 `@9um4`에서 `@9um4-utils`로 바뀌었다(P8). 블로그 복제본(`~/blog-wysiwyg`)의 `vendor/` tarball은 예전 이름(`@9um4/…`)이라 **그대로 쓸 수 없다** — 새 이름으로 다시 만든 tarball이 필요하다.
+- scope가 `@9um4`에서 `@9um4-utils`로 바뀌었다(P8). 블로그 복제본(`~/blog-wysiwyg`, 브랜치 `feature/wysiwyg-editor`)은 새 이름으로 `vendor/` tarball을 다시 만들어 따라갔다(커밋 `4c3b36b`).
 
 ## 게시 전 점검표
 
