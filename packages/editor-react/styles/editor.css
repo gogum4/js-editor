@@ -67,7 +67,6 @@
 
 /* 본문 에디터 (TipTap/ProseMirror). Tailwind의 기본 초기화가 목록·제목 모양을 지우므로 직접 지정한다. */
 .md-editor {
-  min-height: 50vh;
   outline: none;
   line-height: 1.7;
   color: var(--md-c-262626, #262626);
