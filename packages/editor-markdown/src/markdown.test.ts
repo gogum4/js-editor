@@ -369,3 +369,27 @@ describe("표와 토글", () => {
     expect(md(doc(toggle)).markdown).toBe("<details>\n<summary>제목</summary>\n\n- 항목\n\n</details>\n");
   });
 });
+
+describe("hardBreakStyle", () => {
+  const p = (...content: PmNode[]): PmNode => ({ type: "doc", content: [{ type: "paragraph", content }] });
+  const t = (text: string): PmNode => ({ type: "text", text });
+  const br: PmNode = { type: "hardBreak" };
+  const out = (doc: PmNode, hardBreakStyle?: "backslash" | "newline") => docToMarkdown(doc, { pageTitle: () => null, ...(hardBreakStyle ? { hardBreakStyle } : {}) }).markdown;
+
+  it("기본은 백슬래시, newline은 그냥 줄바꿈", () => {
+    expect(out(p(t("가"), br, t("나")))).toBe("가\\\n나\n");
+    expect(out(p(t("가"), br, t("나")), "newline")).toBe("가\n나\n");
+  });
+
+  it("문단 처음·끝·연속한 줄바꿈은 백슬래시로 (문단이 쪼개지지 않게)", () => {
+    expect(out(p(t("가"), br, br, t("나")), "newline")).toBe("가\\\n\\\n나\n");
+    expect(out(p(t("가"), br), "newline")).toBe("가\\\n\n");
+  });
+
+  it("일반 글(줄바꿈이 든 문자열)이 열었다 내보내면 그대로다", async () => {
+    const { markdownToDoc } = await import("./markdownImport.ts");
+    const text = "첫 줄\n둘째 줄\n셋째 줄\n";
+    const doc = markdownToDoc(text, { resolvePage: () => null, resolveImage: () => null }, "").doc;
+    expect(out(doc, "newline")).toBe(text);
+  });
+});

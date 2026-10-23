@@ -39,6 +39,12 @@ export interface MarkdownOptions {
    */
   dialect?: MarkdownDialect;
   /**
+   * 하드 브레이크(`hardBreak`)를 쓰는 모양. 기본 `"backslash"`(`\` + 줄바꿈 — 어느 Markdown 해석기에서나 줄바꿈이다). `"newline"`은 그냥 줄바꿈 한 개로 쓴다:
+   * Obsidian처럼 문단 안의 줄바꿈을 눈에 보이는 줄바꿈으로 그리는 소비자(일정 설명 같은 일반 글)가 원문을 그대로 돌려받는다.
+   * 앞뒤가 글이 아니거나(문단 처음·끝, 연속한 줄바꿈) 줄바꿈이 문단을 나누게 되는 자리는 `"backslash"`로 쓴다.
+   */
+  hardBreakStyle?: "backslash" | "newline";
+  /**
    * 참조 노드(`reference`)의 내보내기. `toMarkdown(kind, id)`가 글자(한 줄 이상)를 돌려주면 그것을, `null`이면 내보내지 않고(안내함), `undefined`면 기본 표기
    * `::ref{kind=… id=…}`를 쓴다. 블로그처럼 해석기가 없는 소비자는 기본 표기나 대체 표현을 고른다.
    */
@@ -137,7 +143,14 @@ class Renderer {
 
   /** 인라인 노드들(글자, 줄바꿈, 페이지 링크)을 한 문자열로. */
   inline(nodes: PmNode[] | undefined): string {
-    return (nodes ?? []).map((node) => this.inlineNode(node)).join("");
+    const list = nodes ?? [];
+    return list.map((node, index) => (node.type === "hardBreak" ? this.hardBreak(list[index - 1], list[index + 1]) : this.inlineNode(node))).join("");
+  }
+
+  /** 하드 브레이크 한 개. `newline` 모양은 양옆이 모두 글(줄바꿈이 아닌 인라인)일 때만 쓴다. */
+  private hardBreak(previous: PmNode | undefined, next: PmNode | undefined): string {
+    const plain = (n: PmNode | undefined) => n !== undefined && n.type !== "hardBreak" && n.type !== "softBreak";
+    return this.options.hardBreakStyle === "newline" && plain(previous) && plain(next) ? "\n" : "\\\n";
   }
 
   private inlineNode(node: PmNode): string {
