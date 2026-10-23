@@ -109,3 +109,40 @@ describe("gfm 방언: 글머리와 할 일이 섞인 목록", () => {
     expect(md).toBe("- 항목\n\n* [ ] 할 일\n");
   });
 });
+
+describe("gfm 방언: 서식 묶음과 물결표", () => {
+  it("물결표 하나는 취소선이 아니라 글자다 (markdown-it은 `~~`만 읽는다)", () => {
+    const source = "시간은 10~30초, +1~+5 구간 그리고 ~~진짜 취소~~\n";
+    const doc = parse(source);
+    expect(JSON.stringify(doc.content![0]!.content!.filter((n) => n.marks?.some((m) => m.type === "strike")).map((n) => n.text))).toBe('["진짜 취소"]');
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("obsidian 방언은 물결표 하나도 취소선으로 읽는다(예전과 같다)", () => {
+    const o: ImportContext = { resolvePage: () => null, resolveImage: () => null };
+    expect(JSON.stringify(markdownToDoc("a ~지움~ b\n", o, "").doc)).toContain("strike");
+  });
+
+  it("굵은 글씨 안의 코드 조각과 글자는 한 쌍의 `**`로 묶는다", () => {
+    const source = "앞 **`float`는 `int`로 내려가지 않습니다.** 뒤\n";
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("서로 다른 서식이 겹쳐도(굵게 ⊃ 기울임) 짝이 맞는다", () => {
+    const source = "**굵게 *기울임* 굵게** 와 *기울임 **굵게***\n";
+    const once = roundTrip(source);
+    expect(roundTrip(once)).toBe(once);
+    expect(once).not.toContain("****");
+  });
+
+  it("링크 안의 서식도 한 쌍으로: [**굵은 링크**](https://x.y)", () => {
+    const source = "[**굵은 링크** 글](https://x.y)\n";
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("상대 경로의 .md 링크와 주소 그대로의 링크는 일반 링크로 남는다 (gfm)", () => {
+    const source = "[README](../README.md)와 [문서](docs/a.md)와 [앵커](#x)\n";
+    expect(JSON.stringify(parse(source))).not.toContain("pageLink");
+    expect(roundTrip(source)).toBe(source);
+  });
+});

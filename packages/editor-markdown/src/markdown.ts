@@ -136,6 +136,13 @@ function footnoteDefinition(index: number, text: string): string {
     .join("")}`;
 }
 
+/** 글자에 씌우는 서식 하나의 여닫는 기호(`key`가 같으면 같은 서식이라 이어서 쓴다). */
+interface MarkSyntax {
+  key: string;
+  open: string;
+  close: string;
+}
+
 class Renderer {
   readonly notices = new Set<string>();
   readonly images = new Map<string, string>();
@@ -175,7 +182,71 @@ class Renderer {
   /** 인라인 노드들(글자, 줄바꿈, 페이지 링크)을 한 문자열로. */
   inline(nodes: PmNode[] | undefined): string {
     const list = nodes ?? [];
-    return list.map((node, index) => (node.type === "hardBreak" ? this.hardBreak(list[index - 1], list[index + 1]) : this.inlineNode(node))).join("");
+    let out = "";
+    // 열려 있는 서식(링크·굵게·기울임·취소선·밑줄을 이 순서로 바깥부터). 이어지는 글자 노드들이 같은 서식이면 한 쌍의 기호로 묶는다
+    // (`**`float` 는 …**`처럼 코드 조각과 글자가 한 굵은 글씨일 때 `**`float`****는 …**`로 갈라지면 서식이 깨진다).
+    let open: MarkSyntax[] = [];
+    const closeFrom = (from: number) => {
+      for (let j = open.length - 1; j >= from; j--) {
+        // 닫는 기호 앞의 공백은 기호 밖으로 옮긴다(공백에 붙은 기호는 서식으로 읽히지 않는다).
+        const ws = /\s+$/.exec(out)?.[0] ?? "";
+        out = out.slice(0, out.length - ws.length) + open[j]!.close + ws;
+      }
+      open = open.slice(0, from);
+    };
+    list.forEach((node, index) => {
+      if (node.type === "text") {
+        const raw = node.text ?? "";
+        if (raw === "") return;
+        const lead = /^\s*/.exec(raw)?.[0] ?? "";
+        const trail = raw.length > lead.length ? (/\s*$/.exec(raw)?.[0] ?? "") : "";
+        const core = raw.slice(lead.length, raw.length - trail.length);
+        if (core === "") {
+          out += raw; // 공백뿐인 글자는 지금 열린 서식 안에 둔다(가장자리면 닫을 때 밖으로 나간다)
+          return;
+        }
+        const marks = node.marks ?? [];
+        const isCode = marks.some((m) => m.type === "code");
+        const desired = this.markSyntax(marks);
+        let common = 0;
+        while (common < open.length && common < desired.length && open[common]!.key === desired[common]!.key) common++;
+        closeFrom(common);
+        out += lead;
+        for (const syntax of desired.slice(common)) {
+          out += syntax.open;
+          open.push(syntax);
+        }
+        out += isCode ? renderCode(core) : this.options.dialect === "gfm" ? escapeInlineGfm(core) : escapeInline(core);
+        out += trail;
+        return;
+      }
+      closeFrom(0);
+      out += node.type === "hardBreak" ? this.hardBreak(list[index - 1], list[index + 1]) : this.inlineNode(node);
+    });
+    closeFrom(0);
+    return out;
+  }
+
+  /** 글자 노드의 서식을 바깥부터 안쪽 순서(링크 → 굵게 → 기울임 → 취소선 → 밑줄)의 여닫는 기호로. 이 방언에 없는 서식(밑줄)은 안내하고 뺀다. */
+  private markSyntax(marks: readonly { type: string; attrs?: Record<string, unknown> }[]): MarkSyntax[] {
+    const has = (type: string) => marks.some((m) => m.type === type);
+    const out: MarkSyntax[] = [];
+    const link = marks.find((m) => m.type === "link");
+    if (link && typeof link.attrs?.href === "string" && link.attrs.href !== "") {
+      const href = link.attrs.href;
+      out.push({ key: `link:${href}`, open: "[", close: `](${renderLinkHref(href)})` });
+    }
+    if (has("bold")) out.push({ key: "bold", open: "**", close: "**" });
+    if (has("italic")) out.push({ key: "italic", open: "*", close: "*" });
+    if (has("strike")) out.push({ key: "strike", open: "~~", close: "~~" });
+    if (has("underline")) {
+      if (this.plain) this.notices.add("밑줄은 이 방언의 문법에 없어서 일반 글자로 내보냈어요.");
+      else {
+        out.push({ key: "underline", open: "<u>", close: "</u>" });
+        this.notices.add("밑줄은 Markdown에 없어서 <u>…</u>로 내보냈어요.");
+      }
+    }
+    return out;
   }
 
   /** 하드 브레이크 한 개. `newline` 모양은 양옆이 모두 글(줄바꿈이 아닌 인라인)일 때만 쓴다. */
@@ -189,7 +260,7 @@ class Renderer {
   private inlineNode(node: PmNode): string {
     switch (node.type) {
       case "text":
-        return this.text(node);
+        return this.inline([node]);
       case "hardBreak":
         return "\\\n";
       case "pageLink":
@@ -241,37 +312,6 @@ class Renderer {
     const label = typeof node.attrs?.label === "string" ? node.attrs.label.replace(/[[\]\n]/g, " ").replace(/\s+/g, " ").trim() : "";
     const target = shown.replace(/[[\]]/g, "").replace(/\s+/g, " ");
     return `[[${target}${anchor}${label !== "" && label !== target ? `|${label}` : ""}]]`;
-  }
-
-  private text(node: PmNode): string {
-    const raw = node.text ?? "";
-    const marks = node.marks ?? [];
-    if (raw === "") return "";
-
-    const isCode = marks.some((m) => m.type === "code");
-    // 서식 기호가 공백에 붙으면 Markdown이 인식하지 못하므로 앞뒤 공백은 기호 밖에 둔다.
-    const lead = /^\s*/.exec(raw)?.[0] ?? "";
-    const trail = raw.length > lead.length ? (/\s*$/.exec(raw)?.[0] ?? "") : "";
-    const core = raw.slice(lead.length, raw.length - trail.length);
-    if (core === "") return raw;
-
-    let out = isCode ? renderCode(core) : this.options.dialect === "gfm" ? escapeInlineGfm(core) : escapeInline(core);
-    const has = (type: string) => marks.some((m) => m.type === type);
-    if (has("underline")) {
-      if (this.plain) this.notices.add("밑줄은 이 방언의 문법에 없어서 일반 글자로 내보냈어요.");
-      else {
-        out = `<u>${out}</u>`;
-        this.notices.add("밑줄은 Markdown에 없어서 <u>…</u>로 내보냈어요.");
-      }
-    }
-    if (has("strike")) out = `~~${out}~~`;
-    if (has("italic")) out = `*${out}*`;
-    if (has("bold")) out = `**${out}**`;
-    const link = marks.find((m) => m.type === "link");
-    if (link && typeof link.attrs?.href === "string" && link.attrs.href !== "") {
-      out = `[${out}](${renderLinkHref(link.attrs.href)})`;
-    }
-    return lead + out + trail;
   }
 
   /** 블록들을 빈 줄로 이어 붙인다. 문서 끝의 빈 문단(에디터가 항상 두는 것)은 버린다. */

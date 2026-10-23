@@ -32,13 +32,19 @@ export interface DialectProfile {
   directives: boolean;
   /** 문단 안의 줄바꿈 한 개를 `softBreak`로(끄면 눈에 보이는 줄바꿈 `hardBreak`). */
   softBreaks: boolean;
+  /** 상대 경로의 `.md` 링크(`[글](다른글.md)`)를 페이지 링크로 바꾼다(끄면 일반 링크로 둔다). */
+  mdLinksToPages: boolean;
+  /** 열어도 안전한지(`http(s)`·`mailto`·`tel`) 따지지 않고 링크의 주소를 그대로 보존한다(상대 경로·`obsidian://` 등; `javascript:`·`vbscript:`·`file:`·`data:`는 제외). 글 원본을 잃지 않으려는 방언이 켠다. */
+  keepAnyHref: boolean;
+  /** `~글~`(물결표 하나)를 취소선으로 읽는다(GFM·remark-gfm은 읽고, `markdown-it`은 `~~`만 읽는다). 끄면 홀로 있는 `~`는 글자다. */
+  singleTildeStrike: boolean;
 }
 
-const OBSIDIAN: DialectProfile = { wikiLinks: true, wikiExtras: true, blockIds: true, callouts: true, math: true, footnotes: true, imageWidth: true, rawEmbeds: false, directives: false, softBreaks: false };
+const OBSIDIAN: DialectProfile = { wikiLinks: true, wikiExtras: true, blockIds: true, callouts: true, math: true, footnotes: true, imageWidth: true, rawEmbeds: false, directives: false, softBreaks: false, mdLinksToPages: true, keepAnyHref: false, singleTildeStrike: true };
 const PROFILES: Readonly<Record<MarkdownDialect, DialectProfile>> = {
   obsidian: OBSIDIAN,
-  blog: { ...OBSIDIAN, wikiLinks: false, wikiExtras: false, blockIds: false, callouts: false, imageWidth: false, rawEmbeds: true, directives: true, softBreaks: true },
-  gfm: { ...OBSIDIAN, wikiExtras: false, blockIds: false, callouts: false, math: false, footnotes: false, imageWidth: false, rawEmbeds: true },
+  blog: { ...OBSIDIAN, wikiLinks: false, wikiExtras: false, blockIds: false, callouts: false, imageWidth: false, rawEmbeds: true, directives: true, softBreaks: true, mdLinksToPages: false, keepAnyHref: true, singleTildeStrike: true },
+  gfm: { ...OBSIDIAN, wikiExtras: false, blockIds: false, callouts: false, math: false, footnotes: false, imageWidth: false, rawEmbeds: true, mdLinksToPages: false, keepAnyHref: true, singleTildeStrike: false },
 };
 
 export function profileOf(dialect: MarkdownDialect | undefined): DialectProfile {

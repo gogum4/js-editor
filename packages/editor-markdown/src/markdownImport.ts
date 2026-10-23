@@ -157,7 +157,9 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
   const joined = splitCodeSpans(line)
     .map((part) => {
       if (part.code) return part.text;
-      const text = rawDirectives ? part.text.replace(INLINE_DIRECTIVE, (raw) => put({ kind: "rawInline", text: raw, raw })) : part.text;
+      let text = rawDirectives ? part.text.replace(INLINE_DIRECTIVE, (raw) => put({ kind: "rawInline", text: raw, raw })) : part.text;
+      // `markdown-it`처럼 물결표 하나를 취소선으로 읽지 않는 방언: 홀로 있는 `~`를 이스케이프해서 파서가 글자로 두게 한다.
+      if (!profile.singleTildeStrike) text = text.replace(/(?<![\\~])~(?!~)/g, "\\~");
       return text
         .replace(/(!?)\[\[([^[\]\n]+?)\]\]/g, (raw, bang: string, inner: string) => {
           // 위키 링크가 없는 방언(블로그)에서는 `[[글]]`이 그냥 글자다. `![[…]]` 임베드가 없는 방언에서 `!`는 글자다.
@@ -609,14 +611,15 @@ function inlineNodes(tokens: readonly Token[], marks: readonly PmMark[], state: 
 function linkNodes(token: Tokens.Link, href: string, marks: readonly PmMark[], state: State): PmNode[] {
   const target = safeDecode(href.split("#")[0]!.split("?")[0]!);
   // 가져올 폴더 안의 다른 글을 가리키는 상대 링크(`[글](다른글.md)`)는 페이지 링크로 바꾼다.
-  if (/\.(md|markdown)$/i.test(target) && !/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+  if (state.profile.mdLinksToPages && /\.(md|markdown)$/i.test(target) && !/^[a-z][a-z0-9+.-]*:/i.test(target)) {
     const pageId = state.ctx.resolvePage(target.replace(/\.(md|markdown)$/i, ""), state.fromDir);
     if (pageId !== null) return [{ type: "pageLink", attrs: { pageId } }];
     note(state, NOTICE.relativeLink);
     return inlineNodes(token.tokens, marks, state);
   }
   const children = inlineNodes(token.tokens, marks, state);
-  if (isSafeToOpen(href)) {
+  // 글 원본을 잃지 않는 방언(블로그·일반 GFM)은 상대 경로 같은 주소도 링크로 남긴다. 열기는 에디터가 안전한 주소만 연다.
+  if (isSafeToOpen(href) || (state.profile.keepAnyHref && href.trim() !== "" && !/^\s*(javascript|vbscript|file|data):/i.test(href))) {
     return children.map((child) => (child.type === "text" ? { ...child, marks: toggleMark(child.marks ?? [], "link", { href }) } : child));
   }
   if (!/^[a-z][a-z0-9+.-]*:/i.test(href) && !href.startsWith("#")) note(state, NOTICE.relativeLink);
