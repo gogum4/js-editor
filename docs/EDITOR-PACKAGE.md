@@ -182,7 +182,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | P4 ✅ | **render**: Markdown→HTML 플러그인(unified: remark/rehype)과 JSON→React, 서버에서 KaTeX 문자열 렌더, mermaid는 클라이언트 컴포넌트. **Next.js App Router 기준**: 서버 컴포넌트에서 훅 없이 동작, 클라이언트가 필요한 부분(mermaid, 접히는 토글)만 `"use client"`, 컴파일된 JS와 타입을 `exports` 맵으로 배포(소스 TS 배포는 `transpilePackages` 부담을 소비자에게 넘긴다), CSS는 별도 export | Next.js 샘플 앱에서 블로그 글 한 편을 SSG로 끝까지 렌더 |
 | P5 | **react**: 메뉴·NodeView·CSS 분리, 데모 페이지 | 노트 앱이 패키지만으로 같은 화면을 낸다 |
 | P6 | **시범 소비자**: **블로그 관리자 편집기**(캘린더는 Flutter라 P6b WebView로 미룸)에 도입하고 `raw` 보존 노드·방언 어댑터를 만들며 API 빈틈을 기록한다 | 빈틈 목록을 반영했다 |
-| P7 | **PlanBench 도입**: 확장 지점으로 스키마·표 노드를 얹는다 | PlanBench 고유 기능이 그대로 동작한다 |
+| P7 | **PlanBench 도입**: 확장 지점으로 스키마·표 노드를 얹는다. **P7a ✅**(참조 노드·렌더러 빈틈·다크 모드, 데모의 가짜 `table-schema`로 확인) / P7b(실제 PlanBench 도입, 저장소 필요) | PlanBench 고유 기능이 그대로 동작한다 |
 | P8 | **배포**: Changesets, 스키마 호환 semver 규칙, 레지스트리 결정 | 첫 버전을 소비자가 설치해 쓴다 |
 | P9 | 블로그 도입, 소비자 2개 이상 안정 후 **별도 저장소 분리 판단** | — |
 
@@ -369,13 +369,15 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 | 이미지: 코어 이미지 노드는 저장소 해시 전제(앱) | 블로그 이미지를 `rawInline`(원문)으로 두고 그림으로 보임; 이미지 확장은 `transform`으로 제거 | URL 이미지 노드(`src`) 또는 포트로 업로드 연결 — 노드를 더하면 스키마 버전 영향(P7과 함께 판단) |
 | 소비자가 쓰지 않을 확장을 끄기 | `transform`으로 이름 필터 | `createCoreExtensions`에 `disable: ["image","toggle"]` 같은 옵션 |
 | 소비자별 `/` 메뉴 | `slashItems`·`slashHandlers`로 충분했다(항목 뺌·더함) | 없음(잘 맞음) |
-| 다크 모드 | 스타일이 밝은 배경 기준(하드코딩 색) → 흰 종이로 가림 | `editor.css`·`ui.css`를 CSS 변수로(P7) |
+| 다크 모드 | 스타일이 밝은 배경 기준(하드코딩 색) → 흰 종이로 가림 | **P7-5에서 해결**: CSS 변수 토큰 + `dark.css`(블로그는 흰 종이를 걷어도 된다) |
 | typography(`prose`)와의 충돌 | `not-prose` 래퍼 | 문서화(`styles/README`) |
 | 한 줄 수식·열 정렬 표·HTML 등 에디터에 대응 노드가 없는 문법 | `raw` 보존(편집은 원문 칸) | 열 정렬 표 속성·한 줄 수식은 P7에서 승격 검토 |
 | 문단 안 줄바꿈 | `softBreak` 노드(블로그 방언) | 이미 반영 |
 | 소비자 설치 | tarball + `overrides`, Dockerfile `COPY vendor` | P8 레지스트리 배포로 해소 |
-| 읽기 전용 렌더러(`editor-render`)는 `raw`·`directive`·`softBreak`를 모름 | 블로그는 자기 파이프라인으로 그린다 | `editor-render`에 세 노드 지원(원문/자식 렌더)은 P7 |
+| 읽기 전용 렌더러(`editor-render`)는 `raw`·`directive`·`softBreak`를 모름 | 블로그는 자기 파이프라인으로 그린다 | **P7-3에서 해결**: 네 노드(+`reference`) 지원, `renderRaw`·`renderReference` 주입 |
 | 포스트·시리즈 카드 등 임베드의 미리보기 | 회색 원문 상자만 | 소비자 주입 뷰(`views`에 `raw` 렌더러)로 카드 미리보기 |
+**7-1~7-5 결과** (2026-10-23, P7a): ① **참조 노드** — `editor-schema/reference`(kind·id 정규화), core `Reference` 노드(속성 `{kind,id}`만 저장, `createCoreExtensions({ reference: true })`로 켬·기본 끔 → 노트 앱 스키마 버전 불변), 포트 `EditorPorts.references[kind]: ReferenceResolver`(`resolve`→제목·설명·미리 보기 데이터 또는 null=삭제됨, `open`, `subscribe`, DOM 접점 `renderPreview`), 기본 DOM 카드(상태 `loading/ready/missing/unresolved/unknown`, 누르면 열기, 원본이 바뀌면 다시 읽음), 명령 `insertReference`, 글 사전 `reference`. ② **Markdown 훅** — 기본 표기 `::ref{kind=… id=…}`, 가져오기 `ImportContext.references`(true | 한 줄을 받는 함수), 내보내기 `MarkdownOptions.references.toMarkdown(kind,id)`(문자열 | `null`=생략+안내 | `undefined`=기본 표기), 블로그 방언·코드 울타리·잘못된 속성 처리. ③ **읽기 전용 렌더러** — `reference`(소비자 주입 `renderReference`, 없으면 종류·id 대체 표시, `null`이면 그리지 않음), `raw`·`rawInline`(`renderRaw` 또는 원문 표시), `directive`(안쪽 렌더 + `data-head`), `softBreak`; `renderMarkdown`에 `dialect`·`references` 옵션. ④ **데모의 가짜 PlanBench 종류 `table-schema`**(`?ref=1`) — 해석기·미리 보기 표·열기·원본 변경 추적·삭제됨을 실제 Chromium 동작 시험으로 확인(코어는 스키마 모양을 모름). ⑤ **다크 모드** — `editor.css`·`ui.css`의 모든 색이 `var(--md-c-<값>, <밝은 값>)`(55개 토큰; 마메이드 크게 보기는 어두운 모드에서도 같아 제외)이고 `styles/dark.css`가 `[data-md-theme="dark"]`·`.dark` 아래에서 어두운 값을 준다(메뉴·편집 창은 body에 뜨므로 `<html>`에 단다). `scripts/check-css-tokens.mjs`(`check:deps`)가 날것의 색·누락된 다크 값·이름 불일치를 막는다. **밝은 모드는 그대로**: 계산된 스타일 기준(Tailwind 있는/없는 페이지)이 같고 스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일. 다크는 스크린샷을 눈으로 확인했고(`visual --dark --screenshots <이름>`) 동작 시험이 색 전환·복귀를 확인한다. 배운 점: ⓐ **구독 알림 안에서 다시 구독하면 `Set.forEach`가 끝나지 않는다**(실제 Chromium 시험이 영원히 멈춰서 발견; 구독은 대상이 바뀔 때만, 알림은 읽기만) — 회귀 시험 추가. ⓑ **`pnpm test`가 `packages/**/*.test.tsx`를 안 돌리고 있었다** — 설정을 고쳐 렌더 시험(.tsx)이 CI에서 돌게 했다(1728→1752개). ⓒ `color-mix()` 안의 색을 변수로 바꾸면 계산값에 1e-5 오차가 나 기준이 깨진다 — 마메이드 크게 보기를 토큰에서 뺀 이유 중 하나. 남은 것(P7b): 실제 PlanBench 저장소에서 문서 범위 에디터 도입, `table-schema` 해석기 등록, 노트 앱의 `pageLink`/`pageBlock`을 참조 노드로 이전할지 판단(저장 스키마·마이그레이션이 필요해 보류), 이미지 노드의 URL 대응, 열 정렬 표·한 줄 수식의 구조 노드 승격.
+
 미결: ⓐ 블로그 실제 글 데이터(DB)를 읽을 방법(로컬 덤프나 읽기 전용 접속) ⓑ WYSIWYG를 기본 모드로 삼을지 선택 모드로 둘지(권장: 선택 모드로 시작).
 
 **6-0 중간 결과** (2026-10-23, 실제 글 측정은 데이터 대기 중): 측정 도구(저장소 밖; 글 목록 JSON이나 `.md`를 받아 왕복하고 ① 구문별 개수 ② 원문 줄이 그대로 남았는지를 범주별로 센다)를 만들었다. 실제 블로그 DB(`blog-db-1` 컨테이너)를 읽는 시도는 권한 판정에서 막혀서 하지 않았다 — 데이터는 사용자가 덤프해 주기로 한다. 블로그 문법 한 벌을 담은 합성 글(`:::note[제목]`·`tip`·`center`·`indent{n}`·`fold{h}`, `::youtube`·`::post`·`::series`·`::video`, `:postlink[]{}`, `$$`, 할 일, 각주)로 먼저 잰 결과: **지금 변환기는 블로그 방언을 보존하지 못한다.** 컨테이너 `:::` 10줄 중 5줄이 바뀌고(여는 줄의 `[제목]`이 `\[제목\]`로 이스케이프되고, 안쪽 줄마다 끝에 `\`(강제 줄바꿈)가 붙는다 — 문단 안으로 들어가서), 인라인 `:postlink[…]{…}`은 대괄호가 이스케이프되며, `::video[URL]`은 자동 링크로 바뀐다. 한 줄짜리 `::youtube{…}`·`::post{…}`·`::series{…}`와 `$$`·할 일·각주는 그대로 남았다(우연히 텍스트 문단으로 통과한 것이라 속성 안에 특수문자가 있으면 깨질 수 있다). 6-1의 `raw` 노드와 6-2의 방언 어댑터가 필요하다는 근거다.
