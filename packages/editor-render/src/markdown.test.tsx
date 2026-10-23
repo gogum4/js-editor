@@ -105,3 +105,20 @@ describe("HTML 문자열 진입점", () => {
     expect(renderDocToHtml({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "글" }] }] })).toBe('<div class="md-doc"><p>글</p></div>');
   });
 });
+
+describe("방언·참조 (P7)", () => {
+  it("블로그 방언 글을 읽어 콜아웃·directive·원문 디렉티브를 그린다", async () => {
+    const source = ":::note\n콜아웃\n:::\n\n:::indent{n=1}\n안쪽\n:::\n\n::youtube{id=abc123}\n";
+    const { element } = await renderMarkdown(source, { dialect: "blog", renderRaw: (text) => <em data-x>{text}</em> });
+    const out = renderToStaticMarkup(element as never);
+    expect(out).toContain("callout-note");
+    expect(out).toContain('data-head=":::indent{n=1}"');
+    expect(out).toContain("<em data-x=\"\">::youtube{id=abc123}</em>");
+  });
+
+  it("참조 표기를 켜면 참조 노드가 되고 renderReference가 그린다", async () => {
+    const { element, doc } = await renderMarkdown("::ref{kind=table-schema id=t1}\n", { references: true, renderReference: ({ id }) => <b>{id}</b> });
+    expect(doc.content?.[0]?.type).toBe("reference");
+    expect(renderToStaticMarkup(element as never)).toContain("<b>t1</b>");
+  });
+});

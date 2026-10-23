@@ -100,6 +100,19 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
           </sup>
         );
       }
+      case "softBreak":
+        // 문단 안의 줄바꿈 한 개(소스에서 줄을 나눈 자리): 공백으로 그린다.
+        return <Keyed key={index}>{" "}</Keyed>;
+      case "rawInline": {
+        const text = typeof node.attrs?.text === "string" ? node.attrs.text : "";
+        const custom = ctx.options.renderRaw?.(text, true);
+        if (custom !== undefined) return <Keyed key={index}>{custom}</Keyed>;
+        return (
+          <code key={index} className="raw-source" data-raw-inline="">
+            {text}
+          </code>
+        );
+      }
       case "pageLink": {
         const pageId = typeof node.attrs?.pageId === "string" ? node.attrs.pageId : "";
         const target = ctx.options.pageLink?.(pageId) ?? null;
@@ -309,6 +322,39 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
           <summary>{renderInline(title?.content, ctx)}</summary>
           {renderBlocks(rest, ctx)}
         </details>
+      );
+    }
+    case "reference": {
+      const kind = typeof node.attrs?.kind === "string" ? node.attrs.kind : "";
+      const id = typeof node.attrs?.id === "string" ? node.attrs.id : "";
+      if (kind === "" || id === "") return null;
+      const custom = ctx.options.renderReference?.({ kind, id });
+      if (custom !== undefined) return custom === null ? null : <Keyed key={key}>{custom}</Keyed>;
+      // 해석기가 없는 소비자의 대체 표시: 어떤 개체를 가리키는지만 적는다.
+      return (
+        <div key={key} className="reference reference-fallback" data-reference="" data-kind={kind} data-id={id}>
+          <span className="reference-kind">{kind}</span> <span className="reference-id">{id}</span>
+        </div>
+      );
+    }
+    case "raw": {
+      const text = typeof node.attrs?.text === "string" ? node.attrs.text : "";
+      if (text === "") return null;
+      const custom = ctx.options.renderRaw?.(text, false);
+      if (custom !== undefined) return custom === null ? null : <Keyed key={key}>{custom}</Keyed>;
+      return (
+        <pre key={key} className="raw-source" data-raw="">
+          {text}
+        </pre>
+      );
+    }
+    case "directive": {
+      // 컨테이너 디렉티브(`:::indent{n=1}` 등): 안쪽 블록을 그대로 그리고, 여는 줄은 data 속성에 남긴다(소비자가 CSS·후처리로 꾸민다).
+      const head = typeof node.attrs?.head === "string" ? node.attrs.head : "";
+      return (
+        <div key={key} className="directive" data-directive="" data-head={head}>
+          {renderBlocks(node.content, ctx)}
+        </div>
       );
     }
     case "pageBlock": {
