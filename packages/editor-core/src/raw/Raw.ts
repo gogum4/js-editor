@@ -107,6 +107,9 @@ export const Raw = Node.create({
   },
 });
 
+/** 글 중간 원문이 이미지 하나(`![설명](주소)`)인지. 주소는 `/`로 시작하는 사이트 안 경로나 http(s)만 그림으로 보인다. */
+const IMAGE_SOURCE = /^!\[([^\]]*)\]\(\s*(\/[^\s)]*|https?:\/\/[^\s)]*)(?:\s+"[^"]*")?\s*\)$/;
+
 /** 글 중간의 모르는 디렉티브(`:postlink[글]{slug}`): 회색 글자로 원문을 보이고 더블클릭하면 그 자리에서 고친다. */
 export const RawInline = Node.create({
   name: "rawInline",
@@ -142,7 +145,20 @@ export const RawInline = Node.create({
       dom.setAttribute("data-raw-inline", "");
       dom.title = strings.inlineTitle;
       const show = () => {
-        dom.textContent = String(node.attrs.text ?? "");
+        const text = String(node.attrs.text ?? "");
+        const image = IMAGE_SOURCE.exec(text);
+        if (image === null) {
+          dom.classList.remove("md-raw-image");
+          dom.textContent = text;
+          return;
+        }
+        // 블로그 이미지처럼 에디터의 이미지 노드로 읽지 않은 이미지: 원문은 그대로 두고 그림으로 보여 준다.
+        dom.classList.add("md-raw-image");
+        const img = document.createElement("img");
+        img.src = image[2]!;
+        img.alt = image[1]!;
+        img.draggable = false;
+        dom.replaceChildren(img);
       };
       show();
 

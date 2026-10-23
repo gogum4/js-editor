@@ -109,10 +109,17 @@ describe("블로그 방언 가져오기", () => {
     expect(roundTrip(source)).toBe(source);
   });
 
-  it("이미지의 |너비 표기를 해석하지 않는다", () => {
-    const doc = parse("![설명|300](https://example.com/a.png)\n");
-    expect(JSON.stringify(doc)).toContain("설명|300");
+  it("이미지는 원문 그대로의 rawInline이다 (주소의 ?w= 크기와 링크 속 이미지 포함)", () => {
+    const source = "![설명|300](https://example.com/a.png) 글 ![b](/img/3?w=50%25)\n\n[![c](/img/4)](https://example.com)\n";
+    const doc = parse(source);
+    expect(JSON.stringify(doc)).not.toContain('"image"');
     expect(JSON.stringify(doc)).not.toContain('"width"');
+    expect(roundTrip(source)).toBe(source);
+  });
+
+  it("인라인 HTML은 원문 그대로의 rawInline이다", () => {
+    const source = "앞 <u>밑줄</u> 뒤\n";
+    expect(roundTrip(source)).toBe(source);
   });
 
   it("내보내기: 블로그에 없는 서식은 풀어서 쓰고 안내한다", () => {

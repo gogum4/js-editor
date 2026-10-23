@@ -856,3 +856,11 @@
 .md-editor .md-directive-input:focus {
   color: #525252;
 }
+.md-editor .md-raw-inline.md-raw-image {
+  background: none;
+  padding: 0;
+}
+.md-editor .md-raw-inline.md-raw-image img {
+  max-width: 100%;
+  vertical-align: bottom;
+}

@@ -526,18 +526,30 @@ function inlineNodes(tokens: readonly Token[], marks: readonly PmMark[], state: 
         break;
       case "image": {
         const t = token as Tokens.Image;
+        // 블로그의 이미지는 `/img/3?w=300`처럼 주소에 크기가 실리고 에디터의 이미지 노드(저장소 해시)와 모양이 다르다 → 원문 그대로 둔다(화면은 그림으로 보인다).
+        if (state.blog) {
+          nodes.push({ type: "rawInline", attrs: { text: restoreRaw(t.raw, state) } });
+          break;
+        }
         nodes.push(imageNode(t.href, restoreRaw(t.text, state), state));
         break;
       }
       case "link": {
         const t = token as Tokens.Link;
+        if (state.blog && t.tokens.some((inner) => inner.type === "image")) {
+          nodes.push({ type: "rawInline", attrs: { text: restoreRaw(t.raw, state) } });
+          break;
+        }
         const href = restoreRaw(t.href, state);
         nodes.push(...linkNodes(t, href, marks, state));
         break;
       }
       case "html": {
         const tag = (token as Tokens.HTML).raw.trim().toLowerCase();
-        if (/^<u(\s[^>]*)?>$/.test(tag)) state.underline++;
+        if (state.blog) {
+          // 블로그는 HTML을 그리지 않는다 → 태그 글자를 잃지 않게 원문 그대로 둔다.
+          nodes.push({ type: "rawInline", attrs: { text: (token as Tokens.HTML).raw } });
+        } else if (/^<u(\s[^>]*)?>$/.test(tag)) state.underline++;
         else if (tag === "</u>") state.underline = Math.max(0, state.underline - 1);
         else if (/^<br\s*\/?>$/.test(tag)) nodes.push({ type: "hardBreak" });
         else if (!/^<!--/.test(tag)) note(state, NOTICE.unsupportedHtml);

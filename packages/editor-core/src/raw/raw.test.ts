@@ -101,4 +101,13 @@ describe("raw 노드 (core)", () => {
     expect(input.value).toBe(":::fold{h=2}");
     expect(exported(e, "blog")).toBe(":::fold{h=2}\n안\n:::\n");
   });
+
+  it("블로그 이미지는 원문을 지키면서 그림으로 보인다", () => {
+    const source = "앞 ![설명](/img/3?w=300) 뒤\n";
+    const e = mount(source, true, true);
+    const img = e.view.dom.querySelector<HTMLImageElement>("code.md-raw-image img")!;
+    expect(img.getAttribute("src")).toBe("/img/3?w=300");
+    expect(img.alt).toBe("설명");
+    expect(exported(e, "blog")).toBe(source);
+  });
 });
