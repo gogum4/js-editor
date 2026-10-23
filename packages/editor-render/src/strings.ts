@@ -1,4 +1,4 @@
-import type { CalloutType } from "@9um4/editor-schema/callout";
+import type { CalloutType } from "@9um4-utils/editor-schema/callout";
 
 /** 렌더링 결과에 들어가는 글(콜아웃 이름, 각주 제목 등). 기본은 한국어이고 영어도 있다. */
 export interface RenderStrings {

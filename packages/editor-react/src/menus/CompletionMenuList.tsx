@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useEditorStrings } from "../context";
-import type { Candidate } from "@9um4/editor-core";
+import type { Candidate } from "@9um4-utils/editor-core";
 
 interface CompletionMenuListProps {
   items: Candidate[];

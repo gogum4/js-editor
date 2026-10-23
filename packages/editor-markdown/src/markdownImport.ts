@@ -12,13 +12,13 @@
 
 import { Lexer, type Token, type Tokens } from "marked";
 
-import { blockIdFromForeign, isBlockIdType } from "@9um4/editor-schema/blockId";
-import type { ReferenceTarget } from "@9um4/editor-schema/reference";
-import { calloutTypeFromName, normalizeCalloutType } from "@9um4/editor-schema/callout";
-import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
-import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
-import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
-import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
+import { blockIdFromForeign, isBlockIdType } from "@9um4-utils/editor-schema/blockId";
+import type { ReferenceTarget } from "@9um4-utils/editor-schema/reference";
+import { calloutTypeFromName, normalizeCalloutType } from "@9um4-utils/editor-schema/callout";
+import { normalizeImageWidth } from "@9um4-utils/editor-schema/imageLayout";
+import type { PmMark, PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import { isSafeToOpen } from "@9um4-utils/editor-schema/safeLink";
+import { normalizeTextAlign } from "@9um4-utils/editor-schema/textAlign";
 
 import { BLOG_CALLOUT_TO_TYPE, type MarkdownDialect } from "./dialect.ts";
 import { parseReferenceLine } from "./referenceDirective.ts";

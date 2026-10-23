@@ -2,7 +2,7 @@
  * 참조 노드(`reference`)의 기본 Markdown 표기: `::ref{kind=table-schema id=abc}` 한 줄(블로그 방언의 한 줄 디렉티브와 같은 모양).
  * 소비자는 내보내기 `references.toMarkdown`과 가져오기 `references`로 자기 표기(예: `![[schema:이름]]`)를 쓸 수 있다.
  */
-import { normalizeReferenceId, normalizeReferenceKind, type ReferenceTarget, referenceTarget } from "@9um4/editor-schema/reference";
+import { normalizeReferenceId, normalizeReferenceKind, type ReferenceTarget, referenceTarget } from "@9um4-utils/editor-schema/reference";
 
 const LINE = /^ {0,3}::ref\{([^}\n]*)\}[ \t]*$/;
 const ATTR = /([a-zA-Z][\w-]*)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s"}]+))/g;

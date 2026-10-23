@@ -1,5 +1,5 @@
 import type { AnyExtension } from "@tiptap/core";
-import type { ImportContext } from "@9um4/editor-markdown";
+import type { ImportContext } from "@9um4-utils/editor-markdown";
 import Collaboration from "@tiptap/extension-collaboration";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";

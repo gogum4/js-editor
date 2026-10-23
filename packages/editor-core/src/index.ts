@@ -9,7 +9,7 @@ export { type MarkdownCopyOptions, sliceToMarkdown } from "./extensions/Markdown
 export { blockFlashKey, findBlockById } from "./extensions/BlockFlash";
 export { blockIdPlugin, blockIdTransaction, transactionIntroducesBlocks } from "./extensions/BlockId";
 
-// 화면에 필요한 순수 도구 (React 화면은 `@9um4/editor-react`)
+// 화면에 필요한 순수 도구 (React 화면은 `@9um4-utils/editor-react`)
 export { placeMenu } from "./menuPlace";
 
 // 슬래시 메뉴
@@ -25,7 +25,7 @@ export type { AssetStore, EditorPorts, KeyValueStore, Notifier, ReferenceInfo, R
 // 화면 글 사전
 export { enStrings, type EditorStrings, koStrings } from "./strings/index";
 
-// `@9um4/editor-react`가 쓰는 내부 (수식·각주 편집, 수식 렌더 로더, 자동완성 계산, mermaid 도구, 이미지 캐시)
+// `@9um4-utils/editor-react`가 쓰는 내부 (수식·각주 편집, 수식 렌더 로더, 자동완성 계산, mermaid 도구, 이미지 캐시)
 export type { Candidate } from "./completion/words";
 export { Raw, RawInline, SoftBreak } from "./raw/Raw";
 export { Reference } from "./reference/Reference";

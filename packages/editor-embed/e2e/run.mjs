@@ -1,5 +1,5 @@
 // 에디터 번들(정적 빌드)을 iframe 호스트 흉내 페이지에 띄우고 메시지 규약을 실제 Chromium에서 확인한다(docs/EDITOR-EMBED.md).
-// 사용: pnpm --filter @9um4/editor-embed build && pnpm --filter @9um4/editor-embed e2e   (브라우저 준비는 examples/editor-demo/README.md와 같다)
+// 사용: pnpm --filter @9um4-utils/editor-embed build && pnpm --filter @9um4-utils/editor-embed e2e   (브라우저 준비는 examples/editor-demo/README.md와 같다)
 import { createReadStream, existsSync, readdirSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, extname, join, normalize } from "node:path";
@@ -9,7 +9,7 @@ import { chromium } from "playwright";
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, "..", "dist");
 if (!existsSync(join(dist, "index.html"))) {
-  console.error("dist가 없다. 먼저 `pnpm --filter @9um4/editor-embed build`");
+  console.error("dist가 없다. 먼저 `pnpm --filter @9um4-utils/editor-embed build`");
   process.exit(1);
 }
 

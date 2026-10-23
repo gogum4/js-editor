@@ -1,13 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
 import { prepareRender } from "./prepare.ts";
 import { renderDoc } from "./render.tsx";
 import type { RenderOptions } from "./types.ts";
 
 /**
- * HTML 골든(docs/EDITOR-PACKAGE.md P4). `@9um4/editor-markdown`의 Markdown 골든 픽스처(본문 JSON)를 그대로 렌더해
+ * HTML 골든(docs/EDITOR-PACKAGE.md P4). `@9um4-utils/editor-markdown`의 Markdown 골든 픽스처(본문 JSON)를 그대로 렌더해
  * `fixtures/<이름>.html`과 비교한다 — 같은 문서가 Markdown으로도, HTML로도 같은 규칙으로 고정된다.
  * 의도한 변경이면 `pnpm vitest run packages/editor-render -u`로 갱신하고 diff를 검토한다.
  */

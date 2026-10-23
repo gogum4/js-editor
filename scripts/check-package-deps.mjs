@@ -10,17 +10,17 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const ALLOWED_PACKAGES = {
   "editor-schema": [],
   // 읽기 전용 렌더링: React(peer)·KaTeX·lowlight와 schema·markdown. TipTap·ProseMirror·Yjs·브라우저 API는 안 된다(서버 컴포넌트에서 돌아야 한다).
-  "editor-render": ["@9um4/editor-markdown", "@9um4/editor-schema", "highlight.js", "katex", "lowlight", "mermaid", "react", "react-dom"],
+  "editor-render": ["@9um4-utils/editor-markdown", "@9um4-utils/editor-schema", "highlight.js", "katex", "lowlight", "mermaid", "react", "react-dom"],
   // Markdown 변환: schema와 marked만(순수 함수라 TipTap·DOM이 필요 없다).
-  "editor-markdown": ["@9um4/editor-schema", "marked"],
+  "editor-markdown": ["@9um4-utils/editor-schema", "marked"],
   // 에디터 코어(React 없음): TipTap·Yjs와 schema·markdown. React·zustand를 쓰면 안 된다 — 화면은 editor-react가 주입한다(P5).
   "editor-core": [
-    "@9um4/editor-markdown", "@9um4/editor-schema", "@tiptap/core", "@tiptap/extension-code-block", "@tiptap/extension-collaboration", "@tiptap/extension-list",
+    "@9um4-utils/editor-markdown", "@9um4-utils/editor-schema", "@tiptap/core", "@tiptap/extension-code-block", "@tiptap/extension-collaboration", "@tiptap/extension-list",
     "@tiptap/extension-table", "@tiptap/extensions", "@tiptap/pm", "@tiptap/starter-kit", "@tiptap/suggestion",
     "@tiptap/y-tiptap", "highlight.js", "katex", "lowlight", "mermaid", "yjs",
   ],
-  // 에디터 React 화면: core 위에 React로 뷰·메뉴·편집 창을 얹는다. 앱(`src/`)·Tauri·서버·core의 내부 파일은 안 된다(공개 API `@9um4/editor-core`만).
-  "editor-react": ["@9um4/editor-core", "@9um4/editor-schema", "@tiptap/core", "@tiptap/pm", "@tiptap/react", "@tiptap/suggestion", "react", "react-dom", "yjs", "zustand"],
+  // 에디터 React 화면: core 위에 React로 뷰·메뉴·편집 창을 얹는다. 앱(`src/`)·Tauri·서버·core의 내부 파일은 안 된다(공개 API `@9um4-utils/editor-core`만).
+  "editor-react": ["@9um4-utils/editor-core", "@9um4-utils/editor-schema", "@tiptap/core", "@tiptap/pm", "@tiptap/react", "@tiptap/suggestion", "react", "react-dom", "yjs", "zustand"],
 };
 
 function walk(dir, out = []) {

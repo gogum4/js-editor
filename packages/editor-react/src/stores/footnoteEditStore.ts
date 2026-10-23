@@ -1,8 +1,8 @@
 import type { Editor } from "@tiptap/core";
 import { create } from "zustand";
 
-import { collectFootnotes, FOOTNOTE_NODE } from "@9um4/editor-core";
-import type { FootnoteEditState } from "@9um4/editor-core";
+import { collectFootnotes, FOOTNOTE_NODE } from "@9um4-utils/editor-core";
+import type { FootnoteEditState } from "@9um4-utils/editor-core";
 
 // 각주 편집 창의 저장소와 여는 함수. zustand는 React를 끌어오므로 화면 쪽 파일이다(core의 확장은 `uiOf(editor).openFootnoteEditor`로 부른다).
 

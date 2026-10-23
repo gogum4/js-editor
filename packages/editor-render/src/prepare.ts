@@ -1,8 +1,8 @@
 import katex from "katex";
 import { createLowlight } from "lowlight";
 
-import { resolveLanguage } from "@9um4/editor-schema/codeLanguages";
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { resolveLanguage } from "@9um4-utils/editor-schema/codeLanguages";
+import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
 import type { HastChild } from "./highlight.tsx";
 import { LANGUAGE_LOADERS } from "./languageLoaders.generated.ts";
 import { textOf } from "./slug.ts";

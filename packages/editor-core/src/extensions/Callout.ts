@@ -1,6 +1,6 @@
 import { InputRule, mergeAttributes, Node } from "@tiptap/core";
 
-import { type CalloutType, calloutTypeFromName, DEFAULT_CALLOUT_TYPE, normalizeCalloutType } from "@9um4/editor-schema/callout";
+import { type CalloutType, calloutTypeFromName, DEFAULT_CALLOUT_TYPE, normalizeCalloutType } from "@9um4-utils/editor-schema/callout";
 import type { NodeViewOptions } from "../ports/ui";
 
 declare module "@tiptap/core" {

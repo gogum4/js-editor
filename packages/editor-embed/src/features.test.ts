@@ -1,4 +1,4 @@
-import { CORE_SLASH_ITEMS } from "@9um4/editor-core";
+import { CORE_SLASH_ITEMS } from "@9um4-utils/editor-core";
 import { describe, expect, it } from "vitest";
 
 import { allowedSlashItems } from "./features.ts";

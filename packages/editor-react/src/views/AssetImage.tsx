@@ -1,8 +1,8 @@
 import { type CSSProperties, useEffect, useState } from "react";
 
-import { isAssetHash } from "@9um4/editor-schema/assets";
+import { isAssetHash } from "@9um4-utils/editor-schema/assets";
 import { useEditorPorts, useEditorStrings } from "../context";
-import { assetCacheFor } from "@9um4/editor-core";
+import { assetCacheFor } from "@9um4-utils/editor-core";
 
 interface AssetImageProps {
   hash: string;

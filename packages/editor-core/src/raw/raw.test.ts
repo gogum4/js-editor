@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { Editor } from "@tiptap/core";
 import { Slice } from "@tiptap/pm/model";
-import { docToMarkdown, markdownToDoc } from "@9um4/editor-markdown";
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { docToMarkdown, markdownToDoc } from "@9um4-utils/editor-markdown";
+import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
 import { afterEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
 

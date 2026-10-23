@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
 import { prepareRender, renderDoc } from "./index.ts";
 
 const t = (text: string): PmNode => ({ type: "text", text });

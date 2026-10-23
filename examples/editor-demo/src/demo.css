@@ -1,9 +1,9 @@
 /*
- * 데모의 스타일: 패키지의 스타일(`@9um4/editor-react/styles.css`)만 쓴다. 노트 앱의 `src/index.css`는 쓰지 않는다.
+ * 데모의 스타일: 패키지의 스타일(`@9um4-utils/editor-react/styles.css`)만 쓴다. 노트 앱의 `src/index.css`는 쓰지 않는다.
  * Tailwind는 기본 초기화(preflight)만 쓴다 — 앱과 같은 바탕에서 모양이 같은지 비교하려는 것이다.
  */
 @import "tailwindcss";
-@import "@9um4/editor-react/styles.css";
+@import "@9um4-utils/editor-react/styles.css";
 
 html,
 body,

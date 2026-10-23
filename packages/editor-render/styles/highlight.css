@@ -1,5 +1,5 @@
 /*
- * @9um4/editor-render 코드 강조 색. 클래스 이름(hljs-*)은 highlight.js가 붙인다.
+ * @9um4-utils/editor-render 코드 강조 색. 클래스 이름(hljs-*)은 highlight.js가 붙인다.
  * 기본은 시스템 설정을 따르고, `.md-doc[data-theme="light|dark"]`로 고정할 수 있다.
  */
 

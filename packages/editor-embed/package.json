@@ -1,5 +1,5 @@
 {
-  "name": "@9um4/editor-embed",
+  "name": "@9um4-utils/editor-embed",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,10 +10,10 @@
     "e2e": "node e2e/run.mjs"
   },
   "dependencies": {
-    "@9um4/editor-core": "workspace:*",
-    "@9um4/editor-markdown": "workspace:*",
-    "@9um4/editor-react": "workspace:*",
-    "@9um4/editor-schema": "workspace:*",
+    "@9um4-utils/editor-core": "workspace:*",
+    "@9um4-utils/editor-markdown": "workspace:*",
+    "@9um4-utils/editor-react": "workspace:*",
+    "@9um4-utils/editor-schema": "workspace:*",
     "@tiptap/react": "^3.32.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

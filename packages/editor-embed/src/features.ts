@@ -1,4 +1,4 @@
-import type { SlashItem } from "@9um4/editor-core";
+import type { SlashItem } from "@9um4-utils/editor-core";
 
 import type { Feature } from "./protocol.ts";
 

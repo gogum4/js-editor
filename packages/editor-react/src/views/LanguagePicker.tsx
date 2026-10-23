@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { languageOptions, searchLanguages } from "@9um4/editor-schema/codeLanguages";
+import { languageOptions, searchLanguages } from "@9um4-utils/editor-schema/codeLanguages";
 import { useEditorStrings } from "../context";
 
 interface LanguagePickerProps {

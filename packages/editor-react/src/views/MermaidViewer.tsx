@@ -10,7 +10,7 @@ import {
   svgSize,
   type View,
   zoomAt,
-} from "@9um4/editor-core";
+} from "@9um4-utils/editor-core";
 import { useEditorStrings } from "../context";
 
 /** 그림을 이 값만큼 곱해 키우고 줄이는 한 단계(버튼·키보드). */

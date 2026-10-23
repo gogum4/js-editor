@@ -4,7 +4,7 @@ import { type EditorState, Plugin, PluginKey, type Transaction } from "@tiptap/p
 import { ReplaceAroundStep, ReplaceStep, type Step, type StepMap } from "@tiptap/pm/transform";
 import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
-import { BLOCK_ID_TYPES, generateBlockId, isBlockIdType } from "@9um4/editor-schema/blockId";
+import { BLOCK_ID_TYPES, generateBlockId, isBlockIdType } from "@9um4-utils/editor-schema/blockId";
 
 /**
  * 블록 id(`attrs.id`)를 붙이고 지킨다.

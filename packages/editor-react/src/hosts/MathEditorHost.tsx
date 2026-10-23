@@ -12,13 +12,13 @@ import {
   skipCloserEdit,
   suggest,
   tabJump,
-} from "@9um4/editor-core";
-import type { LatexCommand } from "@9um4/editor-core";
-import { MAX_LATEX_CHARS } from "@9um4/editor-core";
+} from "@9um4-utils/editor-core";
+import type { LatexCommand } from "@9um4-utils/editor-core";
+import { MAX_LATEX_CHARS } from "@9um4-utils/editor-core";
 import { useMathHtml } from "../hooks/useMathHtml";
-import { computeMenuPosition } from "@9um4/editor-schema/menuPosition";
+import { computeMenuPosition } from "@9um4-utils/editor-schema/menuPosition";
 import { LatexCompletionMenu } from "../menus/LatexCompletionMenu";
-import { type MathEditState, setMathLatex } from "@9um4/editor-core";
+import { type MathEditState, setMathLatex } from "@9um4-utils/editor-core";
 import { closeMathEditor, useMathEditStore } from "../stores/mathEditStore";
 import { useEditorStrings } from "../context";
 

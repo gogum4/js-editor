@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 
-import { computeMenuPosition } from "@9um4/editor-schema/menuPosition";
-import { type FootnoteEditState, setFootnoteText } from "@9um4/editor-core";
+import { computeMenuPosition } from "@9um4-utils/editor-schema/menuPosition";
+import { type FootnoteEditState, setFootnoteText } from "@9um4-utils/editor-core";
 import { closeFootnoteEditor, useFootnoteEditStore } from "../stores/footnoteEditStore";
 import { useEditorStrings } from "../context";
 

@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { CALLOUT_META, normalizeCalloutType } from "@9um4/editor-schema/callout";
-import { blockIdOf } from "@9um4/editor-schema/blockId";
-import type { PmMark, PmNode } from "@9um4/editor-schema/pmDoc";
-import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
-import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
+import { CALLOUT_META, normalizeCalloutType } from "@9um4-utils/editor-schema/callout";
+import { blockIdOf } from "@9um4-utils/editor-schema/blockId";
+import type { PmMark, PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import { isSafeToOpen } from "@9um4-utils/editor-schema/safeLink";
+import { normalizeTextAlign } from "@9um4-utils/editor-schema/textAlign";
 import { MermaidDiagram } from "./client/MermaidDiagram.tsx";
 import { hastToReact } from "./highlight.tsx";
 import { collectHeadings, textOf } from "./slug.ts";

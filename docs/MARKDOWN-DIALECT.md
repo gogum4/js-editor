@@ -1,6 +1,6 @@
 # Markdown 방언 명세 (0.1, 초안)
 
-`@9um4/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
+`@9um4-utils/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
 **이 문서의 모든 규칙은 `packages/editor-markdown/fixtures/`의 골든으로 고정돼 있다**(문서 → Markdown, Markdown → 문서, 왕복). 규칙을 바꾸면 골든을 갱신하고 이 문서도 고친다.
 
 ## 원칙
@@ -92,7 +92,7 @@ GFM 표는 병합 셀, 머리글 없는 표, 셀 안의 여러 블록을 표현�
 | `**굵게**` `*기울임*` `~~취소선~~` `\`코드\`` | 인라인 서식 |
 | `$x^2# Markdown 방언 명세 (0.1, 초안)
 
-`@9um4/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
+`@9um4-utils/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
 **이 문서의 모든 규칙은 `packages/editor-markdown/fixtures/`의 골든으로 고정돼 있다**(문서 → Markdown, Markdown → 문서, 왕복). 규칙을 바꾸면 골든을 갱신하고 이 문서도 고친다.
 
 ## 원칙
@@ -177,7 +177,7 @@ GFM 표는 병합 셀, 머리글 없는 표, 셀 안의 여러 블록을 표현�
 
 - **언제**: 클립보드에 `text/plain`만 있고(HTML이 같이 있으면 — 에디터 안 복사, 웹 페이지 — 건드리지 않는다) 글이 Markdown처럼 보일 때. 블록 문법(제목·목록·인용·코드 펜스·표·`$`·`<details>`·각주 정의)이 한 줄이라도 있거나, 강한 인라인 문법(`**굵게**` `~~취소선~~` `[글](주소)` `[[위키]]` `\`코드\``)이 있을 때다. `*기울임*`·`_기울임_`·`$수식# Markdown 방언 명세 (0.1, 초안)
 
-`@9um4/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
+`@9um4-utils/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
 **이 문서의 모든 규칙은 `packages/editor-markdown/fixtures/`의 골든으로 고정돼 있다**(문서 → Markdown, Markdown → 문서, 왕복). 규칙을 바꾸면 골든을 갱신하고 이 문서도 고친다.
 
 ## 원칙
@@ -269,7 +269,7 @@ GFM 표는 병합 셀, 머리글 없는 표, 셀 안의 여러 블록을 표현�
 | `**굵게**` `*기울임*` `~~취소선~~` `\`코드\`` | 인라인 서식 |
 | `$x^2# Markdown 방언 명세 (0.1, 초안)
 
-`@9um4/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
+`@9um4-utils/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.
 **이 문서의 모든 규칙은 `packages/editor-markdown/fixtures/`의 골든으로 고정돼 있다**(문서 → Markdown, Markdown → 문서, 왕복). 규칙을 바꾸면 골든을 갱신하고 이 문서도 고친다.
 
 ## 원칙

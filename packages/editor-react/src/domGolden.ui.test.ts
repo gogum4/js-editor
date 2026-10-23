@@ -7,20 +7,20 @@ import { createRoot, type Root } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
 import { CompletionMenuList } from "./menus/CompletionMenuList";
 import { createReactExtensions } from "./createReactExtensions";
 import { MermaidViewer } from "./views/MermaidViewer";
 import { FootnoteEditorHost } from "./hosts/FootnoteEditorHost";
 import { openFootnoteEditor } from "./stores/footnoteEditStore";
-import type { LatexCommand } from "@9um4/editor-core";
+import type { LatexCommand } from "@9um4-utils/editor-core";
 import { LatexCompletionMenu } from "./menus/LatexCompletionMenu";
 import { MathEditorHost } from "./hosts/MathEditorHost";
 import { openMathEditor } from "./stores/mathEditStore";
 import { EditorPortsProvider } from "./context";
-import { memoryPorts } from "@9um4/editor-core";
+import { memoryPorts } from "@9um4-utils/editor-core";
 import { TableToolbar } from "./hosts/TableToolbar";
-import { formatDom, maskKatex, withFixedIds } from "@9um4/editor-core/testing";
+import { formatDom, maskKatex, withFixedIds } from "@9um4-utils/editor-core/testing";
 
 /**
  * 메뉴·편집 창·막대 DOM 골든 (P5-0; `domGolden.test.ts`의 짝). 분리 뒤에도 같은 골든 파일과 비교된다.

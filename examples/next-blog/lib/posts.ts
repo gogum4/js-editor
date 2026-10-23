@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { parseFrontmatter } from "@9um4/editor-markdown";
+import { parseFrontmatter } from "@9um4-utils/editor-markdown";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 

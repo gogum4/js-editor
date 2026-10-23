@@ -1,5 +1,5 @@
 {
-  "name": "@9um4/editor-schema",
+  "name": "@9um4-utils/editor-schema",
   "version": "0.0.0",
   "private": true,
   "type": "module",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { type MermaidResult, renderMermaid } from "@9um4/editor-core";
+import { type MermaidResult, renderMermaid } from "@9um4-utils/editor-core";
 import { MermaidViewer } from "./MermaidViewer";
 import { useEditorStrings } from "../context";
 

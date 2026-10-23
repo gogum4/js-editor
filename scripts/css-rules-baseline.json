@@ -326,7 +326,7 @@
  "@layer base :: video) | height: auto; max-width: 100%",
  "@media (hover: hover) :: .md-card-delete:hover | background-color: var(--md-c-oklch-97-0-none, oklch(97% 0 none)); color: var(--md-c-oklch-57-7-0-245-27-325, oklch(57.7% 0.245 27.325))",
  "@media (hover: hover) :: .md-mermaid-tool:hover | background-color: color-mix(in oklab, #fff 15%, transparent)",
- "at | @import \"@9um4/editor-react/styles.css\"",
+ "at | @import \"@9um4-utils/editor-react/styles.css\"",
  "at | @import \"tailwindcss\"",
  "body | height: 100%",
  "body | margin: 0",

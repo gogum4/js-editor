@@ -1,5 +1,5 @@
 {
-  "name": "@9um4/editor-markdown",
+  "name": "@9um4-utils/editor-markdown",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@9um4/editor-schema": "workspace:*",
+    "@9um4-utils/editor-schema": "workspace:*",
     "marked": "16.4.2"
   },
   "files": [

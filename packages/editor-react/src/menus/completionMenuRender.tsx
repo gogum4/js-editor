@@ -1,8 +1,8 @@
 import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionKeyDownProps } from "@tiptap/suggestion";
 
-import { placeMenu } from "@9um4/editor-core";
-import type { SuggestionRender } from "@9um4/editor-core";
+import { placeMenu } from "@9um4-utils/editor-core";
+import type { SuggestionRender } from "@9um4-utils/editor-core";
 import { type CompletionMenuHandle, CompletionMenuList } from "./CompletionMenuList";
 
 /**

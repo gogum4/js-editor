@@ -1,7 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
-import { isSafeToOpen, wantsToOpenLink } from "@9um4/editor-schema/safeLink";
+import { isSafeToOpen, wantsToOpenLink } from "@9um4-utils/editor-schema/safeLink";
 import { portsOf } from "../ports/editorPorts";
 
 /**

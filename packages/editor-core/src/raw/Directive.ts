@@ -1,6 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 
-import { isContainerOpener } from "@9um4/editor-markdown";
+import { isContainerOpener } from "@9um4-utils/editor-markdown";
 import { stringsOf } from "../ports/editorPorts";
 
 /**
