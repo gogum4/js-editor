@@ -163,7 +163,7 @@ describe("링크·수식·각주", () => {
         text("보라 "),
         { type: "pageLink", attrs: { pageId: "p-project" } },
         text(" 와 "),
-        { type: "pageLink", attrs: { pageId: "p-meeting" } },
+        { type: "pageLink", attrs: { pageId: "p-meeting", label: "회의" } },
         text(" 와 "),
         { type: "pageLink", attrs: { pageId: "p-deep", blockId: "abc0123456" } },
         text(" 와 "),

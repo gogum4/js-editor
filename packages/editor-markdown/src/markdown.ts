@@ -121,8 +121,14 @@ class Renderer {
 
   constructor(private readonly options: MarkdownOptions) {}
 
+  /** 블로그 방언(`:::` 디렉티브로 쓴다). */
   private get blog(): boolean {
     return this.options.dialect === "blog";
+  }
+
+  /** 노트 앱의 Obsidian 방언이 아니다(블로그·일반 GFM): 이미지 크기·토글·밑줄·정렬 같은 Obsidian 쪽 표기를 쓰지 않는다. */
+  private get plain(): boolean {
+    return this.options.dialect !== undefined && this.options.dialect !== "obsidian";
   }
 
   finish(): string[] {
@@ -150,7 +156,9 @@ class Renderer {
   /** 하드 브레이크 한 개. `newline` 모양은 양옆이 모두 글(줄바꿈이 아닌 인라인)일 때만 쓴다. */
   private hardBreak(previous: PmNode | undefined, next: PmNode | undefined): string {
     const plain = (n: PmNode | undefined) => n !== undefined && n.type !== "hardBreak" && n.type !== "softBreak";
-    return this.options.hardBreakStyle === "newline" && plain(previous) && plain(next) ? "\n" : "\\\n";
+    // 일반 GFM(`breaks:true`)은 줄바꿈 한 개가 눈에 보이는 줄바꿈이라 기본이 `newline`이다.
+    const style = this.options.hardBreakStyle ?? (this.options.dialect === "gfm" ? "newline" : "backslash");
+    return style === "newline" && plain(previous) && plain(next) ? "\n" : "\\\n";
   }
 
   private inlineNode(node: PmNode): string {
@@ -204,7 +212,10 @@ class Renderer {
     ids.add(id);
     this.linkedTitles.set(shown, ids);
     // `[[…]]` 안에서 대괄호는 구분자와 헷갈리므로 뺀다.
-    return `[[${shown.replace(/[[\]]/g, "").replace(/\s+/g, " ")}${anchor}]]`;
+    // `[[대상|표시 글자]]`: 표시 글자가 있고 대상과 다르면 남긴다(가져올 때 `label`로 보존한 것).
+    const label = typeof node.attrs?.label === "string" ? node.attrs.label.replace(/[[\]\n]/g, " ").replace(/\s+/g, " ").trim() : "";
+    const target = shown.replace(/[[\]]/g, "").replace(/\s+/g, " ");
+    return `[[${target}${anchor}${label !== "" && label !== target ? `|${label}` : ""}]]`;
   }
 
   private text(node: PmNode): string {
@@ -222,7 +233,7 @@ class Renderer {
     let out = isCode ? renderCode(core) : escapeInline(core);
     const has = (type: string) => marks.some((m) => m.type === type);
     if (has("underline")) {
-      if (this.blog) this.notices.add("밑줄은 블로그 문법에 없어서 일반 글자로 내보냈어요.");
+      if (this.plain) this.notices.add("밑줄은 이 방언의 문법에 없어서 일반 글자로 내보냈어요.");
       else {
         out = `<u>${out}</u>`;
         this.notices.add("밑줄은 Markdown에 없어서 <u>…</u>로 내보냈어요.");
@@ -291,7 +302,7 @@ class Renderer {
    * 이미지는 양쪽 맞춤이 없어서(왼쪽으로 본다) 가운데·오른쪽만 감싼다.
    */
   private aligned(node: PmNode, rendered: string): string {
-    if (this.blog || (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image")) return rendered;
+    if (this.plain || (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image")) return rendered;
     const align = normalizeTextAlign(node.attrs?.textAlign);
     if (align === null || (node.type === "image" && align === "justify")) return rendered;
     this.notices.add("가운데·오른쪽·양쪽 정렬은 Markdown에 없어서 HTML(<div align>)로 내보냈어요. 목록·표 안의 정렬은 내보내지 않아요.");
@@ -446,8 +457,8 @@ class Renderer {
   /** 토글은 HTML <details>로 내보낸다(제목 줄이 <summary>, 나머지는 안의 내용). */
   private toggle(node: PmNode): string | null {
     const [title, ...rest] = node.content ?? [];
-    if (this.blog) {
-      // 블로그에는 토글이 없다(HTML도 그려지지 않는다) → 제목 줄을 굵은 문단으로 두고 내용을 이어 쓴다.
+    if (this.plain) {
+      // 블로그·일반 GFM에는 토글이 없다(HTML도 그려지지 않는다) → 제목 줄을 굵은 문단으로 두고 내용을 이어 쓴다.
       this.notices.add("토글은 블로그 문법에 없어서 제목 문단과 내용으로 풀어 내보냈어요.");
       const head = title ? this.inline(title.content).replace(/\\\n|\n/g, " ").trim() : "";
       const inner = this.blocks(rest);
@@ -484,7 +495,7 @@ class Renderer {
     // `|`는 크기 구분자로 쓰므로 설명 글자에서는 뺀다.
     const alt = String(node.attrs?.alt ?? "").replace(/[[\]|\n]/g, " ").replace(/\s+/g, " ").trim();
     // 크기는 Obsidian 문법(`![설명|너비](경로)`). 다른 편집기에서는 설명 글자에 `|너비`가 붙어 보일 수 있다.
-    const width = this.blog ? null : normalizeImageWidth(node.attrs?.width);
+    const width = this.plain ? null : normalizeImageWidth(node.attrs?.width);
     if (width !== null) this.notices.add("이미지 크기는 Obsidian 형식(![설명|너비](…))으로 내보냈어요. 다른 편집기에서는 크기가 적용되지 않을 수 있어요.");
     const label = width === null ? alt : `${alt}|${width}`;
     const path = this.options.assetPath ? this.options.assetPath(hash, mime) : `assets/${assetFileName(hash, mime)}`;
