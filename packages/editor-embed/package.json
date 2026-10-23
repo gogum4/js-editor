@@ -1,0 +1,29 @@
+{
+  "name": "@9um4/editor-embed",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "에디터를 WebView·iframe에 올리는 정적 번들과 호스트와의 JSON 메시지 규약(docs/EDITOR-EMBED.md, P6b). 캘린더(Flutter)가 쓴다. 배포하는 패키지가 아니라 앱 번들이다",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "e2e": "node e2e/run.mjs"
+  },
+  "dependencies": {
+    "@9um4/editor-core": "workspace:*",
+    "@9um4/editor-markdown": "workspace:*",
+    "@9um4/editor-react": "workspace:*",
+    "@9um4/editor-schema": "workspace:*",
+    "@tiptap/react": "^3.32.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^6.0.2",
+    "playwright": "^1.64.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
+  }
+}

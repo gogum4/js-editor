@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8" /><title>호스트 흉내</title></head>
+  <body style="margin:0">
+    <!-- Flutter 웹이 iframe으로 에디터를 띄우는 상황을 흉내 낸다: 호스트는 부모 창이고 메시지는 postMessage로 오간다. -->
+    <iframe id="app" src="/app/index.html" style="width:600px;height:400px;border:0"></iframe>
+    <script>
+      const frame = document.getElementById("app");
+      window.log = [];
+      window.addEventListener("message", (event) => {
+        if (event.source !== frame.contentWindow) return;
+        window.log.push(JSON.parse(event.data));
+      });
+      window.send = (message) => frame.contentWindow.postMessage(JSON.stringify(message), "*");
+      window.sendObject = (message) => frame.contentWindow.postMessage(message, "*");
+      window.sendViaGlobal = (message) => frame.contentWindow.__editorHostReceive(JSON.stringify(message));
+    </script>
+  </body>
+</html>
