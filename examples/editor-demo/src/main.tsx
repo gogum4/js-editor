@@ -88,7 +88,7 @@ const withRefs = (base: typeof DEMO_DOC) =>
     ? {
         ...base,
         content: [
-          ...base.content,
+          ...(base.content ?? []),
           { type: "reference", attrs: { kind: "table-schema", id: "monster" } },
           { type: "reference", attrs: { kind: "table-schema", id: "gone" } },
           { type: "reference", attrs: { kind: "unknown-kind", id: "x" } },
@@ -99,7 +99,7 @@ const doc = withRefs(raw
   ? {
       ...DEMO_DOC,
       content: [
-        ...DEMO_DOC.content,
+        ...(DEMO_DOC.content ?? []),
         { type: "raw", attrs: { text: ":::fold{h=1}\n안쪽 줄\n:::" } },
         { type: "directive", attrs: { head: ":::indent{n=1}" }, content: [{ type: "paragraph", content: [{ type: "text", text: "디렉티브 안쪽" }] }] },
         { type: "paragraph", content: [{ type: "text", text: "앞 " }, { type: "rawInline", attrs: { text: ":postlink[글]{slug=a}" } }, { type: "text", text: " 뒤" }] },
