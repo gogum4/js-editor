@@ -55,8 +55,8 @@ async function main() {
         const text = message.text();
         if (message.type() === "error" && !/Failed to load resource/.test(text)) errors.push(`console.error: ${text}`);
       });
-      const open = async ({ collab = false, raw = false } = {}) => {
-        const query = [collab ? "collab=1" : "", raw ? "raw=1" : ""].filter(Boolean).join("&");
+      const open = async ({ collab = false, raw = false, ref = false } = {}) => {
+        const query = [collab ? "collab=1" : "", raw ? "raw=1" : "", ref ? "ref=1" : ""].filter(Boolean).join("&");
         await page.goto(url + (plain ? "plain.html" : "") + (query ? `?${query}` : ""));
         await waitReady(page);
       };

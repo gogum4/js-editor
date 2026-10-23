@@ -125,4 +125,17 @@ describe("참조 노드 (core)", () => {
     expect(editor!.commands.insertReference("page", "z")).toBe(true);
     expect(JSON.stringify(editor!.getJSON())).toContain('"id":"z"');
   });
+
+  it("알림 안에서 다시 구독하지 않는다 (Set.forEach로 알리는 해석기가 끝나지 않는 일이 없게)", async () => {
+    const listeners = new Set<() => void>();
+    const subscribe = vi.fn((_id: string, listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    });
+    mount({ page: { resolve: async () => ({ title: "t" }), subscribe } }, doc("page", "a"));
+    await flush();
+    listeners.forEach((listener) => listener()); // 구독을 새로 하면 같은 Set에 다시 들어가 forEach가 끝나지 않는다
+    await flush();
+    expect(subscribe).toHaveBeenCalledTimes(1);
+  });
 });

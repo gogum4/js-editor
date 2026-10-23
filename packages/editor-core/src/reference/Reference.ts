@@ -140,12 +140,10 @@ function referenceDomView({ node: initial, editor }: { node: PmNode; editor: Edi
     }
   };
 
-  const load = () => {
+  /** 대상의 내용을 (다시) 읽어 그린다. 구독은 건드리지 않는다 — 알림 안에서 다시 구독하면 알림이 끝나지 않을 수 있다. */
+  const refresh = () => {
     const mine = ++token;
-    const { kind, id } = node.attrs as { kind: string; id: string };
-    resolver = portsOf(editor).references?.[kind] ?? null;
-    unsubscribe?.();
-    unsubscribe = null;
+    const { id } = node.attrs as { id: string };
     if (resolver === null) {
       paint("unknown", null);
       return;
@@ -161,8 +159,16 @@ function referenceDomView({ node: initial, editor }: { node: PmNode; editor: Edi
         portsOf(editor).notifier.error(error);
       },
     );
-    // 해석기가 알려 주면 다시 읽는다(원본이 바뀜·삭제됨).
-    unsubscribe = resolver.subscribe?.(id, load) ?? null;
+  };
+
+  /** 대상이 정해지거나 바뀌었을 때: 해석기를 찾고, 구독을 새로 하고, 읽는다. */
+  const load = () => {
+    const { kind, id } = node.attrs as { kind: string; id: string };
+    resolver = portsOf(editor).references?.[kind] ?? null;
+    unsubscribe?.();
+    // 해석기가 알려 주면(원본이 바뀜·삭제됨) 다시 읽는다.
+    unsubscribe = resolver?.subscribe?.(id, refresh) ?? null;
+    refresh();
   };
 
   dom.addEventListener("click", () => {

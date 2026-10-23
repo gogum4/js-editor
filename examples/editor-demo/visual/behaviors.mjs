@@ -314,6 +314,30 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "참조 카드: 해석기가 채우고(제목·열 미리 보기), 바뀌면 따라가고, 지워지면 삭제됨으로 보인다 (Yjs 경로)",
+    async run({ page, open }) {
+      await open({ collab: true, ref: true });
+      const states = () => page.evaluate(() => [...document.querySelectorAll(".md-reference")].map((el) => el.getAttribute("data-state")));
+      await page.waitForFunction(() => [...document.querySelectorAll(".md-reference")].every((el) => el.getAttribute("data-state") !== "loading"));
+      eq(await states(), ["ready", "missing", "unknown"], "카드 상태");
+      const card = page.locator('.md-reference[data-id="monster"]');
+      eq(await card.locator(".md-reference-title").textContent(), "몬스터", "제목");
+      eq(await card.locator(".demo-schema-preview td").allTextContents(), ["이름", "체력", "공격력"], "미리 보기 열");
+      // 카드를 누르면 해석기의 open이 불린다.
+      await card.click();
+      eq(await page.evaluate(() => window.__demo.opened), ["schema:monster"], "연 대상");
+      // 원본이 바뀌면 카드가 따라간다(문서는 그대로).
+      const before = JSON.stringify(await json(page));
+      await page.evaluate(() => window.__demo.setSchema("monster", { title: "몬스터 v2", columns: ["이름", "체력", "공격력", "방어력"] }));
+      await page.waitForFunction(() => document.querySelector('.md-reference[data-id="monster"] .md-reference-title')?.textContent === "몬스터 v2");
+      eq(await card.locator(".demo-schema-preview td").count(), 4, "바뀐 열 수");
+      eq(JSON.stringify(await json(page)), before, "참조를 바꿔도 문서는 그대로");
+      // 지워지면 삭제됨.
+      await page.evaluate(() => window.__demo.setSchema("monster", null));
+      await page.waitForFunction(() => document.querySelector('.md-reference[data-id="monster"]')?.getAttribute("data-state") === "missing");
+    },
+  },
+  {
     name: "directive: 여는 줄 입력칸을 고치고, 안쪽 글은 평소처럼 입력한다",
     async run({ page, open }) {
       await open({ raw: true });
