@@ -1,7 +1,12 @@
 {
   "name": "@9um4-utils/editor-react",
   "version": "0.0.0",
-  "private": true,
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/9um4-utils/mine.git",
+    "directory": "packages/editor-react"
+  },
   "type": "module",
   "description": "에디터의 React 화면 — 노드 뷰, 메뉴, 수식·각주 편집 창, 표 편집 막대, 컨텍스트. core의 확장에 주입해서 쓴다(docs/EDITOR-PACKAGE.md P5)",
   "sideEffects": false,
@@ -14,6 +19,7 @@
     "./styles.css": "./styles/index.css"
   },
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",

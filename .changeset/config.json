@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@9um4-utils/editor-schema",
+      "@9um4-utils/editor-markdown",
+      "@9um4-utils/editor-render",
+      "@9um4-utils/editor-core",
+      "@9um4-utils/editor-react"
+    ]
+  ],
+  "linked": [],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": ["notes-app", "notes-sync-server", "editor-demo", "next-blog-example", "@9um4-utils/editor-embed"]
+}

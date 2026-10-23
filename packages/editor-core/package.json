@@ -1,7 +1,12 @@
 {
   "name": "@9um4-utils/editor-core",
   "version": "0.0.0",
-  "private": true,
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/9um4-utils/mine.git",
+    "directory": "packages/editor-core"
+  },
   "type": "module",
   "description": "에디터 코어 — TipTap 확장, 포트·주입 접점 인터페이스, 화면 글 사전. React 화면은 @9um4-utils/editor-react, 위키·저장·동기화는 없다(docs/EDITOR-PACKAGE.md)",
   "sideEffects": false,
@@ -13,6 +18,7 @@
     "./testing": "./src/testing/index.ts"
   },
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",

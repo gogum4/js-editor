@@ -1,7 +1,12 @@
 {
   "name": "@9um4-utils/editor-render",
   "version": "0.0.0",
-  "private": true,
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/9um4-utils/mine.git",
+    "directory": "packages/editor-render"
+  },
   "type": "module",
   "description": "읽기 전용 렌더링 — 본문 JSON/Markdown → React 요소·HTML. 서버 컴포넌트(Next.js App Router)에서 훅 없이 동작한다(docs/EDITOR-PACKAGE.md P4)",
   "sideEffects": false,
@@ -17,6 +22,7 @@
     "./html": "./src/html.ts"
   },
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
