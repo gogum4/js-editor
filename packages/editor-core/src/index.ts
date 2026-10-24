@@ -29,6 +29,7 @@ export { enStrings, type EditorStrings, koStrings } from "./strings/index";
 export type { Candidate } from "./completion/words";
 export { Raw, RawInline, SoftBreak } from "./raw/Raw";
 export { Reference } from "./reference/Reference";
+export { applyEmbedInput, Embed } from "./embed/Embed";
 export { Directive } from "./raw/Directive";
 export { setFootnoteText } from "./footnote/footnoteEdit";
 export type { FootnoteEditState } from "./footnote/footnoteEdit";

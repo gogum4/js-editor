@@ -9,6 +9,8 @@ export interface RenderStrings {
   callout: Readonly<Record<CalloutType, string>>;
   /** 이미지를 불러올 주소가 없을 때 대신 보이는 글의 접근성 이름. */
   imageMissing: string;
+  /** 외부 임베드 iframe의 제목(접근성 이름). */
+  embedTitle: (provider: string) => string;
 }
 
 export const koRenderStrings: RenderStrings = {
@@ -16,6 +18,7 @@ export const koRenderStrings: RenderStrings = {
   backToReference: "본문으로 돌아가기",
   callout: { note: "정보", tip: "팁", important: "중요", warning: "경고", caution: "주의" },
   imageMissing: "이미지를 표시할 수 없어요",
+  embedTitle: (provider) => `${provider} 임베드`,
 };
 
 export const enRenderStrings: RenderStrings = {
@@ -23,4 +26,5 @@ export const enRenderStrings: RenderStrings = {
   backToReference: "Back to reference",
   callout: { note: "Note", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution" },
   imageMissing: "Image unavailable",
+  embedTitle: (provider) => `${provider} embed`,
 };

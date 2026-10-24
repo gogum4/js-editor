@@ -38,6 +38,8 @@ export interface EditorStrings {
     loading: string;
     viewer: { fitShort: string; label: string; hint: string; zoomOut: string; zoomIn: string; fit: string; actualSize: string; close: string; diagram: string };
   };
+  /** 임베드 노드(주소로 끼워 넣는 영상·게시물, `createCoreExtensions({ embed: true })`). */
+  embed: { slashLabel: string; slashDescription: string; placeholder: string; invalid: string; edit: string; open: string; frameTitle: (provider: string) => string };
   /** 참조 노드(다른 개체를 가리키는 카드). */
   reference: { loading: string; missing: string; unresolved: string; unknownKind: (kind: string) => string; openLabel: (title: string) => string };
   footnote: {

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { calloutMeta, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { normalizeReferenceProps } from "@gogum4/editor-schema/reference";
@@ -336,6 +337,33 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       return (
         <div key={key} className="reference reference-fallback" data-reference="" data-kind={kind} data-id={id}>
           <span className="reference-kind">{kind}</span> <span className="reference-id">{id}</span>
+        </div>
+      );
+    }
+    case "embed": {
+      // 외부 임베드: 허용한 도메인의 iframe만 그린다(주소가 올바르지 않으면 아무것도 그리지 않는다).
+      const target = normalizeEmbedTarget(node.attrs?.provider, node.attrs?.url);
+      const src = target === null ? null : embedSource(target);
+      if (target === null || src === null) return null;
+      const defaults = EMBED_DEFAULT_SIZE[target.provider];
+      const width = normalizeEmbedSize(node.attrs?.width) ?? defaults.width;
+      const height = normalizeEmbedSize(node.attrs?.height);
+      const style: CSSProperties = { width: `${width}px`, maxWidth: "100%" };
+      if (height === null && defaults.aspect) style.aspectRatio = `${defaults.width} / ${defaults.height}`;
+      else style.height = `${height ?? defaults.height}px`;
+      return (
+        <div key={key} className="md-embed" data-embed="" data-provider={target.provider}>
+          <div className="md-embed-frame" style={style}>
+            <iframe
+              src={src}
+              title={ctx.strings.embedTitle(target.provider)}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+              allow={EMBED_IFRAME_ALLOW[target.provider]}
+              allowFullScreen={target.provider === "youtube"}
+            />
+          </div>
         </div>
       );
     }

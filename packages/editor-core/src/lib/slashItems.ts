@@ -96,3 +96,11 @@ export function filterSlashItems(query: string, items: readonly SlashItem[] = CO
     .sort((a, b) => a.s - b.s || a.index - b.index)
     .map((entry) => entry.item);
 }
+
+/** `/임베드` 항목. 임베드 노드를 켠 때(`createCoreExtensions({ embed: true })`)만 메뉴에 더해지므로 기본 항목(`CORE_SLASH_ITEMS`)에는 없다. */
+export const EMBED_SLASH_ITEM: SlashItem = {
+  id: "embed",
+  label: "임베드",
+  description: "주소를 붙여 영상·게시물을 끼워 넣기",
+  keywords: ["embed", "youtube", "video", "tweet", "instagram", "임베드", "영상", "유튜브", "트윗", "삽입"],
+};

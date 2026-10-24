@@ -21,6 +21,8 @@ export interface EditorViews {
   toggle?: NodeViewRenderer;
   mathInline?: NodeViewRenderer;
   mathBlock?: NodeViewRenderer;
+  /** 임베드 노드. 주입하지 않으면 코어의 DOM 화면(주소 입력 + iframe)을 쓴다. */
+  embed?: NodeViewRenderer;
   /** 참조 노드. 주입하지 않으면 코어의 DOM 화면(해석기 기반 카드)을 쓴다. */
   reference?: NodeViewRenderer;
 }

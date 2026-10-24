@@ -65,6 +65,9 @@ export function runSlashCommand(editor: Editor, range: Range, id: string, handle
       if (ok) openImagePicker(editor);
       return ok;
     }
+    case "embed":
+      // 주소를 적는 빈 카드를 끼운다(카드가 입력 상자를 보여 주고 포커스를 받는다).
+      return chain.insertEmptyEmbed().run();
     case "mathBlock": {
       // 빈 수식 블록을 끼우고 LaTeX를 적는 창을 연다(내용 없이 닫으면 지워진다).
       const ok = chain.insertContent({ type: "mathBlock", attrs: { latex: "" } }).run();

@@ -128,6 +128,20 @@ describe("내용", () => {
     expect(html(d, { calloutIcons: { rocket: "🚀" } })).toContain("🚀");
   });
 
+  it("임베드: 허용한 도메인의 iframe만 그리고 크기를 따른다", () => {
+    const embed = (attrs: Record<string, unknown>): PmNode => ({ type: "embed", attrs });
+    const out = html(doc(embed({ provider: "youtube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", width: 400 })));
+    expect(out).toContain('src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"');
+    expect(out).toContain("sandbox=");
+    expect(out).toContain("width:400px");
+    expect(out).toContain('data-provider="youtube"');
+    expect(html(doc(embed({ provider: "x", url: "https://x.com/jack/status/20" })))).toContain("platform.twitter.com/embed/Tweet.html?id=20");
+    expect(html(doc(embed({ provider: "youtube", url: "https://evil.com/x" })))).not.toContain("iframe");
+    expect(html(doc(embed({ provider: "x", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" })))).not.toContain("iframe");
+    expect(html(doc(embed({ provider: "", url: "" })))).not.toContain("iframe");
+    expect(html(doc(embed({ provider: "youtube", url: "https://youtu.be/dQw4w9WgXcQ" })), { strings: enRenderStrings })).toContain('title="youtube embed"');
+  });
+
   it("className을 더할 수 있다", () => {
     expect(html(doc(p(t("글"))), { className: "prose" })).toContain('class="md-doc prose"');
   });

@@ -15,6 +15,7 @@ import { Lexer, type Token, type Tokens } from "marked";
 import { blockIdFromForeign, isBlockIdType } from "@gogum4/editor-schema/blockId";
 import type { ReferenceTarget } from "@gogum4/editor-schema/reference";
 import { calloutTypeFromName, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { detectEmbed, normalizeEmbedSize } from "@gogum4/editor-schema/embed";
 import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
@@ -362,6 +363,11 @@ export interface ImportContext {
    * 끄면(기본) 글자로 읽는다. `createCoreExtensions({ reference: true })`와 짝이다.
    */
   references?: boolean | ((line: string) => ReferenceTarget | null);
+  /**
+   * 지원하는 외부 임베드 주소(YouTube·X·Instagram·Pinterest·SoundCloud)의 이미지 문법 `![](주소)`·`![|500x300](주소)`를 `embed` 노드로 읽는다.
+   * 끄면(기본) 일반 이미지로 본다. `createCoreExtensions({ embed: true })`와 짝이다.
+   */
+  embeds?: boolean;
 }
 
 export interface MarkdownImportResult {
@@ -496,6 +502,17 @@ function mergeText(nodes: PmNode[]): PmNode[] {
   return out;
 }
 
+/** `![](주소)`의 주소가 지원하는 임베드 주소면 임베드 노드로(크기 `|500`·`|500x300`은 방언이 허용할 때만). 아니면 null. */
+function embedNode(href: string, rawAlt: string, state: State): PmNode | null {
+  if (state.ctx.embeds !== true) return null;
+  const target = detectEmbed(href);
+  if (target === null) return null;
+  const sized = state.profile.imageWidth ? /\|\s*(\d+)(?:x(\d+))?\s*$/.exec(rawAlt) : null;
+  const width = sized ? normalizeEmbedSize(sized[1]) : null;
+  const height = sized?.[2] !== undefined ? normalizeEmbedSize(sized[2]) : null;
+  return { type: "embed", attrs: { provider: target.provider, url: target.url, ...(width !== null ? { width } : {}), ...(height !== null ? { height } : {}) } };
+}
+
 /** 이미지 하나(`![설명|너비](경로)`)를 이미지 노드로. 인터넷 주소·폴더에 없는 파일은 글자·링크로 둔다. */
 function imageNode(href: string, rawAlt: string, state: State): PmNode {
   // `설명|300`·`설명|300x200`·`300`(Obsidian): 너비만 쓴다.
@@ -570,6 +587,11 @@ function inlineNodes(tokens: readonly Token[], marks: readonly PmMark[], state: 
         break;
       case "image": {
         const t = token as Tokens.Image;
+        const embed = embedNode(t.href, restoreRaw(t.text, state), state);
+        if (embed !== null) {
+          nodes.push(embed);
+          break;
+        }
         // 블로그의 이미지는 `/img/3?w=300`처럼 주소에 크기가 실리고 에디터의 이미지 노드(저장소 해시)와 모양이 다르다 → 원문 그대로 둔다(화면은 그림으로 보인다).
         if (state.profile.rawEmbeds) {
           nodes.push({ type: "rawInline", attrs: { text: restoreRaw(t.raw, state) } });
@@ -636,7 +658,7 @@ function paragraphsAround(inline: PmNode[]): PmNode[] {
     run = [];
   };
   for (const node of inline) {
-    if (node.type === "image") {
+    if (node.type === "image" || node.type === "embed") {
       flush();
       blocks.push(node);
     } else if (node.type === "paragraph") {
@@ -749,7 +771,7 @@ function listBlocks(token: Tokens.List, state: State): PmNode[] {
 
 function tableBlock(token: Tokens.Table, state: State): PmNode {
   const cell = (type: "tableHeader" | "tableCell", c: Tokens.TableCell): PmNode => {
-    const inline = mergeText(inlineNodes(c.tokens, [], state).filter((n) => n.type !== "image"));
+    const inline = mergeText(inlineNodes(c.tokens, [], state).filter((n) => n.type !== "image" && n.type !== "embed"));
     return { type, content: [{ type: "paragraph", ...(inline.length > 0 ? { content: inline } : {}) }] };
   };
   const header: PmNode = { type: "tableRow", content: token.header.map((c) => cell("tableHeader", c)) };
@@ -784,7 +806,7 @@ function tokenBlocksWithoutId(token: Token, state: State): PmNode[] {
       return paragraphBlocks(token as Tokens.Paragraph, state);
     case "heading": {
       const t = token as Tokens.Heading;
-      const content = trimBreaks(mergeText(inlineNodes(t.tokens, [], state).filter((n) => n.type !== "image")));
+      const content = trimBreaks(mergeText(inlineNodes(t.tokens, [], state).filter((n) => n.type !== "image" && n.type !== "embed")));
       return [{ type: "heading", attrs: { level: Math.min(Math.max(t.depth, 1), 6) }, ...(content.length > 0 ? { content } : {}) }];
     }
     case "code": {
@@ -862,7 +884,7 @@ function handleHtml(raw: string, stack: Frame[], state: State): void {
         const end = /<\/summary>/i.exec(raw.slice(last));
         const inner = end ? raw.slice(last, last + end.index) : raw.slice(last);
         const frame = top();
-        if (frame.kind === "details") frame.title = mergeText(inlineNodes(Lexer.lexInline(inner.trim()), [], state).filter((n) => n.type !== "image"));
+        if (frame.kind === "details") frame.title = mergeText(inlineNodes(Lexer.lexInline(inner.trim()), [], state).filter((n) => n.type !== "image" && n.type !== "embed"));
         last += end ? end.index + end[0].length : inner.length;
         tag.lastIndex = last;
       }

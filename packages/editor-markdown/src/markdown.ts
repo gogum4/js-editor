@@ -14,6 +14,7 @@ import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-schema/reference";
 import { formatReference } from "./referenceDirective.ts";
 import { isBuiltinCalloutType, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
 import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
 
 export interface MarkdownOptions {
@@ -428,6 +429,8 @@ class Renderer {
         return "---";
       case "image":
         return this.image(node);
+      case "embed":
+        return this.embed(node);
       case "mathBlock": {
         // 블록 수식은 `$$` 줄 사이에 LaTeX를 그대로 둔다. 내용이 빈 수식은 내보내지 않는다.
         const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.trim() : "";
@@ -551,6 +554,21 @@ class Renderer {
   }
 
   /** `![대체 글자](경로)`. 해시가 올바르지 않은 이미지는 빼고 안내한다. */
+  /** 외부 임베드는 `![](주소)`(크기가 있으면 `![|500x300](주소)`) — Obsidian의 임베드와 같은 모양이라 지원하는 곳에서는 영상·게시물로 보이고 아닌 곳에서는 이미지·링크 자리에 남는다. */
+  private embed(node: PmNode): string | null {
+    const target = normalizeEmbedTarget(node.attrs?.provider, node.attrs?.url);
+    if (target === null) {
+      // 주소를 아직 적지 않은 카드나 올바르지 않은 값은 내보내지 않는다.
+      if (String(node.attrs?.url ?? "") !== "") this.notices.add("주소가 올바르지 않은 임베드는 내보내지 못했어요.");
+      return null;
+    }
+    const width = this.plain ? null : normalizeEmbedSize(node.attrs?.width);
+    const height = this.plain ? null : normalizeEmbedSize(node.attrs?.height);
+    // Obsidian 크기 표기는 너비가 있어야 하므로 높이만 있는 크기는 내보내지 않는다.
+    const size = width === null ? "" : height === null ? `|${width}` : `|${width}x${height}`;
+    return `![${size}](${target.url})`;
+  }
+
   private image(node: PmNode): string | null {
     const hash = node.attrs?.hash;
     const mime = typeof node.attrs?.mime === "string" ? node.attrs.mime : "";
