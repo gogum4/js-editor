@@ -46,12 +46,12 @@ export const Callout = Node.create<NodeViewOptions>({
 
   /**
    * Markdown처럼 `> `로 인용을 만든 뒤 첫 줄에 `[!NOTE] `(종류 이름 뒤에 공백)를 치면 그 인용이 콜아웃이 된다.
-   * 인용 안 **첫 문단의 맨 앞**에서만 동작한다. 모르는 이름이나 다른 자리에서는 아무것도 하지 않는다(글자 그대로 남는다).
+   * 인용 안 **첫 문단의 맨 앞**에서만 동작한다. 이름은 아무 것이나 된다(`[!rocket] `도 콜아웃). 이름으로 쓸 수 없는 글자거나 다른 자리면 아무것도 하지 않는다(글자 그대로 남는다).
    */
   addInputRules() {
     return [
       new InputRule({
-        find: /^\[!([A-Za-z]+)\]\s$/,
+        find: /^\[!([A-Za-z][\w-]*)\]\s$/,
         handler: ({ state, range, match }) => {
           const type = calloutTypeFromName(match[1] ?? "");
           if (type === null) return null;

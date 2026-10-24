@@ -1,3 +1,4 @@
+import type { CalloutIcons } from "@gogum4/editor-schema/callout";
 import type { ReferenceProps } from "@gogum4/editor-schema/reference";
 
 /**
@@ -75,4 +76,6 @@ export interface EditorPorts {
   notifier: Notifier;
   /** 참조 노드(`createCoreExtensions({ reference: true })`)의 종류별 해석기. 없는 종류는 "알 수 없는 참조"로 보인다. */
   references?: Readonly<Record<string, ReferenceResolver>>;
+  /** 콜아웃 종류별 아이콘 표(이모지나 짧은 글). `> [!rocket]`처럼 아이콘을 모르는 종류의 아이콘을 정하거나 기본 종류의 아이콘을 바꾼다. */
+  calloutIcons?: CalloutIcons;
 }

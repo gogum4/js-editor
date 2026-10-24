@@ -102,9 +102,10 @@ describe("블록", () => {
   it("인용과 콜아웃(종류 이름·제목 줄)", () => {
     expect(blocks("> 인용\n> 둘째 줄")[0]).toMatchObject({ type: "blockquote" });
     expect(blocks("> [!WARNING]\n> 조심")[0]).toEqual({ type: "callout", attrs: { type: "warning" }, content: [para(text("조심"))] });
-    // Obsidian의 다른 종류 이름은 가까운 종류로, 제목 줄은 굵은 문단으로.
+    // Obsidian의 다른 종류 이름도 이름 그대로 보존하고, 제목 줄은 굵은 문단으로.
     const info = blocks("> [!info] 알아 두기\n> 내용")[0]!;
-    expect(info).toEqual({ type: "callout", attrs: { type: "note" }, content: [para(text("알아 두기", "bold")), para(text("내용"))] });
+    expect(info).toEqual({ type: "callout", attrs: { type: "info" }, content: [para(text("알아 두기", "bold")), para(text("내용"))] });
+    expect(blocks("> [!rocket] 출시\n> 내용")[0]).toMatchObject({ type: "callout", attrs: { type: "rocket" } });
     expect(blocks("> [!tip]")[0]).toEqual({ type: "callout", attrs: { type: "tip" }, content: [{ type: "paragraph" }] });
   });
 

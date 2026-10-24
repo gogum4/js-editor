@@ -13,6 +13,7 @@ import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 
 import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-schema/reference";
 import { formatReference } from "./referenceDirective.ts";
+import { isBuiltinCalloutType, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
 
 export interface MarkdownOptions {
@@ -61,14 +62,6 @@ export interface MarkdownResult {
 }
 
 export const MISSING_PAGE_TITLE = "삭제된 페이지";
-
-const CALLOUT_LABELS: Record<string, string> = {
-  note: "NOTE",
-  tip: "TIP",
-  important: "IMPORTANT",
-  warning: "WARNING",
-  caution: "CAUTION",
-};
 
 /** 글자 속에서 Markdown 문법으로 읽힐 수 있는 문자를 막는다. 과하게 막아도 보이는 글자는 같다. */
 export function escapeInline(text: string): string {
@@ -423,7 +416,9 @@ class Renderer {
           const inner = this.blocks(node.content);
           return inner === "" ? `:::${name}\n:::` : `:::${name}\n${inner}\n:::`;
         }
-        const label = CALLOUT_LABELS[String(node.attrs?.type)] ?? "NOTE";
+        // 기본 5종은 GitHub 알림 이름(대문자)으로, 그 밖의 이름은 소문자 그대로(Obsidian 콜아웃·사용자 이름).
+        const type = normalizeCalloutType(node.attrs?.type);
+        const label = isBuiltinCalloutType(type) ? type.toUpperCase() : type;
         const body = this.blocks(node.content);
         return prefixLines(body === "" ? `[!${label}]` : `[!${label}]\n${body}`, "> ");
       }

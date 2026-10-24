@@ -681,14 +681,14 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   return paragraphsAround(inlineNodes(tokens, [], state));
 }
 
-/** 콜아웃 종류 이름(`NOTE`, `info`, `Warning` …)을 이 앱의 5종 가운데 하나로(모르는 이름은 기본 종류). */
+/** 콜아웃 이름(`NOTE`, `info`, `Warning`, `rocket` …)을 종류로(대소문자는 무시, 별칭으로 합치지 않는다). */
 function calloutType(name: string): string {
   return calloutTypeFromName(name) ?? normalizeCalloutType(name);
 }
 
 function blockquoteBlocks(token: Tokens.Blockquote, state: State): PmNode[] {
   const first = token.tokens[0];
-  const header = first && first.type === "paragraph" && state.profile.callouts ? /^\[!([A-Za-z]+)\][+-]?[ \t]*([^\n]*)(?:\n([\s\S]*))?$/.exec((first as Tokens.Paragraph).text) : null;
+  const header = first && first.type === "paragraph" && state.profile.callouts ? /^\[!([A-Za-z][\w-]*)\][+-]?[ \t]*([^\n]*)(?:\n([\s\S]*))?$/.exec((first as Tokens.Paragraph).text) : null;
   if (!header) {
     const content = convertBlocks(token.tokens, state);
     return [{ type: "blockquote", content: content.length > 0 ? content : [{ type: "paragraph" }] }];

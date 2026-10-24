@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { CALLOUT_META, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { calloutMeta, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { normalizeReferenceProps } from "@gogum4/editor-schema/reference";
@@ -283,11 +283,12 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       );
     case "callout": {
       const type = normalizeCalloutType(node.attrs?.type);
-      const label = ctx.strings.callout[type];
+      const meta = calloutMeta(type, ctx.options.calloutIcons);
+      const label = ctx.strings.callout[type] ?? meta.label;
       return (
         <div key={key} id={anchorId(node, ctx)} className={`callout callout-${type}`} data-callout={type} role="note" aria-label={label}>
           <div className="callout-icon" aria-hidden="true">
-            {CALLOUT_META[type].icon}
+            {meta.icon}
           </div>
           <div className="callout-body">{renderBlocks(node.content, ctx)}</div>
         </div>

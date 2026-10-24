@@ -85,6 +85,12 @@ describe("블록", () => {
     }
   });
 
+  it("기본 5종 밖의 콜아웃 이름은 소문자 그대로 내보낸다 (Obsidian·사용자 이름)", () => {
+    const callout = (type: string): PmNode => ({ type: "callout", attrs: { type }, content: [p(t("내용"))] });
+    expect(md(doc(callout("rocket"))).markdown).toBe("> [!rocket]\n> 내용\n");
+    expect(md(doc(callout("info"))).markdown).toBe("> [!info]\n> 내용\n");
+  });
+
   it("코드 블록은 언어와 함께, 안에 ```가 있으면 더 긴 울타리", () => {
     const code = (text: string, language?: string): PmNode => ({ type: "codeBlock", attrs: { language: language ?? null }, content: [t(text)] });
     expect(md(doc(code("let a = 1;\n\nlet b = 2;", "ts"))).markdown).toBe("```ts\nlet a = 1;\n\nlet b = 2;\n```\n");

@@ -5,6 +5,7 @@ export interface RenderStrings {
   footnotes: string;
   /** 각주 끝의 "본문으로 돌아가기" 링크의 접근성 이름. */
   backToReference: string;
+  /** 종류별 이름. 여기 없는 종류(Obsidian 이름·사용자 이름)는 정해진 글이나 이름 그대로 보인다. */
   callout: Readonly<Record<CalloutType, string>>;
   /** 이미지를 불러올 주소가 없을 때 대신 보이는 글의 접근성 이름. */
   imageMissing: string;

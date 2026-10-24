@@ -120,6 +120,14 @@ describe("내용", () => {
     expect(out).toContain('aria-label="Footnotes"');
   });
 
+  it("모르는 콜아웃 이름은 이름을 글로, 아이콘은 표에서 찾는다", () => {
+    const d = doc({ type: "callout", attrs: { type: "rocket" }, content: [p(t("출시"))] });
+    const plain = html(d);
+    expect(plain).toContain("callout-rocket");
+    expect(plain).toContain(`aria-label="rocket"`);
+    expect(html(d, { calloutIcons: { rocket: "🚀" } })).toContain("🚀");
+  });
+
   it("className을 더할 수 있다", () => {
     expect(html(doc(p(t("글"))), { className: "prose" })).toContain('class="md-doc prose"');
   });
