@@ -111,9 +111,6 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
           </sup>
         );
       }
-      case "softBreak":
-        // 문단 안의 줄바꿈 한 개(소스에서 줄을 나눈 자리): 공백으로 그린다.
-        return <Keyed key={index}>{" "}</Keyed>;
       case "rawInline": {
         const text = typeof node.attrs?.text === "string" ? node.attrs.text : "";
         const custom = ctx.options.renderRaw?.(text, true);
@@ -385,15 +382,6 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
         <pre key={key} className="raw-source" data-raw="">
           {text}
         </pre>
-      );
-    }
-    case "directive": {
-      // 컨테이너 디렉티브(`:::indent{n=1}` 등): 안쪽 블록을 그대로 그리고, 여는 줄은 data 속성에 남긴다(소비자가 CSS·후처리로 꾸민다).
-      const head = typeof node.attrs?.head === "string" ? node.attrs.head : "";
-      return (
-        <div key={key} className="directive" data-directive="" data-head={head}>
-          {renderBlocks(node.content, ctx)}
-        </div>
       );
     }
     case "pageBlock": {

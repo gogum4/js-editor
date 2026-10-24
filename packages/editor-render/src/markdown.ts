@@ -20,10 +20,14 @@ export interface RenderMarkdownOptions extends Omit<RenderOptions, "prepared"> {
   resolveImage?: ImportContext["resolveImage"];
   /** `http(s)` 주소의 이미지를 이미지로 보일지(끄면 링크). 기본 켜짐. */
   remoteImages?: boolean;
-  /** Markdown 방언. 기본 `obsidian`; 블로그의 `remark-directive` 문법이면 `"blog"`(모르는 디렉티브는 `renderRaw`로 그린다). */
+  /** Markdown 방언. 기본 `obsidian`; 일반 GFM 문서면 `"gfm"`(HTML은 `renderRaw`로 그린다). */
   dialect?: ImportContext["dialect"];
   /** 참조 표기를 참조 노드로 읽을지(`ImportContext.references`). 기본 끔. `renderReference`와 짝이다. */
   references?: ImportContext["references"];
+  /** 지원하는 외부 임베드 주소의 `![](주소)`(YouTube·X·Instagram·Pinterest·SoundCloud)를 임베드로 읽을지. 기본 켜짐 — 끄면 일반 이미지로 본다. */
+  embeds?: boolean;
+  /** 문단·제목 맨 앞의 `&emsp;`를 들여쓰기로 읽을지. 기본 켜짐. */
+  indent?: boolean;
 }
 
 export interface RenderedMarkdown {
@@ -49,12 +53,14 @@ export interface RenderedMarkdown {
  * ```
  */
 export async function renderMarkdown(source: string, options: RenderMarkdownOptions = {}): Promise<RenderedMarkdown> {
-  const { resolvePage, resolveImage, remoteImages = true, dialect, references, ...renderOptions } = options;
+  const { resolvePage, resolveImage, remoteImages = true, dialect, references, embeds = true, indent = true, ...renderOptions } = options;
   const { data, body } = parseFrontmatter(source);
   const context: ImportContext = {
     resolvePage: resolvePage ?? (() => null),
     resolveImage: resolveImage ?? ((path) => path),
     remoteImages,
+    embeds,
+    indent,
     ...(dialect !== undefined ? { dialect } : {}),
     ...(references !== undefined ? { references } : {}),
   };

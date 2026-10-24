@@ -56,7 +56,7 @@ export interface RenderOptions {
    */
   renderReference?: (target: { kind: string; id: string; props: Readonly<Record<string, string>> | null }) => ReactNode | undefined;
   /**
-   * 에디터가 구조를 모르는 문법의 원문(`raw` 블록, `rawInline`)을 그린다(블로그 방언의 `::youtube{…}` 등). `undefined`를 돌려주면 원문을 그대로 보이고,
+   * 에디터에 대응 노드가 없는 Markdown 조각의 원문(`raw` 블록, `rawInline`: HTML 등)을 그린다. `undefined`를 돌려주면 원문을 그대로 보이고,
    * `null`이면 아무것도 그리지 않는다. 옵션이 없으면 원문을 보인다.
    */
   renderRaw?: (text: string, inline: boolean) => ReactNode | undefined;

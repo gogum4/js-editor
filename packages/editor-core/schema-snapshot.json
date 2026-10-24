@@ -38,15 +38,6 @@
         "language": "(필수)"
       }
     },
-    "directive": {
-      "content": "block+",
-      "group": "block",
-      "inline": false,
-      "atom": false,
-      "attrs": {
-        "head": "(필수)"
-      }
-    },
     "doc": {
       "content": "block+",
       "group": null,
@@ -193,13 +184,6 @@
         "kind": "(필수)",
         "props": "(필수)"
       }
-    },
-    "softBreak": {
-      "content": null,
-      "group": "inline",
-      "inline": true,
-      "atom": true,
-      "attrs": {}
     },
     "table": {
       "content": "tableRow+",

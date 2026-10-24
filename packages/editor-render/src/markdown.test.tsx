@@ -107,13 +107,27 @@ describe("HTML 문자열 진입점", () => {
 });
 
 describe("방언·참조 (P7)", () => {
-  it("블로그 방언 글을 읽어 콜아웃·directive·원문 디렉티브를 그린다", async () => {
-    const source = ":::note\n콜아웃\n:::\n\n:::indent{n=1}\n안쪽\n:::\n\n::youtube{id=abc123}\n";
-    const { element } = await renderMarkdown(source, { dialect: "blog", renderRaw: (text) => <em data-x>{text}</em> });
+  it("콜아웃(아무 이름·아이콘 표)·임베드·들여쓰기를 읽어 그린다", async () => {
+    const source = "> [!rocket] 출시\n> 내용\n\n![|480](https://youtu.be/dQw4w9WgXcQ)\n\n&emsp;&emsp;들여쓴 글\n";
+    const { element, doc } = await renderMarkdown(source, { calloutIcons: { rocket: "🚀" } });
     const out = renderToStaticMarkup(element as never);
-    expect(out).toContain("callout-note");
-    expect(out).toContain('data-head=":::indent{n=1}"');
-    expect(out).toContain("<em data-x=\"true\">::youtube{id=abc123}</em>");
+    expect(out).toContain("callout-rocket");
+    expect(out).toContain("🚀");
+    expect(out).toContain("youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    expect(out).toContain("width:480px");
+    expect(out).toContain("margin-left:2em");
+    expect(doc.content?.map((n) => n.type)).toEqual(["callout", "embed", "paragraph"]);
+  });
+
+  it("embeds·indent를 끄면 일반 이미지·글자로 본다", async () => {
+    const { doc } = await renderMarkdown("![](https://youtu.be/dQw4w9WgXcQ)\n\n&emsp;글\n", { embeds: false, indent: false });
+    expect(doc.content?.some((n) => n.type === "embed")).toBe(false);
+    expect(JSON.stringify(doc)).not.toContain('"indent"');
+  });
+
+  it("일반 GFM 방언의 HTML은 renderRaw로 그린다", async () => {
+    const { element } = await renderMarkdown("<div>원문</div>\n", { dialect: "gfm", renderRaw: (text) => <em data-x>{text}</em> });
+    expect(renderToStaticMarkup(element as never)).toContain('<em data-x="true">&lt;div&gt;원문&lt;/div&gt;</em>');
   });
 
   it("참조 표기를 켜면 참조 노드가 되고 renderReference가 그린다", async () => {

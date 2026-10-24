@@ -2,5 +2,4 @@
 export * from "./markdown.ts";
 export * from "./markdownImport.ts";
 export { type MarkdownDialect } from "./dialect.ts";
-export { isContainerOpener } from "./rawDirectives.ts";
 export { formatReference, parseReferenceLine } from "./referenceDirective.ts";

@@ -29,7 +29,7 @@ export const koStrings: EditorStrings = {
     unknownKind: (kind) => `알 수 없는 참조(${kind})`,
     openLabel: (title) => `${title} 열기`,
   },
-  raw: { blockLabel: "원문 (편집기가 모르는 문법)", sourceLabel: "원문 편집", inlineTitle: "더블클릭하여 원문 편집", directiveLabel: "블록 문법의 여는 줄" },
+  raw: { blockLabel: "원문 (편집기가 모르는 문법)", sourceLabel: "원문 편집", inlineTitle: "더블클릭하여 원문 편집" },
   languagePicker: {
     title: "언어 선택",
     plainText: "일반 텍스트",

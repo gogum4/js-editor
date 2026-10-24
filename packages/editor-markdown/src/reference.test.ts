@@ -44,12 +44,6 @@ describe("참조 노드 왕복", () => {
     expect(doc.content?.map((n) => n.type)).toEqual(["codeBlock"]);
   });
 
-  it("블로그 방언에서도 구조 노드로 읽는다", () => {
-    const { doc } = markdownToDoc(source, { ...base, dialect: "blog", references: true }, "");
-    expect(doc.content?.[1]?.type).toBe("reference");
-    expect(docToMarkdown(doc, { ...noPages, dialect: "blog" }).markdown).toBe(source);
-  });
-
   it("사용자 정의 표기: 가져오기 함수와 내보내기 toMarkdown이 짝이다", () => {
     const parse = (line: string) => {
       const m = /^!\[\[schema:([^\]]+)\]\]$/.exec(line);

@@ -3,7 +3,7 @@ import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 /** 노드 안의 글자를 모두 이은 것(제목의 앵커·목차에 쓴다). */
 export function textOf(node: PmNode): string {
   if (node.type === "text") return node.text ?? "";
-  if (node.type === "hardBreak" || node.type === "softBreak") return " ";
+  if (node.type === "hardBreak") return " ";
   if (node.type === "rawInline") return typeof node.attrs?.text === "string" ? node.attrs.text : "";
   if (node.type === "mathInline") return typeof node.attrs?.latex === "string" ? node.attrs.latex : "";
   return (node.content ?? []).map(textOf).join("");

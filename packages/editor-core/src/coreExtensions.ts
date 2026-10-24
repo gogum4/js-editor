@@ -20,8 +20,7 @@ import { CodeBlock } from "./extensions/CodeBlock";
 import { TextAlign } from "./extensions/TextAlign";
 import { Footnote } from "./footnote/Footnote";
 import { MathBlock } from "./math/MathBlock";
-import { Directive } from "./raw/Directive";
-import { Raw, RawInline, SoftBreak } from "./raw/Raw";
+import { Raw, RawInline } from "./raw/Raw";
 import { Embed } from "./embed/Embed";
 import { Indent } from "./extensions/Indent";
 import { Reference } from "./reference/Reference";
@@ -120,7 +119,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
       },
     }),
     LinkOpener,
-    MarkdownPaste.configure({ context: { ...(options.raw ? { rawDirectives: true } : {}), ...(options.reference ? { references: true } : {}), ...(options.embed ? { embeds: true } : {}), ...(options.indent ? { indent: true } : {}), ...options.markdown } }),
+    MarkdownPaste.configure({ context: { ...(options.reference ? { references: true } : {}), ...(options.embed ? { embeds: true } : {}), ...(options.indent ? { indent: true } : {}), ...options.markdown } }),
     MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,
@@ -152,7 +151,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     Footnote.configure({ nodeView: views.footnote ?? null }),
     MathInline.configure({ nodeView: views.mathInline ?? null }),
     MathBlock.configure({ nodeView: views.mathBlock ?? null }),
-    ...(options.raw ? [Raw, RawInline, Directive, SoftBreak] : []),
+    ...(options.raw ? [Raw, RawInline] : []),
     ...(options.reference ? [Reference.configure({ nodeView: views.reference ?? null })] : []),
     ...(options.embed ? [Embed.configure({ nodeView: views.embed ?? null })] : []),
     ...(options.settle ? [Settle] : []),

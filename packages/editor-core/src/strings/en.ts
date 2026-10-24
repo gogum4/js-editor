@@ -62,7 +62,7 @@ export const enStrings: EditorStrings = {
     unknownKind: (kind) => `Unknown reference (${kind})`,
     openLabel: (title) => `Open ${title}`,
   },
-  raw: { blockLabel: "Source (syntax the editor does not know)", sourceLabel: "Edit source", inlineTitle: "Double-click to edit the source", directiveLabel: "Opening line of the block syntax" },
+  raw: { blockLabel: "Source (syntax the editor does not know)", sourceLabel: "Edit source", inlineTitle: "Double-click to edit the source" },
   languagePicker: {
     title: "Choose language",
     plainText: "Plain text",

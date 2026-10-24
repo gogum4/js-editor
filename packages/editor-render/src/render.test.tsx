@@ -160,7 +160,7 @@ describe("내용", () => {
   });
 });
 
-describe("참조·원문·디렉티브·줄바꿈 (P7)", () => {
+describe("참조·원문 (P7)", () => {
   it("참조: 소비자가 그리면 그것을, 안 그리면 종류·id만 적은 대체 표시, null이면 아무것도", () => {
     const d = doc({ type: "reference", attrs: { kind: "table-schema", id: "abc" } });
     expect(html(d)).toContain('data-kind="table-schema"');
@@ -180,18 +180,5 @@ describe("참조·원문·디렉티브·줄바꿈 (P7)", () => {
     const custom = html(d, { renderRaw: (text, inline) => (inline ? <i>{text}</i> : null) });
     expect(custom).toContain("<i>:postlink[a]{b}</i>");
     expect(custom).not.toContain("youtube");
-  });
-
-  it("directive는 안쪽 블록을 그리고 여는 줄을 속성에 남기며, 안의 제목 앵커 번호가 맞는다", () => {
-    const d = doc(h(2, "앞"), { type: "directive", attrs: { head: ":::indent{n=1}" }, content: [h(2, "안"), p(t("글"))] }, h(2, "뒤"));
-    const out = html(d);
-    expect(out).toContain('data-head=":::indent{n=1}"');
-    expect(out).toContain('<h2 id="안">안</h2>');
-    expect(out).toContain('<h2 id="뒤">뒤</h2>');
-  });
-
-  it("softBreak는 공백이고 제목의 앵커·글자에도 공백으로 들어간다", () => {
-    expect(html(doc(p(t("가"), { type: "softBreak" }, t("나"))))).toContain("가 나");
-    expect(collectHeadings(doc({ type: "heading", attrs: { level: 2 }, content: [t("가"), { type: "softBreak" }, t("나")] }))[0]?.id).toBe("가-나");
   });
 });
