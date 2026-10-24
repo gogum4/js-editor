@@ -2,7 +2,7 @@
   "name": "next-blog-example",
   "version": "0.0.0",
   "private": true,
-  "description": "@9um4-utils/editor-render를 Next.js App Router에서 쓰는 블로그 샘플 — Markdown 글을 서버 컴포넌트에서 SSG로 렌더한다(docs/EDITOR-PACKAGE.md P4)",
+  "description": "@9um4/editor-render를 Next.js App Router에서 쓰는 블로그 샘플 — Markdown 글을 서버 컴포넌트에서 SSG로 렌더한다(docs/EDITOR-PACKAGE.md P4)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,8 +10,8 @@
     "verify": "node scripts/verify-build.mjs"
   },
   "dependencies": {
-    "@9um4-utils/editor-markdown": "workspace:*",
-    "@9um4-utils/editor-render": "workspace:*",
+    "@9um4/editor-markdown": "workspace:*",
+    "@9um4/editor-render": "workspace:*",
     "next": "^16.4.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

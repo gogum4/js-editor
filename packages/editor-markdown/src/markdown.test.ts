@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { defaultMarkdownFileName, docToMarkdown, escapeInline, MISSING_PAGE_TITLE } from "./markdown.ts";
 
 const t = (text: string, ...marks: string[]): PmNode => ({

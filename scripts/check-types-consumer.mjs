@@ -1,5 +1,5 @@
 // 배포될 모양의 타입 선언을 **소비자의 TypeScript가 읽을 수 있는지** 확인한다.
-// pnpm pack 한 tarball을 풀어 `node_modules/@9um4-utils/*`에 두고, 그것을 import하는 작은 프로젝트를 `skipLibCheck: false`로 컴파일한다
+// pnpm pack 한 tarball을 풀어 `node_modules/@9um4/*`에 두고, 그것을 import하는 작은 프로젝트를 `skipLibCheck: false`로 컴파일한다
 // (skipLibCheck가 켜져 있으면 선언 안의 해석 못 한 import가 조용히 `any`가 되어 문제를 숨긴다). 먼저 `pnpm build:packages`가 필요하다.
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -16,24 +16,24 @@ const work = mkdtempSync(join(repo, ".consumer-check-"));
 try {
   for (const name of ["editor-schema", "editor-markdown", "editor-render", "editor-core", "editor-react"]) {
     const pack = join(work, "packs", name);
-    execFileSync(pnpm, ["--filter", `@9um4-utils/${name}`, "pack", "--pack-destination", pack], { stdio: "pipe", shell: process.platform === "win32" });
+    execFileSync(pnpm, ["--filter", `@9um4/${name}`, "pack", "--pack-destination", pack], { stdio: "pipe", shell: process.platform === "win32" });
     const tgz = readdirSync(pack).find((f) => f.endsWith(".tgz"));
-    const target = join(work, "node_modules", "@9um4-utils", name);
+    const target = join(work, "node_modules", "@9um4", name);
     mkdirSync(target, { recursive: true });
     execFileSync("tar", ["-xzf", join(pack, tgz), "-C", target, "--strip-components=1"]);
   }
   writeFileSync(
     join(work, "consumer.tsx"),
-    `import { renderMarkdown, renderDoc, prepareRender, collectHeadings, MermaidDiagram, type RenderOptions, type Prepared, type HeadingInfo } from "@9um4-utils/editor-render";
-import { renderMarkdownToHtml, renderDocToHtml } from "@9um4-utils/editor-render/html";
-import { markdownToDoc, docToMarkdown, parseFrontmatter, type ImportContext } from "@9um4-utils/editor-markdown";
-import { blockIdOf, blockIdFromForeign } from "@9um4-utils/editor-schema/blockId";
-import { isSafeToOpen } from "@9um4-utils/editor-schema/safeLink";
-import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
+    `import { renderMarkdown, renderDoc, prepareRender, collectHeadings, MermaidDiagram, type RenderOptions, type Prepared, type HeadingInfo } from "@9um4/editor-render";
+import { renderMarkdownToHtml, renderDocToHtml } from "@9um4/editor-render/html";
+import { markdownToDoc, docToMarkdown, parseFrontmatter, type ImportContext } from "@9um4/editor-markdown";
+import { blockIdOf, blockIdFromForeign } from "@9um4/editor-schema/blockId";
+import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
+import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import * as Y from "yjs";
-import { createCoreExtensions, koStrings, TABLE_ACTIONS, type CoreExtensionsOptions, type EditorStrings } from "@9um4-utils/editor-core";
-import { newEditor } from "@9um4-utils/editor-core/testing";
-import { createReactExtensions, EditorPortsProvider, TableToolbar, useEditorStrings } from "@9um4-utils/editor-react";
+import { createCoreExtensions, koStrings, TABLE_ACTIONS, type CoreExtensionsOptions, type EditorStrings } from "@9um4/editor-core";
+import { newEditor } from "@9um4/editor-core/testing";
+import { createReactExtensions, EditorPortsProvider, TableToolbar, useEditorStrings } from "@9um4/editor-react";
 
 // 타입이 실제로 해석되는지(any가 아닌지) 확인하는 사용 예.
 export async function page(source: string) {
@@ -86,9 +86,9 @@ export const badCore: CoreExtensionsOptions = { noSuchOption: true };
   // Node 방식 해석(`nodenext`)은 더 엄격하다: 선언의 상대 import 확장자가 `.js`여야 한다(`.ts`로 끝나면 해석하지 못한다).
   writeFileSync(
     join(work, "consumer-node.mts"),
-    `import { renderMarkdownToHtml } from "@9um4-utils/editor-render/html";
-import { prepareRender, type RenderOptions, type Prepared } from "@9um4-utils/editor-render";
-import { markdownToDoc } from "@9um4-utils/editor-markdown";
+    `import { renderMarkdownToHtml } from "@9um4/editor-render/html";
+import { prepareRender, type RenderOptions, type Prepared } from "@9um4/editor-render";
+import { markdownToDoc } from "@9um4/editor-markdown";
 
 export async function run(source: string): Promise<string> {
   const options: RenderOptions = { blockAnchors: true };

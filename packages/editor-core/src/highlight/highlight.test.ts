@@ -2,7 +2,7 @@ import { Schema } from "@tiptap/pm/model";
 import { EditorState, type Transaction } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
-import { LANGUAGE_NAMES } from "@9um4-utils/editor-schema/languageData.generated";
+import { LANGUAGE_NAMES } from "@9um4/editor-schema/languageData.generated";
 import { buildDecorations, MAX_HIGHLIGHT_CHARS, updateDecorations, usedLanguages } from "./decorations";
 import { availableLanguageNames, isLanguageLoaded, loadLanguage, lowlight } from "./loader";
 import { type HastNode, hastToRanges } from "./ranges";

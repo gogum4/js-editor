@@ -2,7 +2,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import { resolveLanguage } from "@9um4-utils/editor-schema/codeLanguages";
+import { resolveLanguage } from "@9um4/editor-schema/codeLanguages";
 import { isLanguageLoaded, lowlight } from "./loader";
 import { type HastNode, type HighlightRange, hastToRanges } from "./ranges";
 

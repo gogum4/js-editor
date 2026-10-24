@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { type MermaidResult, peekMermaid, renderMermaid } from "@9um4-utils/editor-core";
+import { type MermaidResult, peekMermaid, renderMermaid } from "@9um4/editor-core";
 import { MermaidViewer } from "./MermaidViewer";
 import { useEditorStrings } from "../context";
 

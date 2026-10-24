@@ -1,7 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { NodeSelection, Selection } from "@tiptap/pm/state";
 
-import { altFromFileName, checkImageFile, MAX_ASSET_BYTES, SUPPORTED_IMAGE_TYPES } from "@9um4-utils/editor-schema/assets";
+import { altFromFileName, checkImageFile, MAX_ASSET_BYTES, SUPPORTED_IMAGE_TYPES } from "@9um4/editor-schema/assets";
 import { portsOf, stringsOf } from "../ports/editorPorts";
 
 /**

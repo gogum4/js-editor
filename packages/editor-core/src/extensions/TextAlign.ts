@@ -1,6 +1,6 @@
 import { Extension } from "@tiptap/core";
 
-import { normalizeTextAlign, type TextAlignment } from "@9um4-utils/editor-schema/textAlign";
+import { normalizeTextAlign, type TextAlignment } from "@9um4/editor-schema/textAlign";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {

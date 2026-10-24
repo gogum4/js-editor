@@ -1,7 +1,7 @@
-import { enStrings, type EditorStrings, koStrings, memoryPorts } from "@9um4-utils/editor-core";
-import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@9um4-utils/editor-react";
-import { docToMarkdown, type ImportContext, markdownToDoc } from "@9um4-utils/editor-markdown";
-import { isSafeToOpen } from "@9um4-utils/editor-schema/safeLink";
+import { enStrings, type EditorStrings, koStrings, memoryPorts } from "@9um4/editor-core";
+import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@9um4/editor-react";
+import { docToMarkdown, type ImportContext, markdownToDoc } from "@9um4/editor-markdown";
+import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useImperativeHandle, useMemo, useRef, type Ref } from "react";
 

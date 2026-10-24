@@ -3,8 +3,8 @@ import type { Slice } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
-import { docToMarkdown, type MarkdownOptions } from "@9um4-utils/editor-markdown";
-import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import { docToMarkdown, type MarkdownOptions } from "@9um4/editor-markdown";
+import type { PmNode } from "@9um4/editor-schema/pmDoc";
 
 /** 복사할 때 클립보드의 일반 텍스트(`text/plain`)를 Markdown으로 채우는 옵션. 비우면(`null`) 켜지 않는다. */
 export type MarkdownCopyOptions = Partial<MarkdownOptions> | null;

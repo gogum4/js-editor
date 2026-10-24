@@ -5,12 +5,12 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import type { PmNode } from "@9um4/editor-schema/pmDoc";
 import { createReactExtensions } from "./createReactExtensions";
 import { EditorPortsProvider } from "./context";
-import { memoryPorts } from "@9um4-utils/editor-core";
-import type { AssetStore } from "@9um4-utils/editor-core";
-import { editorDom, formatDom, withFixedIds } from "@9um4-utils/editor-core/testing";
+import { memoryPorts } from "@9um4/editor-core";
+import type { AssetStore } from "@9um4/editor-core";
+import { editorDom, formatDom, withFixedIds } from "@9um4/editor-core/testing";
 
 /**
  * 뷰·메뉴·편집 창 DOM 골든. P5(`editor-react` 분리)가 화면을 한 글자도 바꾸지 않았다는 것을 지키는 안전망이다.

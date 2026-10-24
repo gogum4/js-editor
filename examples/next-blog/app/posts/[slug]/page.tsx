@@ -1,4 +1,4 @@
-import { renderMarkdown } from "@9um4-utils/editor-render";
+import { renderMarkdown } from "@9um4/editor-render";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

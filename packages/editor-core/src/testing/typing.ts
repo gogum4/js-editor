@@ -1,4 +1,4 @@
-// 시험 도구: 화면(DOM) 없이 에디터의 타이핑·붙여넣기·플러그인 상태를 흉내 낸다. 소비자의 시험에서도 쓸 수 있게 `@9um4-utils/editor-core/testing`으로 공개한다.
+// 시험 도구: 화면(DOM) 없이 에디터의 타이핑·붙여넣기·플러그인 상태를 흉내 낸다. 소비자의 시험에서도 쓸 수 있게 `@9um4/editor-core/testing`으로 공개한다.
 import { type AnyExtension, Editor } from "@tiptap/core";
 import { Slice } from "@tiptap/pm/model";
 import { EditorState, TextSelection, type Transaction } from "@tiptap/pm/state";

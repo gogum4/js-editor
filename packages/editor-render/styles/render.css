@@ -1,8 +1,8 @@
 /*
- * @9um4-utils/editor-render 기본 스타일 — `.md-doc` 안에서만 적용된다(소비자의 다른 CSS와 부딪치지 않는다).
+ * @9um4/editor-render 기본 스타일 — `.md-doc` 안에서만 적용된다(소비자의 다른 CSS와 부딪치지 않는다).
  * 색은 CSS 변수라서 `.md-doc { --md-accent: …; }`처럼 덮어쓰면 된다.
  * 밝은/어두운 테마: 기본은 시스템 설정(prefers-color-scheme)을 따르고, `data-theme="light|dark"` 속성으로 고정할 수 있다.
- * 코드 강조 색은 `@9um4-utils/editor-render/highlight.css`, 수식은 `@9um4-utils/editor-render/katex.css`.
+ * 코드 강조 색은 `@9um4/editor-render/highlight.css`, 수식은 `@9um4/editor-render/katex.css`.
  */
 
 .md-doc {

@@ -1,4 +1,4 @@
-import type { PmNode } from "@9um4-utils/editor-schema/pmDoc";
+import type { PmNode } from "@9um4/editor-schema/pmDoc";
 
 /** 노드 안의 글자를 모두 이은 것(제목의 앵커·목차에 쓴다). */
 export function textOf(node: PmNode): string {

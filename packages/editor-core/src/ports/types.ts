@@ -1,4 +1,4 @@
-import type { ReferenceProps } from "@9um4-utils/editor-schema/reference";
+import type { ReferenceProps } from "@9um4/editor-schema/reference";
 
 /**
  * 에디터가 바깥(앱)에서 필요로 하는 것들. 에디터 코드는 `lib/api`나 화면 저장소를 직접 부르지 않고 이 포트만 쓴다

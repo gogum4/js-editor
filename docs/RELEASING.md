@@ -1,6 +1,6 @@
 # 에디터 패키지 배포와 버전 규칙 (P8)
 
-패키지 5개(`@9um4-utils/editor-schema·markdown·render·core·react`)를 **GitHub Packages(비공개, 저장소 `9um4-utils/mine`)**에 올리고 Changesets로 버전을 관리한다. 결정 배경은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §7·P8. 앱·서버·데모·`editor-embed`(앱 번들)는 버전 대상이 아니다(`.changeset/config.json`의 `ignore`).
+패키지 5개(`@9um4/editor-schema·markdown·render·core·react`)를 **공개 npm(scope `@9um4`, MIT)**에 올리고 Changesets로 버전을 관리한다. 결정 배경은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §7·P8. 앱·서버·데모·`editor-embed`(앱 번들)는 버전 대상이 아니다(`.changeset/config.json`의 `ignore`).
 
 ## 한눈에
 
@@ -29,26 +29,19 @@
 
 ## 소비자가 설치하는 법
 
-GitHub Packages는 비공개라서 **읽기 토큰이 필요하다**. 소비 프로젝트의 `.npmrc`:
-
-```
-@9um4-utils:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
-```
-
-`NODE_AUTH_TOKEN`은 `read:packages` 권한의 개인 액세스 토큰(또는 같은 조직 저장소의 `GITHUB_TOKEN`)이다. 그 뒤 `pnpm add @9um4-utils/editor-react …`(다섯 패키지는 같은 버전으로).
+공개 npm이라 **토큰·`.npmrc`가 필요 없다.** `pnpm add @9um4/editor-react …`(다섯 패키지는 같은 버전으로).
 
 - **노트 앱(이 저장소)**은 워크스페이스(`workspace:*`)로 쓰므로 토큰이 필요 없다.
-- **블로그(Docker 빌드)**는 지금 `vendor/*.tgz`로 설치한다. 레지스트리로 옮기려면 Dockerfile의 deps 단계에서 `.npmrc`와 토큰을 **빌드 시크릿**(`--mount=type=secret`)으로 넘겨야 한다(토큰이 이미지 층에 남지 않게). 옮기면 `vendor/`·`overrides`를 지운다. 그 저장소는 따로 있어 여기서 바꾸지 않았다.
+- **블로그(Docker 빌드)**는 지금 `vendor/*.tgz`로 설치한다. 첫 게시 뒤에는 공개 npm 버전으로 바꾸고 `vendor/`·`overrides`를 지운다(토큰·빌드 시크릿이 필요 없다). 그 저장소는 따로 있어 여기서 바꾸지 않았다.
 - **캘린더(Flutter)**는 npm 패키지를 직접 쓰지 않는다 — `editor-embed` 번들(정적 파일)을 쓴다([EDITOR-EMBED.md](EDITOR-EMBED.md)).
-- scope가 `@9um4`에서 `@9um4-utils`로 바뀌었다(P8). 블로그 복제본(`~/blog-wysiwyg`, 브랜치 `feature/wysiwyg-editor`)은 새 이름으로 `vendor/` tarball을 다시 만들어 따라갔다(커밋 `4c3b36b`).
+- scope는 `@9um4-utils`에서 `@9um4`로 바뀌었다(2026-10-24, 첫 게시 전). 블로그 복제본의 `vendor/` tarball은 이전 이름이라 게시 뒤 레지스트리 설치로 바꿀 때 함께 바뀐다.
 
 ## 게시 전 점검표
 
 1. `pnpm test`·`pnpm build`·`pnpm check:deps`·`pnpm check:dist`가 통과한다(`pnpm release`가 앞의 둘과 `check:dist`를 다시 돌린다).
 2. `pnpm changeset status`가 기대한 단계를 보인다(major가 의도한 것인가).
 3. `schema-snapshot.json`이 현재 스키마와 같다.
-4. 라이선스: 지금 `"license": "UNLICENSED"`다(공개·재사용 범위를 정하지 않았다). **공개 npm으로 옮기거나 남에게 줄 때는 먼저 정한다.**
+4. 라이선스: **MIT**(각 패키지 폴더의 `LICENSE`와 `package.json`).
 5. 게시는 되돌릴 수 없다(같은 버전 번호는 재사용 불가, 삭제는 제한적). 의심스러우면 아래 리허설부터.
 
 ## 리허설 (실제 레지스트리에 올리지 않고 게시·설치를 시험)
@@ -56,20 +49,20 @@ GitHub Packages는 비공개라서 **읽기 토큰이 필요하다**. 소비 프
 P8에서 이 방법으로 확인했다(2026-10-23): 5개 패키지가 `0.1.0`으로 게시되고, 게시된 매니페스트의 `workspace:*`가 `0.1.0`으로 바뀌고, 새 프로젝트에서 설치해 Node에서 렌더·변환이 돌고 타입 검사가 통과했다.
 
 ```bash
-# 1) 임시 로컬 레지스트리(Verdaccio): 저장소 밖에서. @9um4-utils/*는 누구나 게시, 나머지는 npmjs로 프록시
+# 1) 임시 로컬 레지스트리(Verdaccio): 저장소 밖에서. @9um4/*는 누구나 게시, 나머지는 npmjs로 프록시
 mkdir -p /tmp/vd && cd /tmp/vd && npm i verdaccio@6 && cat > config.yaml <<'YAML'
 storage: ./storage
 auth: { htpasswd: { file: ./htpasswd } }
 uplinks: { npmjs: { url: https://registry.npmjs.org/ } }
 packages:
-  '@9um4-utils/*': { access: $all, publish: $all }
+  '@9um4/*': { access: $all, publish: $all }
   '**': { access: $all, proxy: npmjs }
 YAML
 npx verdaccio -c config.yaml -l 127.0.0.1:4873 &
 # 2) 토큰을 받아 userconfig에 적는다(사용자 만들기: PUT /-/user/org.couchdb.user:<이름>, 응답의 token)
 # 3) 저장소에서: changeset version → publishConfig.registry를 로컬로 바꿔서(임시) 다섯 패키지에서 pnpm publish --no-git-checks
 #    (NPM_CONFIG_USERCONFIG=위 userconfig). 끝나면 `git checkout -- . && rm packages/*/CHANGELOG.md`로 되돌린다.
-# 4) 새 폴더에서 `.npmrc`에 `@9um4-utils:registry=http://127.0.0.1:4873/`를 두고 `pnpm add`로 설치해 import해 본다.
+# 4) 새 폴더에서 `.npmrc`에 `@9um4:registry=http://127.0.0.1:4873/`를 두고 `pnpm add`로 설치해 import해 본다.
 ```
 
 `pnpm publish --dry-run`은 매니페스트·파일 목록만 보여 준다(인증은 필요 없다).

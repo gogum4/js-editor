@@ -1,10 +1,10 @@
 {
-  "name": "@9um4-utils/editor-schema",
+  "name": "@9um4/editor-schema",
   "version": "0.0.0",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/9um4-utils/mine.git",
+    "url": "git+https://github.com/9um4/editor.git",
     "directory": "packages/editor-schema"
   },
   "type": "module",
@@ -17,7 +17,7 @@
     "./*": "./src/*.ts"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
+    "access": "public",
     "exports": {
       "./*": {
         "types": "./dist/*.d.ts",

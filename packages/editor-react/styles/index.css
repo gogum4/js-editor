@@ -1,4 +1,4 @@
-/* @9um4-utils/editor-react/styles.css — 화면 부품(ui.css)과 본문 모양(editor.css), 다크 모드 값(dark.css)을 한 번에 가져온다. 다크 모드는 `data-md-theme="dark"`나 `.dark`가 있을 때만 켜진다. */
+/* @9um4/editor-react/styles.css — 화면 부품(ui.css)과 본문 모양(editor.css), 다크 모드 값(dark.css)을 한 번에 가져온다. 다크 모드는 `data-md-theme="dark"`나 `.dark`가 있을 때만 켜진다. */
 @import "./ui.css";
 @import "./editor.css";
 @import "./dark.css";

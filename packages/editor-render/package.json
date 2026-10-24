@@ -1,10 +1,10 @@
 {
-  "name": "@9um4-utils/editor-render",
+  "name": "@9um4/editor-render",
   "version": "0.0.0",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/9um4-utils/mine.git",
+    "url": "git+https://github.com/9um4/editor.git",
     "directory": "packages/editor-render"
   },
   "type": "module",
@@ -22,7 +22,7 @@
     "./html": "./src/html.ts"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
+    "access": "public",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
@@ -41,8 +41,8 @@
     "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-dts-imports.mjs dist"
   },
   "dependencies": {
-    "@9um4-utils/editor-markdown": "workspace:*",
-    "@9um4-utils/editor-schema": "workspace:*",
+    "@9um4/editor-markdown": "workspace:*",
+    "@9um4/editor-schema": "workspace:*",
     "highlight.js": "^11.12.0",
     "katex": "^0.18.10",
     "lowlight": "^3.3.0"

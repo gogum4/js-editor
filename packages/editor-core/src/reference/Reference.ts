@@ -1,7 +1,7 @@
 import { type Editor, mergeAttributes, Node } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 
-import { normalizeReferenceProps, type ReferenceProps, referenceTarget } from "@9um4-utils/editor-schema/reference";
+import { normalizeReferenceProps, type ReferenceProps, referenceTarget } from "@9um4/editor-schema/reference";
 import { portsOf, stringsOf } from "../ports/editorPorts";
 import type { ReferenceInfo, ReferenceResolver } from "../ports/types";
 import type { NodeViewOptions } from "../ports/ui";
