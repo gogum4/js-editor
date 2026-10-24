@@ -159,6 +159,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 ## 7. 이름 제안
 
+- **결정(2026-10-24, 두 번째 변경): scope는 `@gogum4`, 저장소 `gogum4/js-editor`.** 다른 언어(Dart·Python·Java)에서 숫자로 시작하는 이름이 불편하다는 이유로 `@9um4`에서 바뀌었다. 아래는 이전 결정의 기록이다.
 - **결정(2026-10-23, P8에서 바뀜): scope는 `@9um4`, 레지스트리는 GitHub Packages.** 2026-10-22의 `@9um4` 결정을 대체한다. 이유: GitHub Packages(npm)는 scope가 저장소 소유자(`9um4-utils`)와 같아야 하고 비공개도 된다. 모든 import가 `@9um4/…`로 바뀌었다. 아래는 결정 전 비교다(예전 `@9um4` 서술 포함).
 - **scope 후보 두 개** (사용자가 `@9um4`를 제안함). GitHub의 사용자 `9um4`와 조직 `9um4-utils`는 **둘 다 존재한다**(확인함). npm 쪽 이름이 비어 있는지는 **확인하지 못했다**(레지스트리 검색 API는 scope 필터를 무시하고, npmjs.com은 봇을 막는다) — npm 계정으로 직접 확인해야 한다.
 
@@ -170,7 +171,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
   | 길이 | 짧음 | 김 |
 
   **추천: `@9um4`.** 공개 여부가 미정인데, 이 이름만 두 레지스트리 모두에서 저장소를 옮기지 않고 쓸 수 있다. scope를 나중에 바꾸면 모든 소비자의 import가 바뀌므로 지금 정한다. 공개로 확정되고 짧은 이름이 중요하면 `@9um4`로 가는 것도 합리적이다(그때 npm 이름을 확인).
-- **패키지 이름은 기능 이름으로**: `@9um4/editor-schema`, `editor-core`, `editor-markdown`, `editor-render`, `editor-react`. 앱 이름이 가칭("Notes")이라 이름에 넣지 않는다.
+- **패키지 이름은 기능 이름으로**: `@gogum4/editor-schema`, `editor-core`, `editor-markdown`, `editor-render`, `editor-react`. 앱 이름이 가칭("Notes")이라 이름에 넣지 않는다.
 - **저장소**: 1단계는 이 저장소의 `packages/` 워크스페이스(`pnpm-workspace.yaml`에 추가)로 둔다. 소비자가 둘 이상 안정되면 `9um4-utils/editor`로 분리를 판단한다.
 
 ## 8. 단계 계획
@@ -207,7 +208,7 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 | 2-8 | **물리적 이동**: `packages/editor-core`로 위키가 아닌 코드와 `latexCommands`·`slashItems`를 한 번에 | 시험·빌드·CI 통과, core의 앱 import 0 |
 
 **결과** (2-0~2-8 모두 끝, 커밋은 `git log --grep "P2-"`):
-- `packages/editor-core`: 위키가 아닌 에디터 코드 75개 파일(확장·NodeView·슬래시·수식·각주·표·이미지·토글·코드 블록·포트·글 사전)과 `lib`의 `math`·`latexAssist`·`latexCommands`·`slashItems`. 공개 API는 `src/index.ts` 배럴 하나이고 앱은 `@9um4/editor-core`로만 가져온다.
+- `packages/editor-core`: 위키가 아닌 에디터 코드 75개 파일(확장·NodeView·슬래시·수식·각주·표·이미지·토글·코드 블록·포트·글 사전)과 `lib`의 `math`·`latexAssist`·`latexCommands`·`slashItems`. 공개 API는 `src/index.ts` 배럴 하나이고 앱은 `@gogum4/editor-core`로만 가져온다.
 - **포트**: `KeyValueStore`·`AssetStore`·`Notifier`·`UrlOpener`(Tauri opener를 직접 쓰던 `LinkOpener`를 바꿨다). 앱 구현은 `src/features/editor/appPorts.ts`. 상태는 포트 객체별(`WeakMap`)이라 에디터가 여럿이어도 섞이지 않는다.
 - **주입 지점**: `createCoreExtensions(ydoc, { ports, strings, slashItems, slashHandlers, transform })`. 노트 앱의 `editorExtensions.ts`가 위키 확장을 **예전 자리 그대로** 끼운다. 스키마 골든이 노드·마크·확장 순서를 고정하고, P2 내내 한 글자도 바뀌지 않았다.
 - **Yjs 선택화**: `ydoc`가 없으면 StarterKit의 history가 되돌리기를 맡는다.
@@ -224,17 +225,17 @@ Obsidian 호환 Markdown의 상위 집합을 공식 방언으로 한다. 콜아�
 
 **5-1 결과** (2026-10-23): core의 확장은 이제 화면을 모른다. `createCoreExtensions(ydoc, { views, menus, ui })`로 노드 뷰 7개(콜아웃·코드 블록·이미지·각주·토글·수식 인라인/블록), 메뉴 2개(`/`·코드 자동완성 — 닫힐 때 Ctrl+Space 위치를 비우는 일과 한글 조합 키 무시는 core가 주입된 render를 감싸서 한다), 편집 창 접점(`uiOf(editor).openMathEditor/openFootnoteEditor`)을 주입받고, 주입하지 않으면 `renderHTML` 기본 렌더로 그려진다. `src/react/`(views·menus·hosts·stores·hooks·context·`createReactExtensions`)에 React 쪽을 모았고, `scripts/check-core-react.mjs`가 **그 밖의 core가 React·zustand를 import하면 실패**시킨다(`check:deps`; 지금 위반 0). 수식 KaTeX 로더는 core(`lib/math.ts`), `useMathHtml` 훅은 react. 노트 앱·데모·화면 시험은 `createReactExtensions`를 쓴다. 검증: 단위 시험 1686개, DOM 골든 한 글자도 안 바뀜, 실제 Chromium의 계산된 스타일이 기준과 같음, 동작 시험 19개, **스크린샷 13장이 5-0b 시점과 픽셀 단위로 동일**.
 
-**5-2 결과** (2026-10-23): `packages/editor-react`(`@9um4/editor-react`)가 생겼다 — 뷰 10개·메뉴 3개·호스트 3개·저장소 3개·훅·컨텍스트·`createReactExtensions`와 화면 시험(DOM 골든 2개와 그 골든 파일, 실제 Yjs 마운트 시험)이 옮겨 왔고 공개 API는 `src/index.ts`(`"use client"`) 하나다. **core는 React를 전혀 쓰지 못한다**: `check-package-deps`의 core 허용 목록에서 `react`·`react-dom`·`@tiptap/react`·`zustand`를 뺐고 core의 `package.json`에서도 지웠다(5-1의 임시 검사 `check-core-react`는 이 규칙으로 대체되어 없앴다). **editor-react은 core의 공개 API(`@9um4/editor-core`, `@9um4/editor-core/testing`)만 쓴다**(상대 경로로 core 내부를 읽으면 `check-package-deps`가 막는다). 넓어진 core 공개 API: 수식·각주 편집 보조(`setMathLatex`·`setFootnoteText`·`collectFootnotes` 등), 수식 로더(`loadKatex`·`renderMathHtml`·`mathError`), LaTeX 자동완성 계산(`latexAssist`), mermaid 도구, `assetCacheFor`, 화면 시험 도구(`@9um4/editor-core/testing`에 `mountGolden`). 한글 하드코딩 검사는 두 패키지를 모두 본다. 노트 앱·데모는 React 쪽을 `@9um4/editor-react`에서 가져온다. 검증: 단위 시험 1686개, DOM 골든(옮겨 간 파일 그대로), 실제 Chromium 계산된 스타일 기준과 같음, 동작 시험 19개, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**, 앱 진입 JS +1.5KB.
+**5-2 결과** (2026-10-23): `packages/editor-react`(`@gogum4/editor-react`)가 생겼다 — 뷰 10개·메뉴 3개·호스트 3개·저장소 3개·훅·컨텍스트·`createReactExtensions`와 화면 시험(DOM 골든 2개와 그 골든 파일, 실제 Yjs 마운트 시험)이 옮겨 왔고 공개 API는 `src/index.ts`(`"use client"`) 하나다. **core는 React를 전혀 쓰지 못한다**: `check-package-deps`의 core 허용 목록에서 `react`·`react-dom`·`@tiptap/react`·`zustand`를 뺐고 core의 `package.json`에서도 지웠다(5-1의 임시 검사 `check-core-react`는 이 규칙으로 대체되어 없앴다). **editor-react은 core의 공개 API(`@gogum4/editor-core`, `@gogum4/editor-core/testing`)만 쓴다**(상대 경로로 core 내부를 읽으면 `check-package-deps`가 막는다). 넓어진 core 공개 API: 수식·각주 편집 보조(`setMathLatex`·`setFootnoteText`·`collectFootnotes` 등), 수식 로더(`loadKatex`·`renderMathHtml`·`mathError`), LaTeX 자동완성 계산(`latexAssist`), mermaid 도구, `assetCacheFor`, 화면 시험 도구(`@gogum4/editor-core/testing`에 `mountGolden`). 한글 하드코딩 검사는 두 패키지를 모두 본다. 노트 앱·데모는 React 쪽을 `@gogum4/editor-react`에서 가져온다. 검증: 단위 시험 1686개, DOM 골든(옮겨 간 파일 그대로), 실제 Chromium 계산된 스타일 기준과 같음, 동작 시험 19개, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**, 앱 진입 JS +1.5KB.
 
-**5-3 결과** (2026-10-23): editor-react의 Tailwind 유틸리티 클래스를 모두 `md-` 의미 클래스로 바꿨다(`packages/editor-react/styles/ui.css`, 패키지 내보내기 `@9um4/editor-react/styles.css`; 앱은 `src/index.css`에서 가져온다). 값은 Tailwind가 실제로 내놓는 CSS를 뽑아 그대로 옮겼다(색은 oklch 값, 길이는 0.25rem 단위). Tailwind 초기화(preflight)에 기대던 것(버튼의 `font: inherit`·테두리 없음, `box-sizing`, 목록 기호 없음)은 클래스마다 직접 적어서 Tailwind 없는 소비자도 같은 모양이 나온다. 배운 점: **줄 간격은 `calc(1.25 / 0.875)`를 사용자 정의 속성에 담아 `var()`로 써야 한다** — 소수(`1.42857`)로 적거나 CSS 최적화가 나눗셈을 소수로 줄이면 14px 글자가 19.98px 줄이 돼 메뉴 글자가 1px씩 올라간다(스크린샷 비교가 잡았다). 검증: DOM 골든 7개는 클래스 속성만 달라졌고(클래스를 지운 뒤 같음을 스크립트로 확인) 단위 시험 1686개·동작 시험 19개 통과, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**. 계산된 스타일 기준은 눈에 보이지 않는 차이(너비 0 테두리의 색·스타일, 투명한 그림자 층, 1e-5 크기의 색 혼합 오차)만 있어 갱신했다.
+**5-3 결과** (2026-10-23): editor-react의 Tailwind 유틸리티 클래스를 모두 `md-` 의미 클래스로 바꿨다(`packages/editor-react/styles/ui.css`, 패키지 내보내기 `@gogum4/editor-react/styles.css`; 앱은 `src/index.css`에서 가져온다). 값은 Tailwind가 실제로 내놓는 CSS를 뽑아 그대로 옮겼다(색은 oklch 값, 길이는 0.25rem 단위). Tailwind 초기화(preflight)에 기대던 것(버튼의 `font: inherit`·테두리 없음, `box-sizing`, 목록 기호 없음)은 클래스마다 직접 적어서 Tailwind 없는 소비자도 같은 모양이 나온다. 배운 점: **줄 간격은 `calc(1.25 / 0.875)`를 사용자 정의 속성에 담아 `var()`로 써야 한다** — 소수(`1.42857`)로 적거나 CSS 최적화가 나눗셈을 소수로 줄이면 14px 글자가 19.98px 줄이 돼 메뉴 글자가 1px씩 올라간다(스크린샷 비교가 잡았다). 검증: DOM 골든 7개는 클래스 속성만 달라졌고(클래스를 지운 뒤 같음을 스크립트로 확인) 단위 시험 1686개·동작 시험 19개 통과, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**. 계산된 스타일 기준은 눈에 보이지 않는 차이(너비 0 테두리의 색·스타일, 투명한 그림자 층, 1e-5 크기의 색 혼합 오차)만 있어 갱신했다.
 
 **5-4 결과** (2026-10-23): 본문 모양 규칙(제목·목록·콜아웃·코드 블록·언어 선택·구문 강조·이미지·각주·수식·표와 표 편집 막대·토글·할 일·링크 기본형)을 `src/index.css`에서 `packages/editor-react/styles/editor.css`로 옮기고 루트 클래스를 `.md-editor`로 바꿨다(713줄 이동, 앱에는 295줄 남음). 패키지의 `styles.css` 내보내기는 `styles/index.css`가 `ui.css`(5-3)와 `editor.css`를 함께 가져온다. **앱 고유의 규칙은 앱에 남겼다**: 페이지 링크·페이지 블록·동기화 블록·버전 비교(`.page-editor` 선택자 그대로). 앱의 본문 요소는 `page-editor md-editor` 두 클래스를 모두 단다(`PageEditor`·`SyncedBlock`·`VersionCompareView`·`PagePreviewHost`). 순서가 바뀐 것: 옮긴 규칙이 앱 규칙(버전 비교·페이지 블록) 뒤에서 앞으로 왔다 — 같은 요소를 꾸미는 겹침이 없는지 따졌다(버전 비교의 `[data-diff]`는 노드가 아니라 비교 화면이 만든 래퍼에 붙고, 페이지 블록의 `.image-placeholder` 규칙은 여전히 뒤에 있다) — 앱 화면은 데모가 덮지 못하므로 5-5의 사람 확인 항목이다. `check-css-rules`는 두 파일을 보고 `.md-editor`를 기준의 `.page-editor`로 맞춰 비교한다(기준 210개 모두 있음). 데모는 이제 앱의 CSS가 아니라 패키지의 `styles.css`만 쓴다. 검증: 계산된 스타일이 기준과 같고(실제 Chromium) 동작 시험 19개·단위 시험 1686개 통과, **스크린샷 13장이 P5 시작 전과 픽셀 단위로 동일**.
 
 **5-6 결과** (2026-10-23): `editor-core`와 `editor-react`도 배포용으로 컴파일하고 `check:dist`가 다섯 패키지를 모두 본다(`build:packages` → pack 모양 → 소비자 타입(번들러·nodenext, `skipLibCheck: false`) → Node 스모크). 각 패키지에 `tsconfig.build.json`·`files`·`publishConfig`·`build` 스크립트를 더했고 editor-react의 `"use client"`가 컴파일 뒤에도 진입점 맨 앞에 남는지 검사한다. 이 과정에서 잡힌 문제 셋: ① **core·react의 소스는 확장자 없는 상대 import(`./keywordStore`)를 써서 tsc 출력이 순수 Node에서 불러지지 않았다**(Node 스모크가 52개 모듈 중 첫 번째에서 깼다) → `fix-dts-imports.mjs`가 JS·선언의 확장자 없는 상대 import에 `.js`/`/index.js`를 붙이도록 넓혔다(소스는 건드리지 않음). ② **editor-react의 표 막대가 쓰는 표 명령 타입(`addRowAfter` 등)은 `@tiptap/extension-table`이 에디터 타입에 더하는 확장인데, editor-react은 그 패키지에 의존하지 않아 컴파일이 깨졌다**(선언 파일의 `/// <reference types>`는 tsc가 남기지 않는다) → 표 동작 목록(`TABLE_ACTIONS`: 실행·가능 여부·위험 표시)을 core의 `table/tableActions.ts`로 옮겨 공개했다 — 에디터 명령은 core에 있는 것이 옳다. ③ `katex/dist/katex.min.css` 동적 import에 타입 선언이 없어 컴파일이 깨졌다 → `css.d.ts`(번들러가 CSS를 처리한다는 전제를 문서화). editor-react은 컴파일할 때 core의 소스가 아니라 `dist/index.d.ts`를 보게 `paths`로 지정했고, 그래서 `build:packages`는 core를 먼저 짓는다(pnpm이 의존 순서를 지킨다). 소비자 타입 시험에 core·react의 공개 API 사용 예(`createCoreExtensions`·`createReactExtensions`·`newEditor`·`TABLE_ACTIONS`)와 "없는 옵션은 오류" 확인을 더했다. 검증: `check:dist` 전부 통과(Node에서 102개 모듈), 단위 1686개, 동작 19개, 스크린샷 13장 P5 이전과 동일, 앱 진입 JS 1,524,759B(5-2 대비 −1.8KB: Tailwind 클래스가 빠졌다).
 
-**5-7 결과** (2026-10-23): 데모는 `@9um4/editor-core`·`@9um4/editor-react`와 패키지 스타일(`@9um4/editor-react/styles.css`)만 쓴다(앱의 `src/`를 가져오는 곳 없음). 더해서 **Tailwind 없는 페이지(`plain.html`)** 를 만들었다 — 소비자(블로그·캘린더)가 Tailwind를 안 쓰는 경우를 실제 브라우저로 보려는 것이다. 처음에는 브라우저 기본 여백(`p`·`ul`)·버튼 테두리·`img` 크기 제한·`code` 글자 크기가 그대로 스며들어 모양이 많이 달랐다(스크린샷). 두 페이지의 계산된 스타일을 비교해 **차이를 낳는 속성만** 골라(박스 크기·여백·테두리 초기화, 제목 크기, 목록 기호, 링크 색, 버튼·입력 글꼴, 이미지·svg 표시) `editor.css` 앞머리의 `@layer base` 초기화로 넣었다: Tailwind preflight와 같은 값이라 앱에서는 아무것도 바뀌지 않고(계산된 스타일·스크린샷 13장 동일), `@layer base` 안이라 소비자의 스타일·Tailwind 유틸리티가 항상 이긴다(레이어 밖 규칙이 레이어 안 규칙을 이긴다 — 페이지 미리보기가 `page-editor md-editor` 요소에 `mt-1.5`·`border-t`를 얹는 것이 이 이유로 안전하다). 표 막대는 본문 밖에 뜨는 부품이라 `box-sizing`·`font: inherit`를 직접 적었다. 이제 두 페이지의 남은 차이는 소비자 몫(문서 기본 글꼴·줄 간격)뿐이고 **동작 시험 19개가 Tailwind 없는 페이지에서도 통과**한다. `visual:plain`(기준 `computed-styles-plain.json`)을 CI `browser` 작업에 더했다.
+**5-7 결과** (2026-10-23): 데모는 `@gogum4/editor-core`·`@gogum4/editor-react`와 패키지 스타일(`@gogum4/editor-react/styles.css`)만 쓴다(앱의 `src/`를 가져오는 곳 없음). 더해서 **Tailwind 없는 페이지(`plain.html`)** 를 만들었다 — 소비자(블로그·캘린더)가 Tailwind를 안 쓰는 경우를 실제 브라우저로 보려는 것이다. 처음에는 브라우저 기본 여백(`p`·`ul`)·버튼 테두리·`img` 크기 제한·`code` 글자 크기가 그대로 스며들어 모양이 많이 달랐다(스크린샷). 두 페이지의 계산된 스타일을 비교해 **차이를 낳는 속성만** 골라(박스 크기·여백·테두리 초기화, 제목 크기, 목록 기호, 링크 색, 버튼·입력 글꼴, 이미지·svg 표시) `editor.css` 앞머리의 `@layer base` 초기화로 넣었다: Tailwind preflight와 같은 값이라 앱에서는 아무것도 바뀌지 않고(계산된 스타일·스크린샷 13장 동일), `@layer base` 안이라 소비자의 스타일·Tailwind 유틸리티가 항상 이긴다(레이어 밖 규칙이 레이어 안 규칙을 이긴다 — 페이지 미리보기가 `page-editor md-editor` 요소에 `mt-1.5`·`border-t`를 얹는 것이 이 이유로 안전하다). 표 막대는 본문 밖에 뜨는 부품이라 `box-sizing`·`font: inherit`를 직접 적었다. 이제 두 페이지의 남은 차이는 소비자 몫(문서 기본 글꼴·줄 간격)뿐이고 **동작 시험 19개가 Tailwind 없는 페이지에서도 통과**한다. `visual:plain`(기준 `computed-styles-plain.json`)을 CI `browser` 작업에 더했다.
 
-**P5 완료 요약과 5-5·5-8** (2026-10-23): 5-5(앱 연결)의 코드 작업은 앞 단계에서 끝났다 — 앱은 `createReactExtensions`와 `@9um4/editor-react`·`@9um4/editor-react/styles.css`를 쓰고 본문 요소에 `page-editor md-editor`를 단다. 남은 것은 **앱 화면은 서버(Linux, 화면 없음)에서 띄울 수 없어 데모가 덮지 못하는 곳을 사람이 확인하는 일**이다. 확인 목록(앱 `pnpm tauri dev`, 이전 모습과 비교):
+**P5 완료 요약과 5-5·5-8** (2026-10-23): 5-5(앱 연결)의 코드 작업은 앞 단계에서 끝났다 — 앱은 `createReactExtensions`와 `@gogum4/editor-react`·`@gogum4/editor-react/styles.css`를 쓰고 본문 요소에 `page-editor md-editor`를 단다. 남은 것은 **앱 화면은 서버(Linux, 화면 없음)에서 띄울 수 없어 데모가 덮지 못하는 곳을 사람이 확인하는 일**이다. 확인 목록(앱 `pnpm tauri dev`, 이전 모습과 비교):
 1. 본문 편집 화면: 제목·목록·표·콜아웃·코드 블록·이미지·토글·각주·수식이 이전과 같은가(특히 첫 화면의 간격).
 2. 메뉴·편집 창: 슬래시 메뉴, 코드 자동완성, 수식 편집 창과 LaTeX 자동완성, 각주 편집 창, 마메이드 크게 보기의 모양과 위치.
 3. **CSS 순서가 바뀐 곳**(옮긴 규칙이 앱 규칙 앞으로 왔다): 버전 비교 화면(색·기호·접힘), 페이지 블록 카드·임베드·동기화 블록, 링크 호버 미리보기(`PagePreviewHost`: 위쪽 간격·구분선), 페이지 링크의 색·흐림.
@@ -256,7 +257,7 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 | 단계 | 내용 | 확인 방법 |
 |---|---|---|
 | 3-0 | **방언 명세와 골든 틀**: `docs/MARKDOWN-DIALECT.md`(노드별 문법·읽기/쓰기 규칙·알려진 손실)와 `fixtures/` 골든(문서→Markdown, Markdown→문서, 왕복) | 골든이 현재 동작과 일치 |
-| 3-1 | **`@9um4/editor-markdown` 패키지**: `markdown.ts`·`markdownImport.ts`(frontmatter 포함)와 시험을 옮긴다. 의존은 schema·`marked`만 | 기존 시험 그대로 통과 |
+| 3-1 | **`@gogum4/editor-markdown` 패키지**: `markdown.ts`·`markdownImport.ts`(frontmatter 포함)와 시험을 옮긴다. 의존은 schema·`marked`만 | 기존 시험 그대로 통과 |
 | 3-2 | **블록 id `^id` 입출력**: 내보내기 옵션 `blockIds`, 가져오기에서 `^id` 읽기, 블록 링크가 `[[제목#^id]]`로 살아남게 한다 | 왕복·블록 링크 시험 |
 | 3-3 | **입력 규칙**: 있는 규칙(제목·목록·인용·코드 펜스·체크리스트·수식)을 시험으로 확인하고 콜아웃 `> [!NOTE]`를 추가한다 | 타이핑 시뮬레이션 시험 |
 | 3-4 | **붙여넣기 변환**: Markdown 같은 텍스트를 붙이면 서식으로 변환, Ctrl+Z로 원문 복귀, Ctrl+Shift+V는 일반 텍스트 그대로. 위키 링크 해석은 앱이 주입 | 판별·변환 시험 |
@@ -265,13 +266,13 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 | 3-7 | **알려진 손실 목록 확정**, 문서 갱신 | — |
 
 **결과** (3-0~3-5, 3-7 끝, 커밋은 `git log --grep "P3-"`):
-- **`@9um4/editor-markdown`**: `markdown.ts`·`markdownImport.ts`(frontmatter 포함)와 시험. 의존은 schema·`marked`뿐이다.
+- **`@gogum4/editor-markdown`**: `markdown.ts`·`markdownImport.ts`(frontmatter 포함)와 시험. 의존은 schema·`marked`뿐이다.
 - **방언 명세** [MARKDOWN-DIALECT.md](MARKDOWN-DIALECT.md)와 **골든 픽스처 15개**(`packages/editor-markdown/fixtures/`): 문서→Markdown, Markdown→문서, 한 번 읽은 뒤 제자리, 손실 없는 것은 문서 동일, 손실 있는 것은 읽은 모양 고정. 골든을 만들며 **실제 손실 하나를 찾아 고쳤다**: 같은 종류의 목록이 이어지면 Markdown이 한 목록으로 합치던 것을 기호 번갈아 쓰기(`-`↔`*`, `.`↔`)`)로 해결.
 - **블록 id `^id`**: 내보내기 옵션 `blockIds`(전체 내보내기는 켬), 가져오기에서 줄 끝·홀로 있는 `^id`와 `[[이름#^id]]` 블록 링크. Obsidian 사용자의 `^my-id`는 글자에서 정해지는 id로 바꾼다(`blockIdFromForeign`, 값 고정). 전체 내보내기→가져오기 왕복에서 블록 링크가 이어지는 것을 시험으로 확인.
 - **입력 규칙**: 있는 11개를 한 글자씩 타이핑하는 시험으로 고정(설계 문서가 "미확인"이라 했던 것이 모두 있었다), 콜아웃 `> [!NOTE] ` 추가.
 - **붙여넣기 변환**: `MarkdownPaste` — 판별(`looksLikeMarkdown`), 첫 Ctrl+Z는 원문으로, 노트 앱은 제목이 같은 페이지가 하나일 때만 `[[제목]]`을 이어 줌.
 - **복사 시 Markdown**: `copyAsMarkdown` 옵션, 기본 꺼짐(노트 앱도 끔).
-- 화면 없는 시험 도구를 `@9um4/editor-core/testing`으로 공개했다(타이핑·붙여넣기·플러그인 상태).
+- 화면 없는 시험 도구를 `@gogum4/editor-core/testing`으로 공개했다(타이핑·붙여넣기·플러그인 상태).
 
 **P3에서 확인하지 못했거나 남은 것**:
 1. **3-6 Obsidian·Notion 실제 파일 검증은 샘플이 없어 못 했다.** 호환은 공개 문서의 문법을 근거로 한 것이다.
@@ -288,7 +289,7 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 
 | 단계 | 내용 | 확인 방법 |
 |---|---|---|
-| 4-0 | `@9um4/editor-render` 골격(의존: schema·markdown·katex·lowlight, React는 peer). 의존 방향 검사와 **배포용 컴파일을 세 패키지 모두로** 확장, dist끼리의 import를 검증하는 로더 | `check:deps`·`check:dist` |
+| 4-0 | `@gogum4/editor-render` 골격(의존: schema·markdown·katex·lowlight, React는 peer). 의존 방향 검사와 **배포용 컴파일을 세 패키지 모두로** 확장, dist끼리의 import를 검증하는 로더 | `check:deps`·`check:dist` |
 | 4-1 | **핵심 렌더러**(JSON→React, 훅·브라우저 API 없음): 모든 블록·인라인, 콜아웃, 토글(`<details>`), 각주 목록, 표, 정렬, 안전한 링크, 이미지(주소 해석기 주입), 블록 id·제목 앵커 | `editor-markdown` 골든 픽스처 재사용 → HTML 골든 |
 | 4-2 | **서버 준비 단계** `prepareRender(doc)`(비동기): 수식→KaTeX HTML, 코드→lowlight 강조. 렌더 자체는 동기 | Node 시험 |
 | 4-3 | **클라이언트 조각** `MermaidDiagram`(`"use client"`) | 서버 출력 시험 |
@@ -301,7 +302,7 @@ P5로 해소된 한계: 위 P2의 3번(core의 React 뷰)·4번(CSS는 앱에 �
 하지 않는 것: mermaid의 빌드 시점 SVG(브라우저 엔진 필요), 위키 링크의 의미 있는 해석(블로그에 위키가 없다 — 소비자가 `pageLink` 해석기를 주면 링크로 만든다).
 
 **결과** (4-0~4-8 끝, 커밋은 `git log --grep "P4-"`):
-- **`@9um4/editor-render`**: `renderDoc`(본문 JSON→React 요소, 훅·브라우저 API 없음), `prepareRender`(서버에서 수식→KaTeX HTML·코드→lowlight 강조, 렌더는 동기), `renderMarkdown`(frontmatter·본문 변환·준비·렌더·목차·안내를 한 번에), `/html` 진입점(`react-dom/server` 문자열; Next 서버 컴포넌트와 섞지 않으려고 분리), `MermaidDiagram`(`"use client"`, 서버는 `<pre class="mermaid">`, 브라우저에서만 mermaid를 동적 import — 선택 peer), 스타일 3개(`styles.css`·`highlight.css`·`katex.css`; CSS 변수, 시스템 다크 모드 + `data-theme`).
+- **`@gogum4/editor-render`**: `renderDoc`(본문 JSON→React 요소, 훅·브라우저 API 없음), `prepareRender`(서버에서 수식→KaTeX HTML·코드→lowlight 강조, 렌더는 동기), `renderMarkdown`(frontmatter·본문 변환·준비·렌더·목차·안내를 한 번에), `/html` 진입점(`react-dom/server` 문자열; Next 서버 컴포넌트와 섞지 않으려고 분리), `MermaidDiagram`(`"use client"`, 서버는 `<pre class="mermaid">`, 브라우저에서만 mermaid를 동적 import — 선택 peer), 스타일 3개(`styles.css`·`highlight.css`·`katex.css`; CSS 변수, 시스템 다크 모드 + `data-theme`).
 - **파이프라인은 하나**(결정 ①): Markdown→`markdownToDoc`→본문 JSON→React. 편집기와 블로그가 같은 해석을 쓴다. 이를 위해 가져오기에 `remoteImages` 옵션을 더했다(블로그는 `![](https://…)`를 이미지로 읽는다).
 - **HTML 골든**: `editor-markdown`의 Markdown 골든 픽스처 15개를 그대로 렌더해 `fixtures/*.html`로 고정(같은 문서가 Markdown으로도 HTML로도 고정된다) + 서버 준비 골든 2개. 보안 시험: HTML 이스케이프, `javascript:`·`data:` 링크·이미지 차단, KaTeX `trust: false`.
 - **배포 모양**(`pnpm check:dist`, CI `packages` 작업): 세 패키지를 tsc로 컴파일하고 ① `pnpm pack` 결과의 `exports`가 dist를 가리키는지·`workspace:`가 없는지, ② 소비자 프로젝트가 배포된 `.d.ts`를 `skipLibCheck: false`로 번들러·nodenext 해석 둘 다에서 컴파일하는지, ③ dist끼리의 import(로더 훅)로 순수 Node에서 Markdown→HTML이 끝까지 되는지, ④ `"use client"`가 컴파일 뒤에도 남는지 확인한다. 이 검사들이 실제 문제를 잡았다: 렌더 패키지 상대 import의 확장자 누락(dist에서 모듈 못 찾음), `gen:languages`가 P2 이동 뒤에도 옛 경로에 쓰던 것.

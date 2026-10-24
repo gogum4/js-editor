@@ -1,4 +1,4 @@
-# @9um4/editor-react
+# @gogum4/editor-react
 
 ## 0.1.0
 
@@ -11,5 +11,5 @@
 
 - Updated dependencies [3a5ab80]
 - Updated dependencies [12bedd7]
-  - @9um4/editor-schema@0.1.0
-  - @9um4/editor-core@0.1.0
+  - @gogum4/editor-schema@0.1.0
+  - @gogum4/editor-core@0.1.0

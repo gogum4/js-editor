@@ -1,9 +1,9 @@
 import { createContext, type ReactNode, useContext } from "react";
 
-import { koStrings } from "@9um4/editor-core";
-import type { EditorStrings } from "@9um4/editor-core";
-import { memoryPorts } from "@9um4/editor-core";
-import type { EditorPorts } from "@9um4/editor-core";
+import { koStrings } from "@gogum4/editor-core";
+import type { EditorStrings } from "@gogum4/editor-core";
+import { memoryPorts } from "@gogum4/editor-core";
+import type { EditorPorts } from "@gogum4/editor-core";
 
 const fallbackPorts = memoryPorts();
 const EditorPortsContext = createContext<EditorPorts>(fallbackPorts);

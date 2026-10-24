@@ -1,10 +1,10 @@
 {
-  "name": "@9um4/editor-markdown",
+  "name": "@gogum4/editor-markdown",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/9um4/editor.git",
+    "url": "git+https://github.com/gogum4/js-editor.git",
     "directory": "packages/editor-markdown"
   },
   "type": "module",
@@ -14,14 +14,14 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@9um4/editor-schema": "workspace:*",
+    "@gogum4/editor-schema": "workspace:*",
     "marked": "16.4.2"
   },
   "files": [
     "dist"
   ],
   "publishConfig": {
-    "access": "public",
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",

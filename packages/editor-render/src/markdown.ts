@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { type Frontmatter, type ImportContext, markdownToDoc, parseFrontmatter } from "@9um4/editor-markdown";
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { type Frontmatter, type ImportContext, markdownToDoc, parseFrontmatter } from "@gogum4/editor-markdown";
+import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 import { prepareRender } from "./prepare.ts";
 import { renderDoc } from "./render.tsx";
 import { collectHeadings, type HeadingInfo } from "./slug.ts";

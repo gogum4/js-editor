@@ -1,10 +1,10 @@
 {
-  "name": "@9um4/editor-react",
+  "name": "@gogum4/editor-react",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/9um4/editor.git",
+    "url": "git+https://github.com/gogum4/js-editor.git",
     "directory": "packages/editor-react"
   },
   "type": "module",
@@ -19,7 +19,7 @@
     "./styles.css": "./styles/index.css"
   },
   "publishConfig": {
-    "access": "public",
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
@@ -32,8 +32,8 @@
     "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-dts-imports.mjs dist"
   },
   "dependencies": {
-    "@9um4/editor-core": "workspace:*",
-    "@9um4/editor-schema": "workspace:*",
+    "@gogum4/editor-core": "workspace:*",
+    "@gogum4/editor-schema": "workspace:*",
     "@tiptap/core": "^3.32.0",
     "@tiptap/pm": "^3.32.0",
     "@tiptap/react": "^3.32.0",

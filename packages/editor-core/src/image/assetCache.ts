@@ -1,4 +1,4 @@
-import { sniffImageMime } from "@9um4/editor-schema/assets";
+import { sniffImageMime } from "@gogum4/editor-schema/assets";
 import type { AssetStore } from "../ports/types";
 
 /**

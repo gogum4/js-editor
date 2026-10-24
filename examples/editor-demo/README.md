@@ -1,6 +1,6 @@
 # 에디터 데모와 시각·동작 시험
 
-노트 앱 없이 `@9um4/editor-core`만으로 편집기를 띄우는 데모이자, **실제 브라우저(Chromium)** 에서 화면과 동작이 바뀌지 않았는지 확인하는 시험의 대상이다(docs/EDITOR-PACKAGE.md P5).
+노트 앱 없이 `@gogum4/editor-core`만으로 편집기를 띄우는 데모이자, **실제 브라우저(Chromium)** 에서 화면과 동작이 바뀌지 않았는지 확인하는 시험의 대상이다(docs/EDITOR-PACKAGE.md P5).
 
 ```
 pnpm --filter editor-demo dev                 # 데모를 띄운다 (http://localhost:5173, ?collab=1이면 실제 Yjs 문서)

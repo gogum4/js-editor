@@ -1,4 +1,4 @@
-import type { CalloutType } from "@9um4/editor-schema/callout";
+import type { CalloutType } from "@gogum4/editor-schema/callout";
 import type { WordKind } from "../completion/words";
 
 /**

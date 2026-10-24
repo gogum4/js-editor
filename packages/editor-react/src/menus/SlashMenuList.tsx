@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-import type { SlashItem } from "@9um4/editor-core";
+import type { SlashItem } from "@gogum4/editor-core";
 import { useEditorStrings } from "../context";
 
 interface SlashMenuListProps {

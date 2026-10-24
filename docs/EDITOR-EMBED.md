@@ -5,8 +5,8 @@
 React 에디터를 **WebView·iframe 안에서 돌리고 호스트 앱(Flutter 등)과 JSON 메시지로 대화**하게 하는 번들이다. 캘린더(LunarTask, Flutter)의 일정·할 일 `description`(Markdown 문자열) 편집기가 쓴다. 계획과 결정은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md)의 "P6b 상세 계획".
 
 - 코드: `packages/editor-embed/` (비공개 앱 번들, 배포 패키지가 아니다). 규약 타입·검증은 `src/protocol.ts`, 전송 어댑터는 `src/transport.ts`.
-- 빌드: `pnpm --filter @9um4/editor-embed build` → `packages/editor-embed/dist/` (정적 파일, 상대 경로라 `file://`·로컬 에셋 서버·iframe 어디서나 연다). mermaid를 포함하려면 `EMBED_MERMAID=1 pnpm … build`(기본은 뺀다 — 아래 "크기").
-- 시험: `pnpm --filter @9um4/editor-embed e2e` — iframe 부모 창을 호스트 삼아 실제 Chromium에서 규약 전체를 확인한다(CI `browser` 작업이 돌린다). 브라우저 준비는 [examples/editor-demo/README.md](../examples/editor-demo/README.md)와 같다.
+- 빌드: `pnpm --filter @gogum4/editor-embed build` → `packages/editor-embed/dist/` (정적 파일, 상대 경로라 `file://`·로컬 에셋 서버·iframe 어디서나 연다). mermaid를 포함하려면 `EMBED_MERMAID=1 pnpm … build`(기본은 뺀다 — 아래 "크기").
+- 시험: `pnpm --filter @gogum4/editor-embed e2e` — iframe 부모 창을 호스트 삼아 실제 Chromium에서 규약 전체를 확인한다(CI `browser` 작업이 돌린다). 브라우저 준비는 [examples/editor-demo/README.md](../examples/editor-demo/README.md)와 같다.
 
 ## 규약 (버전 1)
 

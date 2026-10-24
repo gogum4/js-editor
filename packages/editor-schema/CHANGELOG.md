@@ -1,4 +1,4 @@
-# @9um4/editor-schema
+# @gogum4/editor-schema
 
 ## 0.1.0
 

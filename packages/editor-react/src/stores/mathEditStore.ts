@@ -1,7 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { create } from "zustand";
 
-import { isMathNode, MATH_BLOCK_NODE, type MathEditState } from "@9um4/editor-core";
+import { isMathNode, MATH_BLOCK_NODE, type MathEditState } from "@gogum4/editor-core";
 
 // 수식 편집 창의 저장소와 여는 함수. zustand는 React를 끌어오므로 화면 쪽 파일이다(core의 확장은 `uiOf(editor).openMathEditor`로 부른다).
 

@@ -4,11 +4,11 @@
   "commit": false,
   "fixed": [
     [
-      "@9um4/editor-schema",
-      "@9um4/editor-markdown",
-      "@9um4/editor-render",
-      "@9um4/editor-core",
-      "@9um4/editor-react"
+      "@gogum4/editor-schema",
+      "@gogum4/editor-markdown",
+      "@gogum4/editor-render",
+      "@gogum4/editor-core",
+      "@gogum4/editor-react"
     ]
   ],
   "linked": [],
@@ -20,6 +20,6 @@
     "notes-sync-server",
     "editor-demo",
     "next-blog-example",
-    "@9um4/editor-embed"
+    "@gogum4/editor-embed"
   ]
 }

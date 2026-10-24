@@ -1,7 +1,7 @@
-import { enStrings, type EditorStrings, koStrings, memoryPorts } from "@9um4/editor-core";
-import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@9um4/editor-react";
-import { docToMarkdown, type ImportContext, markdownToDoc } from "@9um4/editor-markdown";
-import { isSafeToOpen } from "@9um4/editor-schema/safeLink";
+import { enStrings, type EditorStrings, koStrings, memoryPorts } from "@gogum4/editor-core";
+import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@gogum4/editor-react";
+import { docToMarkdown, type ImportContext, markdownToDoc } from "@gogum4/editor-markdown";
+import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useImperativeHandle, useMemo, useRef, type Ref } from "react";
 

@@ -1,4 +1,4 @@
-# @9um4/editor-render
+# @gogum4/editor-render
 
 ## 0.1.0
 
@@ -11,5 +11,5 @@
 
 - Updated dependencies [3a5ab80]
 - Updated dependencies [12bedd7]
-  - @9um4/editor-schema@0.1.0
-  - @9um4/editor-markdown@0.1.0
+  - @gogum4/editor-schema@0.1.0
+  - @gogum4/editor-markdown@0.1.0

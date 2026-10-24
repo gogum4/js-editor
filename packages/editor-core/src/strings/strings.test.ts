@@ -1,4 +1,4 @@
-import { CALLOUT_TYPES } from "@9um4/editor-schema/callout";
+import { CALLOUT_TYPES } from "@gogum4/editor-schema/callout";
 import { describe, expect, it } from "vitest";
 
 import { CORE_SLASH_ITEMS, filterSlashItems } from "../lib/slashItems";

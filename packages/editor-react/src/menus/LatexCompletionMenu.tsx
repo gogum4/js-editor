@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { insertPreview } from "@9um4/editor-core";
-import type { LatexCommand } from "@9um4/editor-core";
+import { insertPreview } from "@gogum4/editor-core";
+import type { LatexCommand } from "@gogum4/editor-core";
 import { useMathHtml } from "../hooks/useMathHtml";
 import { useEditorStrings } from "../context";
 

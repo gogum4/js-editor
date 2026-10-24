@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TOGGLE_CLOSED_KEY } from "@9um4/editor-schema/toggleState";
-import type { KeyValueStore } from "@9um4/editor-core";
+import { TOGGLE_CLOSED_KEY } from "@gogum4/editor-schema/toggleState";
+import type { KeyValueStore } from "@gogum4/editor-core";
 import { createToggleStore, type ToggleStore, toggleStoreFor } from "./toggleStore";
 
 const kv = { get: vi.fn<KeyValueStore["get"]>(), set: vi.fn<KeyValueStore["set"]>() };

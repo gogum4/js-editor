@@ -12,13 +12,13 @@ import {
   skipCloserEdit,
   suggest,
   tabJump,
-} from "@9um4/editor-core";
-import type { LatexCommand } from "@9um4/editor-core";
-import { MAX_LATEX_CHARS } from "@9um4/editor-core";
+} from "@gogum4/editor-core";
+import type { LatexCommand } from "@gogum4/editor-core";
+import { MAX_LATEX_CHARS } from "@gogum4/editor-core";
 import { useMathHtml } from "../hooks/useMathHtml";
-import { computeMenuPosition } from "@9um4/editor-schema/menuPosition";
+import { computeMenuPosition } from "@gogum4/editor-schema/menuPosition";
 import { LatexCompletionMenu } from "../menus/LatexCompletionMenu";
-import { type MathEditState, setMathLatex } from "@9um4/editor-core";
+import { type MathEditState, setMathLatex } from "@gogum4/editor-core";
 import { closeMathEditor, useMathEditStore } from "../stores/mathEditStore";
 import { useEditorStrings } from "../context";
 

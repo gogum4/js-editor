@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { blockIdFromForeign } from "@9um4/editor-schema/blockId";
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { blockIdFromForeign } from "@gogum4/editor-schema/blockId";
+import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 import { docToMarkdown } from "./markdown.ts";
 import { finalizeImages, type ImportContext, markdownToDoc, NOTICE, parseFrontmatter } from "./markdownImport.ts";
 

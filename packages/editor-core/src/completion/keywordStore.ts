@@ -1,6 +1,6 @@
 import hljs from "highlight.js/lib/core";
 
-import { resolveLanguage } from "@9um4/editor-schema/codeLanguages";
+import { resolveLanguage } from "@gogum4/editor-schema/codeLanguages";
 import { loadLanguageDefinition } from "../highlight/loader";
 import { type Candidate, extractKeywords } from "./words";
 

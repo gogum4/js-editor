@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 import { docToMarkdown } from "./markdown.ts";
 import { type ImportContext, markdownToDoc } from "./markdownImport.ts";
 

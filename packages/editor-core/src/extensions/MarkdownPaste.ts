@@ -4,9 +4,9 @@ import { type EditorState, Plugin, PluginKey, Selection, type Transaction } from
 import type { EditorView } from "@tiptap/pm/view";
 import { yUndoPluginKey } from "@tiptap/y-tiptap";
 
-import { type ImportContext, markdownToDoc } from "@9um4/editor-markdown";
-import { blockKey } from "@9um4/editor-schema/blockId";
-import type { PmNode as PmJson } from "@9um4/editor-schema/pmDoc";
+import { type ImportContext, markdownToDoc } from "@gogum4/editor-markdown";
+import { blockKey } from "@gogum4/editor-schema/blockId";
+import type { PmNode as PmJson } from "@gogum4/editor-schema/pmDoc";
 import { looksLikeMarkdown } from "../markdown/looksLikeMarkdown";
 
 /** 방금 변환해 붙인 것의 기록. 문서가 바뀌거나 선택이 옮겨 가면 사라진다. */

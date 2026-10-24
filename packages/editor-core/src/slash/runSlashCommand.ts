@@ -1,6 +1,6 @@
 import type { ChainedCommands, Editor, Range } from "@tiptap/core";
 
-import { type CalloutType, isCalloutType } from "@9um4/editor-schema/callout";
+import { type CalloutType, isCalloutType } from "@gogum4/editor-schema/callout";
 import { openImagePicker } from "../image/insertImages";
 import { findEmptyMathBlock } from "../math/mathEdit";
 import { uiOf } from "../ports/editorPorts";

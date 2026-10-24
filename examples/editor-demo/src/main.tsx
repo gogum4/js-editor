@@ -4,8 +4,8 @@ import { prosemirrorJSONToYXmlFragment } from "@tiptap/y-tiptap";
 import { createRoot } from "react-dom/client";
 import * as Y from "yjs";
 
-import { memoryPorts, type AssetStore, type ReferenceResolver } from "@9um4/editor-core";
-import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@9um4/editor-react";
+import { memoryPorts, type AssetStore, type ReferenceResolver } from "@gogum4/editor-core";
+import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@gogum4/editor-react";
 import { DEMO_DOC } from "./demoDoc";
 
 /**

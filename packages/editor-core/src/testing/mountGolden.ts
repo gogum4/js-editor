@@ -1,8 +1,8 @@
 // 렌더된 에디터 DOM을 골든으로 고정하는 시험 도구(docs/EDITOR-PACKAGE.md P5-0). happy-dom 환경에서 쓴다.
 import type { Editor } from "@tiptap/core";
 
-import { BLOCK_ID_TYPES } from "@9um4/editor-schema/blockId";
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
+import { BLOCK_ID_TYPES } from "@gogum4/editor-schema/blockId";
+import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 
 const ID_TYPES: ReadonlySet<string> = new Set(BLOCK_ID_TYPES);
 

@@ -19,7 +19,7 @@ function targets(value) {
 try {
   for (const name of PACKAGES) {
     const dest = join(tmp, name);
-    execFileSync(pnpm, ["--filter", `@9um4/${name}`, "pack", "--pack-destination", dest], { stdio: "pipe", shell: process.platform === "win32" });
+    execFileSync(pnpm, ["--filter", `@gogum4/${name}`, "pack", "--pack-destination", dest], { stdio: "pipe", shell: process.platform === "win32" });
     const tgz = execFileSync("node", ["-e", `console.log(require("fs").readdirSync(${JSON.stringify(dest)}).find((f) => f.endsWith(".tgz")))`], { encoding: "utf8" }).trim();
     execFileSync("tar", ["-xzf", join(dest, tgz), "-C", dest]);
     const root = join(dest, "package");

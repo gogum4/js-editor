@@ -104,10 +104,10 @@ importers:
 
   examples/editor-demo:
     dependencies:
-      '@9um4/editor-core':
+      '@gogum4/editor-core':
         specifier: workspace:*
         version: link:../../packages/editor-core
-      '@9um4/editor-react':
+      '@gogum4/editor-react':
         specifier: workspace:*
         version: link:../../packages/editor-react
       '@tiptap/core':
@@ -165,10 +165,10 @@ importers:
 
   examples/next-blog:
     dependencies:
-      '@9um4/editor-markdown':
+      '@gogum4/editor-markdown':
         specifier: workspace:*
         version: link:../../packages/editor-markdown
-      '@9um4/editor-render':
+      '@gogum4/editor-render':
         specifier: workspace:*
         version: link:../../packages/editor-render
       next:
@@ -196,10 +196,10 @@ importers:
 
   packages/editor-core:
     dependencies:
-      '@9um4/editor-markdown':
+      '@gogum4/editor-markdown':
         specifier: workspace:*
         version: link:../editor-markdown
-      '@9um4/editor-schema':
+      '@gogum4/editor-schema':
         specifier: workspace:*
         version: link:../editor-schema
       '@tiptap/core':
@@ -250,16 +250,16 @@ importers:
 
   packages/editor-embed:
     dependencies:
-      '@9um4/editor-core':
+      '@gogum4/editor-core':
         specifier: workspace:*
         version: link:../editor-core
-      '@9um4/editor-markdown':
+      '@gogum4/editor-markdown':
         specifier: workspace:*
         version: link:../editor-markdown
-      '@9um4/editor-react':
+      '@gogum4/editor-react':
         specifier: workspace:*
         version: link:../editor-react
-      '@9um4/editor-schema':
+      '@gogum4/editor-schema':
         specifier: workspace:*
         version: link:../editor-schema
       '@tiptap/react':
@@ -293,7 +293,7 @@ importers:
 
   packages/editor-markdown:
     dependencies:
-      '@9um4/editor-schema':
+      '@gogum4/editor-schema':
         specifier: workspace:*
         version: link:../editor-schema
       marked:
@@ -302,10 +302,10 @@ importers:
 
   packages/editor-react:
     dependencies:
-      '@9um4/editor-core':
+      '@gogum4/editor-core':
         specifier: workspace:*
         version: link:../editor-core
-      '@9um4/editor-schema':
+      '@gogum4/editor-schema':
         specifier: workspace:*
         version: link:../editor-schema
       '@tiptap/core':
@@ -339,10 +339,10 @@ importers:
 
   packages/editor-render:
     dependencies:
-      '@9um4/editor-markdown':
+      '@gogum4/editor-markdown':
         specifier: workspace:*
         version: link:../editor-markdown
-      '@9um4/editor-schema':
+      '@gogum4/editor-schema':
         specifier: workspace:*
         version: link:../editor-schema
       highlight.js:

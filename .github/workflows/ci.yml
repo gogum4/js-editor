@@ -73,4 +73,4 @@ jobs:
       - name: 시각·동작 시험 (Tailwind 없이)
         run: pnpm --filter editor-demo visual:plain
       - name: 에디터 번들(WebView용) 빌드와 메시지 규약 시험
-        run: pnpm --filter @9um4/editor-embed build && pnpm --filter @9um4/editor-embed e2e
+        run: pnpm --filter @gogum4/editor-embed build && pnpm --filter @gogum4/editor-embed e2e

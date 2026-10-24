@@ -1,6 +1,6 @@
 // 배포용으로 컴파일한 packages/*/dist를 앱 도구(Vite) 없이 순수 Node로 불러 본다.
 // 확장자 누락(`./x`)이나 import 시점의 브라우저 API 사용이 있으면 여기서 깬다 — 블로그 서버(Next.js)가 겪을 문제다.
-// `@9um4/editor-*` import는 dist로 돌려서(scripts/dist-resolve-hooks.mjs) 배포된 모양 그대로 검증한다.
+// `@gogum4/editor-*` import는 dist로 돌려서(scripts/dist-resolve-hooks.mjs) 배포된 모양 그대로 검증한다.
 // 먼저 `pnpm build:packages`가 필요하다.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { register } from "node:module";
@@ -32,8 +32,8 @@ for (const name of PACKAGES) {
 console.log(`모두 ${total}개 OK`);
 
 // 배포된 모양 그대로 Markdown → 본문 JSON → HTML이 끝까지 되는지 한 번 돌려 본다.
-const { markdownToDoc } = await import("@9um4/editor-markdown");
-const { prepareRender, renderDoc } = await import("@9um4/editor-render");
+const { markdownToDoc } = await import("@gogum4/editor-markdown");
+const { prepareRender, renderDoc } = await import("@gogum4/editor-render");
 const { renderToStaticMarkup } = await import("react-dom/server");
 const { doc } = markdownToDoc("# 제목\n\n**굵게** 와 [링크](https://example.com) 와 $x^2$\n\n> [!TIP]\n> 팁\n\n```ts\nconst a = 1;\n```", { resolvePage: () => null, resolveImage: () => null }, "");
 const html = renderToStaticMarkup(renderDoc(doc, { prepared: await prepareRender(doc) }));
@@ -60,7 +60,7 @@ if (!/^\s*"use client";/.test(readFileSync(reactEntry, "utf8"))) {
 console.log('dist의 "use client" 지시어 OK');
 
 // 편의 API: frontmatter·목차·HTML 문자열 진입점(react-dom/server를 쓰는 별도 파일)까지 dist로 한 번 돌려 본다.
-const { renderMarkdownToHtml } = await import("@9um4/editor-render/html");
+const { renderMarkdownToHtml } = await import("@gogum4/editor-render/html");
 const result = await renderMarkdownToHtml("---\ntitle: 글\n---\n\n# 제목\n\n본문 \`코드\`");
 if (result.frontmatter.title !== "글" || result.headings[0]?.id !== "제목" || !result.html.includes("<code>코드</code>")) {
   console.error("renderMarkdownToHtml 결과가 이상하다:", result);

@@ -1,7 +1,7 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
-import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
+import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import { insertImageFiles } from "./insertImages";
 import type { NodeViewOptions } from "../ports/ui";
 

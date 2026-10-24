@@ -53,7 +53,7 @@
   ".version-diff [data-diff]:not([data-diff=\"same\"])::before | font: 700 0.9rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; left: 0.45em; position: absolute; text-decoration: none; top: 0.2em",
   ".version-diff del | background: #fecaca; border-radius: 2px; color: #7f1d1d; text-decoration: line-through",
   ".version-diff ins | background: #bbf7d0; border-radius: 2px; text-decoration-color: #16a34a; text-decoration: underline; text-underline-offset: 2px",
-  "at | @import \"@9um4/editor-react/styles.css\"",
+  "at | @import \"@gogum4/editor-react/styles.css\"",
   "at | @import \"tailwindcss\"",
   "body | height: 100%",
   "body | margin: 0",

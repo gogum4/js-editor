@@ -1,10 +1,10 @@
 {
-  "name": "@9um4/editor-schema",
+  "name": "@gogum4/editor-schema",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/9um4/editor.git",
+    "url": "git+https://github.com/gogum4/js-editor.git",
     "directory": "packages/editor-schema"
   },
   "type": "module",
@@ -17,7 +17,7 @@
     "./*": "./src/*.ts"
   },
   "publishConfig": {
-    "access": "public",
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       "./*": {
         "types": "./dist/*.d.ts",

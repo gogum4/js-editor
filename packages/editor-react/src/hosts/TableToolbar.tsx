@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/core";
 import { useEffect, useReducer } from "react";
 
 import { useEditorStrings } from "../context";
-import { TABLE_ACTIONS } from "@9um4/editor-core";
+import { TABLE_ACTIONS } from "@gogum4/editor-core";
 
 /** 커서(또는 선택)가 놓인 표의 DOM 요소. 표 밖이면 null. */
 function currentTable(editor: Editor): HTMLTableElement | null {

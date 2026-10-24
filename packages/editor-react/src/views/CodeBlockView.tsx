@@ -1,8 +1,8 @@
 import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
 
-import { resolveLanguage } from "@9um4/editor-schema/codeLanguages";
-import { isMermaidLanguage } from "@9um4/editor-core";
+import { resolveLanguage } from "@gogum4/editor-schema/codeLanguages";
+import { isMermaidLanguage } from "@gogum4/editor-core";
 import { LanguagePicker } from "./LanguagePicker";
 import { MermaidPreview } from "./MermaidPreview";
 import { useEditorStrings } from "../context";

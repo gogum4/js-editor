@@ -1,14 +1,14 @@
 {
-  "name": "@9um4/editor-core",
+  "name": "@gogum4/editor-core",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/9um4/editor.git",
+    "url": "git+https://github.com/gogum4/js-editor.git",
     "directory": "packages/editor-core"
   },
   "type": "module",
-  "description": "에디터 코어 — TipTap 확장, 포트·주입 접점 인터페이스, 화면 글 사전. React 화면은 @9um4/editor-react, 위키·저장·동기화는 없다(docs/EDITOR-PACKAGE.md)",
+  "description": "에디터 코어 — TipTap 확장, 포트·주입 접점 인터페이스, 화면 글 사전. React 화면은 @gogum4/editor-react, 위키·저장·동기화는 없다(docs/EDITOR-PACKAGE.md)",
   "sideEffects": false,
   "files": [
     "dist"
@@ -18,7 +18,7 @@
     "./testing": "./src/testing/index.ts"
   },
   "publishConfig": {
-    "access": "public",
+    "registry": "https://npm.pkg.github.com",
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
@@ -34,8 +34,8 @@
     "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-dts-imports.mjs dist"
   },
   "dependencies": {
-    "@9um4/editor-markdown": "workspace:*",
-    "@9um4/editor-schema": "workspace:*",
+    "@gogum4/editor-markdown": "workspace:*",
+    "@gogum4/editor-schema": "workspace:*",
     "@tiptap/core": "^3.32.0",
     "@tiptap/extension-code-block": "^3.32.0",
     "@tiptap/extension-collaboration": "^3.32.0",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { loadKatex, mathError, renderMathHtml } from "@9um4/editor-core";
+import { loadKatex, mathError, renderMathHtml } from "@gogum4/editor-core";
 import { useEditorStrings } from "../context";
 
 /** 수식을 그린 HTML. KaTeX를 불러오는 동안은 null(자리표시를 보여 준다). 입력이 바뀌면 다시 그린다. */

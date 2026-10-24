@@ -13,7 +13,7 @@ declare module "@tiptap/core" {
 
 /**
  * 접는 블록. **첫 자식은 제목 줄(문단 하나)** 이고 나머지(`block*`)가 접히는 내용이다.
- * 열림 여부는 문서에 저장하지 않는다 — 이 컴퓨터의 설정에 블록 id별로 둔다(`toggleStore`, `@9um4/editor-schema/toggleState`).
+ * 열림 여부는 문서에 저장하지 않는다 — 이 컴퓨터의 설정에 블록 id별로 둔다(`toggleStore`, `@gogum4/editor-schema/toggleState`).
  * `/토글`로 만든다. 제목 줄 끝에서 Enter를 치면 내용의 첫 문단이 생긴다.
  */
 export const Toggle = Node.create<NodeViewOptions>({

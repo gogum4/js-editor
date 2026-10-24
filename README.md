@@ -1,21 +1,21 @@
-# @9um4/editor
+# gogum4/js-editor
 
 TipTap 기반 **위키형 에디터**를 여러 곳에서 쓰려고 나눈 패키지 묶음이다(노트 앱, 블로그, 캘린더…). 본문은 ProseMirror JSON, 저장·전송 형식은 Markdown 방언([docs/MARKDOWN-DIALECT.md](docs/MARKDOWN-DIALECT.md)).
 A set of packages for a TipTap-based wiki-style editor, shared across several apps. Documents are ProseMirror JSON and round-trip through a documented Markdown dialect.
 
 | 패키지 | 내용 |
 |---|---|
-| [`@9um4/editor-schema`](packages/editor-schema) | TipTap·DOM·앱에 기대지 않는 순수 규칙(콜아웃·정렬·이미지 레이아웃·안전한 링크 등) |
-| [`@9um4/editor-core`](packages/editor-core) | TipTap 확장·슬래시 메뉴·수식/각주/표/이미지/토글/코드 블록, **포트(주입 접점)**와 화면 글 사전. React 없음 |
-| [`@9um4/editor-react`](packages/editor-react) | core에 주입하는 React 화면(노드 뷰·메뉴·편집 창) |
-| [`@9um4/editor-markdown`](packages/editor-markdown) | 본문 ↔ Markdown 변환(순수 함수) |
-| [`@9um4/editor-render`](packages/editor-render) | 읽기 전용 렌더링(본문/Markdown → React·HTML, 서버 컴포넌트 지원) |
-| `@9um4/editor-embed` | (비공개) WebView·iframe에 올리는 번들과 호스트 메시지 규약 |
+| [`@gogum4/editor-schema`](packages/editor-schema) | TipTap·DOM·앱에 기대지 않는 순수 규칙(콜아웃·정렬·이미지 레이아웃·안전한 링크 등) |
+| [`@gogum4/editor-core`](packages/editor-core) | TipTap 확장·슬래시 메뉴·수식/각주/표/이미지/토글/코드 블록, **포트(주입 접점)**와 화면 글 사전. React 없음 |
+| [`@gogum4/editor-react`](packages/editor-react) | core에 주입하는 React 화면(노드 뷰·메뉴·편집 창) |
+| [`@gogum4/editor-markdown`](packages/editor-markdown) | 본문 ↔ Markdown 변환(순수 함수) |
+| [`@gogum4/editor-render`](packages/editor-render) | 읽기 전용 렌더링(본문/Markdown → React·HTML, 서버 컴포넌트 지원) |
+| `@gogum4/editor-embed` | (비공개) WebView·iframe에 올리는 번들과 호스트 메시지 규약 |
 
 다섯 패키지는 **항상 같은 버전**으로 게시한다(Changesets `fixed`). 설치:
 
 ```bash
-pnpm add @9um4/editor-react @9um4/editor-core @9um4/editor-schema @9um4/editor-markdown   # 같은 버전으로
+pnpm add @gogum4/editor-react @gogum4/editor-core @gogum4/editor-schema @gogum4/editor-markdown   # 같은 버전으로
 ```
 
 ## 개발

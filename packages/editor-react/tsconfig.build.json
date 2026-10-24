@@ -18,7 +18,7 @@
     "outDir": "dist",
     "jsx": "react-jsx",
     "paths": {
-      "@9um4/editor-core": [
+      "@gogum4/editor-core": [
         "../editor-core/dist/index.d.ts"
       ]
     }

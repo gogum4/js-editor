@@ -8,7 +8,7 @@ import {
   matchingPreset,
   presetWidth,
   resizedWidth,
-} from "@9um4/editor-schema/imageLayout";
+} from "@gogum4/editor-schema/imageLayout";
 import { AssetImage } from "./AssetImage";
 import { useEditorStrings } from "../context";
 

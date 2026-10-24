@@ -6,7 +6,7 @@ import {
   CALLOUT_TYPES,
   type CalloutType,
   normalizeCalloutType,
-} from "@9um4/editor-schema/callout";
+} from "@gogum4/editor-schema/callout";
 import { useEditorStrings } from "../context";
 
 /** 콜아웃 한 개의 화면: 왼쪽 아이콘(누르면 종류 변경)과 오른쪽 본문. */

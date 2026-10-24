@@ -2,7 +2,7 @@
 
 # 에디터 패키지 배포와 버전 규칙 (P8)
 
-패키지 5개(`@9um4/editor-schema·markdown·render·core·react`)를 **공개 npm(scope `@9um4`, MIT)**에 올리고 Changesets로 버전을 관리한다. 결정 배경은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §7·P8. 앱·서버·데모·`editor-embed`(앱 번들)는 버전 대상이 아니다(`.changeset/config.json`의 `ignore`).
+패키지 5개(`@gogum4/editor-schema·markdown·render·core·react`)를 **GitHub Packages(scope `@gogum4`, MIT)**에 올리고 Changesets로 버전을 관리한다. 결정 배경은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §7·P8. 앱·서버·데모·`editor-embed`(앱 번들)는 버전 대상이 아니다(`.changeset/config.json`의 `ignore`).
 
 ## 한눈에
 
@@ -31,12 +31,19 @@
 
 ## 소비자가 설치하는 법
 
-공개 npm이라 **토큰·`.npmrc`가 필요 없다.** `pnpm add @9um4/editor-react …`(다섯 패키지는 같은 버전으로).
+GitHub Packages라 **설치하는 쪽에도 토큰이 필요하다**(공개 패키지도 `read:packages` 권한의 토큰을 요구한다). `.npmrc`에 아래 두 줄을 두고 `pnpm add @gogum4/editor-react …`(다섯 패키지는 같은 버전으로).
+
+```
+@gogum4:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GH_PACKAGES_TOKEN}
+```
+
+게시는 Actions의 `GITHUB_TOKEN`이 하므로 OTP·`NPM_TOKEN`이 필요 없다(출처 증명은 GitHub Packages에서 지원하지 않아 껐다).
 
 - **노트 앱(이 저장소)**은 워크스페이스(`workspace:*`)로 쓰므로 토큰이 필요 없다.
-- **블로그(Docker 빌드)**는 지금 `vendor/*.tgz`로 설치한다. 첫 게시 뒤에는 공개 npm 버전으로 바꾸고 `vendor/`·`overrides`를 지운다(토큰·빌드 시크릿이 필요 없다). 그 저장소는 따로 있어 여기서 바꾸지 않았다.
+- **블로그(Docker 빌드)**는 지금 `vendor/*.tgz`로 설치한다. 첫 게시 뒤에는 레지스트리 버전으로 바꾸고 `vendor/`·`overrides`를 지운다(Docker 빌드 시크릿으로 `read:packages` 토큰이 필요하다). 그 저장소는 따로 있어 여기서 바꾸지 않았다.
 - **캘린더(Flutter)**는 npm 패키지를 직접 쓰지 않는다 — `editor-embed` 번들(정적 파일)을 쓴다([EDITOR-EMBED.md](EDITOR-EMBED.md)).
-- scope는 `@9um4-utils`에서 `@9um4`로 바뀌었다(2026-10-24, 첫 게시 전). 블로그 복제본의 `vendor/` tarball은 이전 이름이라 게시 뒤 레지스트리 설치로 바꿀 때 함께 바뀐다.
+- scope는 `@9um4-utils` → `@9um4` → `@gogum4`로 바뀌었다(2026-10-24, 첫 게시 전; 다른 언어에서도 쓰려고 영문자로 시작하는 이름으로, 저장소는 `gogum4/js-editor`). 블로그 복제본의 `vendor/` tarball은 이전 이름이라 게시 뒤 레지스트리 설치로 바꿀 때 함께 바뀐다.
 
 ## 게시 전 점검표
 
@@ -51,20 +58,20 @@
 P8에서 이 방법으로 확인했다(2026-10-23): 5개 패키지가 `0.1.0`으로 게시되고, 게시된 매니페스트의 `workspace:*`가 `0.1.0`으로 바뀌고, 새 프로젝트에서 설치해 Node에서 렌더·변환이 돌고 타입 검사가 통과했다.
 
 ```bash
-# 1) 임시 로컬 레지스트리(Verdaccio): 저장소 밖에서. @9um4/*는 누구나 게시, 나머지는 npmjs로 프록시
+# 1) 임시 로컬 레지스트리(Verdaccio): 저장소 밖에서. @gogum4/*는 누구나 게시, 나머지는 npmjs로 프록시
 mkdir -p /tmp/vd && cd /tmp/vd && npm i verdaccio@6 && cat > config.yaml <<'YAML'
 storage: ./storage
 auth: { htpasswd: { file: ./htpasswd } }
 uplinks: { npmjs: { url: https://registry.npmjs.org/ } }
 packages:
-  '@9um4/*': { access: $all, publish: $all }
+  '@gogum4/*': { access: $all, publish: $all }
   '**': { access: $all, proxy: npmjs }
 YAML
 npx verdaccio -c config.yaml -l 127.0.0.1:4873 &
 # 2) 토큰을 받아 userconfig에 적는다(사용자 만들기: PUT /-/user/org.couchdb.user:<이름>, 응답의 token)
 # 3) 저장소에서: changeset version → publishConfig.registry를 로컬로 바꿔서(임시) 다섯 패키지에서 pnpm publish --no-git-checks
 #    (NPM_CONFIG_USERCONFIG=위 userconfig). 끝나면 `git checkout -- . && rm packages/*/CHANGELOG.md`로 되돌린다.
-# 4) 새 폴더에서 `.npmrc`에 `@9um4:registry=http://127.0.0.1:4873/`를 두고 `pnpm add`로 설치해 import해 본다.
+# 4) 새 폴더에서 `.npmrc`에 `@gogum4:registry=http://127.0.0.1:4873/`를 두고 `pnpm add`로 설치해 import해 본다.
 ```
 
 `pnpm publish --dry-run`은 매니페스트·파일 목록만 보여 준다(인증은 필요 없다).

@@ -5,13 +5,13 @@
  * Markdown으로 온전히 표현되지 않는 부분은 `notices`로 알려서 화면에 보여 줄 수 있게 한다.
  */
 
-import { assetFileName, isAssetHash } from "@9um4/editor-schema/assets";
-import { blockIdOf } from "@9um4/editor-schema/blockId";
-import { normalizeImageWidth } from "@9um4/editor-schema/imageLayout";
-import type { PmNode } from "@9um4/editor-schema/pmDoc";
-import { normalizeTextAlign } from "@9um4/editor-schema/textAlign";
+import { assetFileName, isAssetHash } from "@gogum4/editor-schema/assets";
+import { blockIdOf } from "@gogum4/editor-schema/blockId";
+import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
+import type { PmNode } from "@gogum4/editor-schema/pmDoc";
+import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 
-import { normalizeReferenceProps, type ReferenceProps } from "@9um4/editor-schema/reference";
+import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-schema/reference";
 import { formatReference } from "./referenceDirective.ts";
 import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
 
