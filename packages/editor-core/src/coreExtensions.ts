@@ -23,6 +23,7 @@ import { MathBlock } from "./math/MathBlock";
 import { Directive } from "./raw/Directive";
 import { Raw, RawInline, SoftBreak } from "./raw/Raw";
 import { Embed } from "./embed/Embed";
+import { Indent } from "./extensions/Indent";
 import { Reference } from "./reference/Reference";
 import { MathInline } from "./math/MathInline";
 import { LinkOpener } from "./extensions/LinkOpener";
@@ -69,6 +70,11 @@ export interface CoreExtensionsOptions {
    */
   embed?: boolean;
   /**
+   * 문단·제목의 들여쓰기(`indent` 속성, Tab·Shift+Tab, 1~8단계)를 켠다(기본 꺼짐). Markdown에는 줄 맨 앞의 `&emsp;`로 쓴다.
+   * **속성을 더하는 것이므로** 본문을 저장하는 소비자는 본문 스키마 버전을 올려야 한다 — 노트 앱은 켜지 않는다.
+   */
+  indent?: boolean;
+  /**
    * 에디터를 만들자마자 문서의 자동 정리(끝 문단 등)를 끝낸다(기본 꺼짐). 켜지 않으면 **처음 원자 노드(링크·카드·원문 상자)를 누를 때** "Selection passed to setSelection…" 오류가 날 수 있다
    * (`extensions/Settle.ts`). 켜면 열자마자 `onUpdate`가 한 번 불릴 수 있으니, 내보낸 결과를 기준과 비교해서 바뀐 때만 저장하는 소비자가 켠다. 노트 앱은 켜지 않는다.
    */
@@ -114,7 +120,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
       },
     }),
     LinkOpener,
-    MarkdownPaste.configure({ context: { ...(options.raw ? { rawDirectives: true } : {}), ...(options.reference ? { references: true } : {}), ...(options.embed ? { embeds: true } : {}), ...options.markdown } }),
+    MarkdownPaste.configure({ context: { ...(options.raw ? { rawDirectives: true } : {}), ...(options.reference ? { references: true } : {}), ...(options.embed ? { embeds: true } : {}), ...(options.indent ? { indent: true } : {}), ...options.markdown } }),
     MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,
@@ -123,6 +129,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     CodeCompletion.configure({ render: options.menus?.codeCompletion ?? null }),
     Callout.configure({ nodeView: views.callout ?? null }),
     TextAlign,
+    ...(options.indent ? [Indent] : []),
     Toggle.configure({ nodeView: views.toggle ?? null }),
     // 표: 열 너비 조절(`colwidth`)과 셀 병합(`colspan`·`rowspan`)은 셀 속성으로 저장한다. 셀 안에는 문단만 둔다(목록·표 중첩 없음).
     Table.configure({ resizable: true, cellMinWidth: 60 }),

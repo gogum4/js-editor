@@ -16,6 +16,7 @@ import { blockIdFromForeign, isBlockIdType } from "@gogum4/editor-schema/blockId
 import type { ReferenceTarget } from "@gogum4/editor-schema/reference";
 import { calloutTypeFromName, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { detectEmbed, normalizeEmbedSize } from "@gogum4/editor-schema/embed";
+import { indentFromLeadingSpaces } from "@gogum4/editor-schema/indent";
 import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
@@ -368,6 +369,11 @@ export interface ImportContext {
    * 끄면(기본) 일반 이미지로 본다. `createCoreExtensions({ embed: true })`와 짝이다.
    */
   embeds?: boolean;
+  /**
+   * 문단·제목 맨 앞의 `&emsp;`(두 개가 한 단계)를 들여쓰기(`indent` 속성)로 읽는다. 끄면(기본) 글자로 둔다.
+   * `createCoreExtensions({ indent: true })`와 짝이다.
+   */
+  indent?: boolean;
 }
 
 export interface MarkdownImportResult {
@@ -678,6 +684,31 @@ function trimBreaks(nodes: PmNode[]): PmNode[] {
   return nodes.slice(start, end);
 }
 
+/** 맨 앞의 들여쓰기 문자: `&emsp;` 글자나 EM SPACE(U+2003). */
+const LEADING_INDENT = new RegExp(`^(?:&emsp;|${String.fromCharCode(0x2003)})+`);
+
+/** 문단·제목의 첫 글자 토큰에서 앞의 들여쓰기 문자를 떼고 단계를 돌려준다(없거나 꺼져 있으면 null, 토큰은 그대로). */
+function takeIndent(tokens: Token[], state: State): number | null {
+  if (state.ctx.indent !== true) return null;
+  const first = tokens[0];
+  if (!first || first.type !== "text") return null;
+  const lead = LEADING_INDENT.exec((first as Tokens.Text).text);
+  if (!lead) return null;
+  const count = lead[0].split("&emsp;").length - 1 + [...lead[0].replace(/&emsp;/g, "")].length;
+  const rest = (first as Tokens.Text).text.slice(lead[0].length);
+  tokens[0] = { ...first, text: rest, raw: rest } as Token;
+  return indentFromLeadingSpaces(count);
+}
+
+/** 첫 문단 블록에 들여쓰기 단계를 붙인다. */
+function withIndent(blocks: PmNode[], indent: number | null): PmNode[] {
+  if (indent === null) return blocks;
+  const index = blocks.findIndex((block) => block.type === "paragraph");
+  if (index < 0) return blocks;
+  const target = blocks[index]!;
+  return blocks.map((block, at) => (at === index ? { ...target, attrs: { ...target.attrs, indent } } : block));
+}
+
 /** 문단 토큰 하나를 블록들로. 수식 블록·페이지 임베드·이미지 임베드만 든 문단은 그 블록이 된다. */
 function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): PmNode[] {
   const only = /^(\d+)$/.exec(token.text.trim());
@@ -699,8 +730,9 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
       return [{ type: "pageBlock", attrs: { pageId, mode: "embed" } }];
     }
   }
-  const tokens = token.tokens ?? [];
-  return paragraphsAround(inlineNodes(tokens, [], state));
+  const tokens = [...(token.tokens ?? [])];
+  const indent = takeIndent(tokens, state);
+  return withIndent(paragraphsAround(inlineNodes(tokens, [], state)), indent);
 }
 
 /** 콜아웃 이름(`NOTE`, `info`, `Warning`, `rocket` …)을 종류로(대소문자는 무시, 별칭으로 합치지 않는다). */
@@ -806,8 +838,10 @@ function tokenBlocksWithoutId(token: Token, state: State): PmNode[] {
       return paragraphBlocks(token as Tokens.Paragraph, state);
     case "heading": {
       const t = token as Tokens.Heading;
-      const content = trimBreaks(mergeText(inlineNodes(t.tokens, [], state).filter((n) => n.type !== "image" && n.type !== "embed")));
-      return [{ type: "heading", attrs: { level: Math.min(Math.max(t.depth, 1), 6) }, ...(content.length > 0 ? { content } : {}) }];
+      const headingTokens = [...t.tokens];
+      const headingIndent = takeIndent(headingTokens, state);
+      const content = trimBreaks(mergeText(inlineNodes(headingTokens, [], state).filter((n) => n.type !== "image" && n.type !== "embed")));
+      return [{ type: "heading", attrs: { level: Math.min(Math.max(t.depth, 1), 6), ...(headingIndent !== null ? { indent: headingIndent } : {}) }, ...(content.length > 0 ? { content } : {}) }];
     }
     case "code": {
       const t = token as Tokens.Code;

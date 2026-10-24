@@ -15,6 +15,7 @@ import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-sch
 import { formatReference } from "./referenceDirective.ts";
 import { isBuiltinCalloutType, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
+import { indentPrefix } from "@gogum4/editor-schema/indent";
 import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
 
 export interface MarkdownOptions {
@@ -390,11 +391,12 @@ class Renderer {
       case "paragraph": {
         const text = this.inline(node.content);
         if (text.trim() === "") return null; // 빈 문단은 Markdown에서 의미가 없다.
-        return text.split("\n").map(escapeLineStart).join("\n");
+        // 들여쓰기는 줄 맨 앞의 `&emsp;`(문단의 첫 줄만).
+        return indentPrefix(node.attrs?.indent) + text.split("\n").map(escapeLineStart).join("\n");
       }
       case "heading": {
         const level = Math.min(Math.max(Number(node.attrs?.level) || 1, 1), 6);
-        return `${"#".repeat(level)} ${this.inline(node.content).replace(/\n/g, " ")}`.trimEnd();
+        return `${"#".repeat(level)} ${indentPrefix(node.attrs?.indent)}${this.inline(node.content).replace(/\n/g, " ")}`.trimEnd();
       }
       case "bulletList": {
         const mark = this.takeFlip() ? "*" : "-";

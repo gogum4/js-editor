@@ -89,6 +89,7 @@
       "atom": false,
       "attrs": {
         "id": "(필수)",
+        "indent": "(필수)",
         "level": "(필수)",
         "textAlign": "(필수)"
       }
@@ -160,6 +161,7 @@
       "atom": false,
       "attrs": {
         "id": "(필수)",
+        "indent": "(필수)",
         "textAlign": "(필수)"
       }
     },

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { calloutMeta, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { normalizeIndent } from "@gogum4/editor-schema/indent";
 import { EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
@@ -27,6 +28,14 @@ const LINK_REL = "noopener noreferrer nofollow";
 function alignStyle(node: PmNode): CSSProperties | undefined {
   const align = normalizeTextAlign(node.attrs?.textAlign);
   return align === null ? undefined : { textAlign: align };
+}
+
+/** 문단·제목의 정렬과 들여쓰기(한 단계 2em)를 합친 스타일. */
+function blockStyle(node: PmNode): CSSProperties | undefined {
+  const indent = normalizeIndent(node.attrs?.indent);
+  const align = alignStyle(node);
+  if (indent === null) return align;
+  return { ...align, marginLeft: `${indent * 2}em` };
 }
 
 /** 블록 id를 앵커로 단다(옵션이 켜졌을 때). `[[글#^id]]` 링크의 목적지다. */
@@ -256,7 +265,7 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       // 빈 문단(해석되지 않은 페이지 링크만 든 문단 포함)은 보이지 않는다.
       if (!children.some((child) => child !== null)) return null;
       return (
-        <p key={key} id={anchorId(node, ctx)} style={alignStyle(node)}>
+        <p key={key} id={anchorId(node, ctx)} style={blockStyle(node)}>
           {children}
         </p>
       );
@@ -267,7 +276,7 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       const id = ctx.options.headingIds === false ? undefined : ctx.headingIds[ctx.nextHeading];
       ctx.nextHeading += 1;
       return (
-        <Tag key={key} id={id} style={alignStyle(node)}>
+        <Tag key={key} id={id} style={blockStyle(node)}>
           {renderInline(node.content, ctx)}
         </Tag>
       );

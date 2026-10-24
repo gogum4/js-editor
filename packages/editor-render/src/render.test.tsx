@@ -142,6 +142,14 @@ describe("내용", () => {
     expect(html(doc(embed({ provider: "youtube", url: "https://youtu.be/dQw4w9WgXcQ" })), { strings: enRenderStrings })).toContain('title="youtube embed"');
   });
 
+  it("문단·제목의 들여쓰기는 단계 × 2em의 왼쪽 여백이고 정렬과 함께 쓴다", () => {
+    const out = html(doc({ type: "paragraph", attrs: { indent: 3, textAlign: "right" }, content: [t("글")] }, { type: "heading", attrs: { level: 2, indent: 1 }, content: [t("제목")] }));
+    expect(out).toContain("margin-left:6em");
+    expect(out).toContain("text-align:right");
+    expect(out).toContain("margin-left:2em");
+    expect(html(doc({ type: "paragraph", attrs: { indent: 99 }, content: [t("글")] }))).not.toContain("margin-left");
+  });
+
   it("className을 더할 수 있다", () => {
     expect(html(doc(p(t("글"))), { className: "prose" })).toContain('class="md-doc prose"');
   });
