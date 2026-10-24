@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { type MermaidResult, renderMermaid } from "@9um4-utils/editor-core";
+import { type MermaidResult, peekMermaid, renderMermaid } from "@9um4-utils/editor-core";
 import { MermaidViewer } from "./MermaidViewer";
 import { useEditorStrings } from "../context";
 
@@ -10,18 +10,23 @@ const RENDER_DELAY_MS = 400;
 /** `mermaid` 코드 블록 아래에 보이는 그림. 소스가 바뀌면 잠시 뒤 다시 그린다. */
 export function MermaidPreview({ source }: { source: string }) {
   const strings = useEditorStrings();
-  const [result, setResult] = useState<MermaidResult | null>(null);
+  // 이미 그려 둔 그림이면 처음부터 보인다(페이지를 다시 열 때 기다리지 않는다).
+  const [result, setResult] = useState<MermaidResult | null>(() => peekMermaid(source));
+  const rendered = useRef(false);
   const [viewing, setViewing] = useState(false);
   const empty = source.trim().length === 0;
 
   useEffect(() => {
     if (empty) return;
     let stale = false;
+    // 처음 그릴 때는 기다리지 않는다. 지연은 타이핑으로 소스가 바뀔 때만 둔다(문법이 틀려 있는 중간 상태를 보여 주지 않으려는 것).
+    const delay = rendered.current ? RENDER_DELAY_MS : 0;
+    rendered.current = true;
     const timer = window.setTimeout(() => {
       void renderMermaid(source).then((next) => {
         if (!stale) setResult(next);
       });
-    }, RENDER_DELAY_MS);
+    }, delay);
     return () => {
       stale = true;
       window.clearTimeout(timer);

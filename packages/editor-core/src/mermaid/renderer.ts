@@ -30,6 +30,11 @@ function loadMermaid(): Promise<MermaidApi> {
   return loading;
 }
 
+/** 한가한 때 mermaid를 미리 불러온다(처음 그림을 그릴 때의 기다림을 줄인다). 실패해도 나중에 그릴 때 다시 시도한다. */
+export function preloadMermaid(): void {
+  void loadMermaid().catch(() => {});
+}
+
 /** 언어 이름이 mermaid인지 (대소문자·공백 무시). */
 export function isMermaidLanguage(language: string | null | undefined): boolean {
   return language?.trim().toLowerCase() === "mermaid";
@@ -46,20 +51,49 @@ export function summarizeMermaidError(error: unknown, maxLines = 4): string {
   return lines.slice(0, maxLines).join("\n");
 }
 
+/**
+ * 같은 소스를 다시 그리지 않도록 결과를 기억한다(페이지를 다시 열 때 바로 그림이 나온다). 성공한 그림만 담고 가장 오래 안 쓴 것부터 버린다.
+ * mermaid는 같은 소스·같은 설정이면 같은 그림을 내므로 안전하다.
+ */
+const CACHE_LIMIT = 64;
+const cache = new Map<string, MermaidResult>();
+
+/** 이미 그려 둔 그림이 있으면 돌려준다(없으면 `null`). 화면이 처음부터 그림을 보이는 데 쓴다. */
+export function peekMermaid(source: string): MermaidResult | null {
+  const hit = cache.get(source);
+  if (!hit) return null;
+  cache.delete(source);
+  cache.set(source, hit); // 최근에 쓴 것으로
+  return hit;
+}
+
+function remember(source: string, result: MermaidResult): void {
+  if (!result.ok) return;
+  cache.delete(source);
+  cache.set(source, result);
+  if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value as string);
+}
+
 let counter = 0;
 // mermaid는 같은 시각에 여러 번 그리면 서로의 임시 요소를 건드릴 수 있어, 한 번에 하나씩 그린다.
 let queue: Promise<unknown> = Promise.resolve();
 
 /** 소스를 그림으로 만든다. 문법이 틀려도 던지지 않고 `{ ok: false }`로 돌려준다. */
 export function renderMermaid(source: string): Promise<MermaidResult> {
+  const cached = peekMermaid(source);
+  if (cached) return Promise.resolve(cached);
   const task = queue.then(async (): Promise<MermaidResult> => {
+    const again = peekMermaid(source); // 줄을 서는 동안 같은 소스가 그려졌을 수 있다
+    if (again) return again;
     const id = `mermaid-render-${++counter}`;
     try {
       const mermaid = await loadMermaid();
       // render()는 문법이 틀려도 던지지 않고 "문법 오류" 그림을 돌려준다. 먼저 검사해서 오류로 다룬다.
       await mermaid.parse(source);
       const { svg } = await mermaid.render(id, source);
-      return { ok: true, svg };
+      const result: MermaidResult = { ok: true, svg };
+      remember(source, result);
+      return result;
     } catch (error) {
       // 실패하면 mermaid가 오류 그림이 든 임시 요소를 body에 남긴다. 치운다.
       document.getElementById(id)?.remove();
