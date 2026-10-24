@@ -2,7 +2,6 @@ import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/re
 import { useEffect, useRef, useState } from "react";
 
 import {
-  CALLOUT_PRESET_META,
   CALLOUT_TYPES,
   type CalloutType,
   calloutMeta,
@@ -35,8 +34,8 @@ export function CalloutView({ node, updateAttributes }: NodeViewProps) {
 
   // 글: 사전에 있으면 사전, 없으면(Obsidian 이름·사용자 이름) 정해진 글이나 이름 그대로.
   const labelOf = (kind: CalloutType) => strings.callout.types[kind] ?? calloutMeta(kind).label;
-  // 메뉴에는 기본 5종과 Obsidian 이름을 보이고, 지금 종류가 그 밖의 이름이면 그것도 맨 아래에 보인다.
-  const options: CalloutType[] = [...CALLOUT_TYPES, ...Object.keys(CALLOUT_PRESET_META)];
+  // 메뉴에는 기본 5종을 보이고, 지금 종류가 그 밖의 이름(Obsidian 이름·사용자 이름)이면 그것도 맨 아래에 보인다. 다른 이름은 `> [!이름] ` 입력이나 Markdown으로 정한다.
+  const options: CalloutType[] = [...CALLOUT_TYPES];
   if (!options.includes(type)) options.push(type);
 
   return (

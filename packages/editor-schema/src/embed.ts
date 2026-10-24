@@ -129,7 +129,7 @@ export function embedSource(target: EmbedTarget): string | null {
 /** 공급자별 기본 크기(px). 너비는 상한이라 좁은 화면에서는 줄어든다. `aspect`가 있으면 높이는 너비에 비례한다. */
 export const EMBED_DEFAULT_SIZE: Readonly<Record<EmbedProvider, { width: number; height: number; aspect: boolean }>> = {
   youtube: { width: 640, height: 360, aspect: true },
-  x: { width: 550, height: 520, aspect: false },
+  x: { width: 550, height: 380, aspect: false },
   instagram: { width: 540, height: 640, aspect: false },
   pinterest: { width: 345, height: 500, aspect: false },
   soundcloud: { width: 640, height: 166, aspect: false },

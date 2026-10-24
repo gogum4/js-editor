@@ -343,7 +343,6 @@
 .md-doc .md-embed-frame {
   overflow: hidden;
   border-radius: 8px;
-  background: var(--md-subtle);
 }
 .md-doc .md-embed-frame iframe {
   display: block;

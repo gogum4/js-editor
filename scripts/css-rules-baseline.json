@@ -185,7 +185,7 @@
   ".md-editor .md-embed-bar button | background: none; border: 0; color: inherit; cursor: pointer; font: inherit; padding: 0; text-decoration: underline",
   ".md-editor .md-embed-bar | color: var(--md-c-737373, #737373); display: flex; font-size: 12px; gap: 0.75rem; margin-top: 0.25rem",
   ".md-editor .md-embed-frame iframe | border: 0; display: block; height: 100%; width: 100%",
-  ".md-editor .md-embed-frame | background: var(--md-c-f5f5f5, #f5f5f5); border-radius: 8px; overflow: hidden",
+  ".md-editor .md-embed-frame | border-radius: 8px; overflow: hidden",
   ".md-editor .md-embed-input | background: var(--md-c-fff, #fff); border-radius: 8px; border: 1px solid var(--md-c-e5e5e5, #e5e5e5); box-sizing: border-box; font: inherit; padding: 0.5rem 0.75rem; width: 100%",
   ".md-editor .md-embed-message | color: var(--md-c-737373, #737373); font-size: 12px; margin-top: 0.25rem",
   ".md-editor .md-embed-message:empty | display: none",
