@@ -40,7 +40,7 @@ export type { LatexCommand } from "./lib/latexCommands";
 export { MAX_LATEX_CHARS, loadKatex, mathError, renderMathHtml } from "./lib/math";
 export { MATH_BLOCK_NODE, isMathNode, setMathLatex } from "./math/mathEdit";
 export type { MathEditState } from "./math/mathEdit";
-export { isMermaidLanguage, peekMermaid, preloadMermaid, renderMermaid } from "./mermaid/renderer";
+export { hasUsedMermaid, isMermaidLanguage, peekMermaid, preloadMermaid, renderMermaid } from "./mermaid/renderer";
 export type { MermaidResult } from "./mermaid/renderer";
 export { centerAt, constrainView, fitView, percentLabel, svgSize, zoomAt } from "./mermaid/viewerMath";
 export type { Size, View } from "./mermaid/viewerMath";

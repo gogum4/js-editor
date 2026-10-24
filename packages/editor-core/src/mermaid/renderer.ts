@@ -50,6 +50,25 @@ export function preloadMermaid(): void {
     .catch(() => {});
 }
 
+const USED_KEY = "mermaid.used";
+
+/** 이 브라우저에서 다이어그램을 그려 본 적이 있는가(저장소를 못 쓰면 `false`). 다음에 앱을 열 때 미리 불러올지 정하는 데 쓴다. */
+export function hasUsedMermaid(): boolean {
+  try {
+    return localStorage.getItem(USED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markMermaidUsed(): void {
+  try {
+    localStorage.setItem(USED_KEY, "1");
+  } catch {
+    // 못 적어도 그림은 그려졌다.
+  }
+}
+
 /** 언어 이름이 mermaid인지 (대소문자·공백 무시). */
 export function isMermaidLanguage(language: string | null | undefined): boolean {
   return language?.trim().toLowerCase() === "mermaid";
@@ -108,6 +127,7 @@ export function renderMermaid(source: string): Promise<MermaidResult> {
       const { svg } = await mermaid.render(id, source);
       const result: MermaidResult = { ok: true, svg };
       remember(source, result);
+      markMermaidUsed();
       return result;
     } catch (error) {
       // 실패하면 mermaid가 오류 그림이 든 임시 요소를 body에 남긴다. 치운다.

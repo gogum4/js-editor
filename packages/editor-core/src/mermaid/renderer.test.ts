@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from "vitest";
 
-import { isMermaidLanguage, peekMermaid, renderMermaid, summarizeMermaidError } from "./renderer";
+import { hasUsedMermaid, isMermaidLanguage, peekMermaid, renderMermaid, summarizeMermaidError } from "./renderer";
 
 const calls = vi.hoisted(() => ({ render: 0, parse: 0 }));
 vi.mock("mermaid", () => ({
@@ -64,5 +64,14 @@ describe("그림 기억", () => {
     for (let i = 0; i < 70; i++) await renderMermaid(`graph TD\nN${i}-->M`);
     expect(peekMermaid("graph TD\nN0-->M")).toBeNull();
     expect(peekMermaid("graph TD\nN69-->M")).not.toBeNull();
+  });
+});
+
+describe("써 본 적 있는지", () => {
+  it("한 번 그리면 기억해 두어 다음에 앱을 열 때 미리 불러올 수 있다", async () => {
+    localStorage.removeItem("mermaid.used");
+    expect(hasUsedMermaid()).toBe(false);
+    await renderMermaid("graph TD\nUSED-->X");
+    expect(hasUsedMermaid()).toBe(true);
   });
 });
