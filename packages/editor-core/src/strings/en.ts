@@ -46,6 +46,15 @@ export const enStrings: EditorStrings = {
     types: { note: "Info", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution" },
   },
   codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed" },
+  embed: {
+    slashLabel: "Embed",
+    slashDescription: "Paste a link to embed a video or post",
+    placeholder: "Paste a link and press Enter (YouTube, X, Instagram, Pinterest, SoundCloud …)",
+    invalid: "This link is not supported",
+    edit: "Change link",
+    open: "Open original",
+    frameTitle: (provider) => `${provider} embed`,
+  },
   reference: {
     loading: "Loading…",
     missing: "This item was deleted or cannot be found",
@@ -53,7 +62,7 @@ export const enStrings: EditorStrings = {
     unknownKind: (kind) => `Unknown reference (${kind})`,
     openLabel: (title) => `Open ${title}`,
   },
-  raw: { blockLabel: "Source (syntax the editor does not know)", sourceLabel: "Edit source", inlineTitle: "Double-click to edit the source", directiveLabel: "Opening line of the block syntax" },
+  raw: { blockLabel: "Source (syntax the editor does not know)", sourceLabel: "Edit source", inlineTitle: "Double-click to edit the source" },
   languagePicker: {
     title: "Choose language",
     plainText: "Plain text",

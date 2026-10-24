@@ -1,4 +1,5 @@
-import type { ReferenceProps } from "@gogum4/editor-schema/reference";
+import type { CalloutIcons } from "@gogum4/editor-schema/callout";
+import type { ReferenceProps, ReferenceTarget } from "@gogum4/editor-schema/reference";
 
 /**
  * 에디터가 바깥(앱)에서 필요로 하는 것들. 에디터 코드는 `lib/api`나 화면 저장소를 직접 부르지 않고 이 포트만 쓴다
@@ -75,4 +76,11 @@ export interface EditorPorts {
   notifier: Notifier;
   /** 참조 노드(`createCoreExtensions({ reference: true })`)의 종류별 해석기. 없는 종류는 "알 수 없는 참조"로 보인다. */
   references?: Readonly<Record<string, ReferenceResolver>>;
+  /** 콜아웃 종류별 아이콘 표(이모지나 짧은 글). `> [!rocket]`처럼 아이콘을 모르는 종류의 아이콘을 정하거나 기본 종류의 아이콘을 바꾼다. */
+  calloutIcons?: CalloutIcons;
+  /**
+   * 임베드 입력(`/임베드`에 붙여 넣은 글)을 소비자가 알아보게 한다. 외부 공급자(YouTube·X …)로 알아보지 못한 글을 받아, 소비자의 개체를 가리키는 참조 대상이면 그 대상을, 아니면 null을 돌려준다
+   * (예: 블로그의 `https://내사이트/글/슬러그` → `{ kind: "post", id: "슬러그" }`). 참조 노드(`reference: true`)가 켜져 있어야 한다.
+   */
+  parseEmbedInput?: (input: string) => ReferenceTarget | null;
 }

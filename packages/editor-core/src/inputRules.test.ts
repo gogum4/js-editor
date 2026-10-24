@@ -78,19 +78,22 @@ describe("입력 규칙: 콜아웃 (> [!NOTE] )", () => {
     expect(firstBlock(editor)).toMatchObject({ type: "callout", text: "내용" });
   });
 
-  it("대소문자와 Obsidian 별칭도 받는다 ([!WARNING], [!danger] → caution)", () => {
+  it("대소문자를 가리지 않고 아무 이름이나 받는다 ([!WARNING] → warning, [!danger] → danger)", () => {
     const upper = newEditor();
     typeText(upper, "> [!WARNING] ");
     expect(firstBlock(upper)).toMatchObject({ type: "callout", attrs: { type: "warning" } });
     const alias = newEditor();
     typeText(alias, "> [!danger] ");
-    expect(firstBlock(alias)).toMatchObject({ type: "callout", attrs: { type: "caution" } });
+    expect(firstBlock(alias)).toMatchObject({ type: "callout", attrs: { type: "danger" } });
+    const custom = newEditor();
+    typeText(custom, "> [!rocket] ");
+    expect(firstBlock(custom)).toMatchObject({ type: "callout", attrs: { type: "rocket" } });
   });
 
-  it("모르는 이름이나 인용 밖에서는 글자로 남는다", () => {
+  it("이름으로 쓸 수 없는 글자거나 인용 밖에서는 글자로 남는다", () => {
     const unknown = newEditor();
-    typeText(unknown, "> [!foo] ");
-    expect(firstBlock(unknown)).toMatchObject({ type: "blockquote", text: "[!foo] " });
+    typeText(unknown, "> [!1st] ");
+    expect(firstBlock(unknown)).toMatchObject({ type: "blockquote", text: "[!1st] " });
     const plain = newEditor();
     typeText(plain, "[!note] ");
     expect(firstBlock(plain)).toMatchObject({ type: "paragraph", text: "[!note] " });

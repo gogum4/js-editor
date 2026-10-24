@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import type { CalloutIcons } from "@gogum4/editor-schema/callout";
 import type { HastChild } from "./highlight.tsx";
 import type { RenderStrings } from "./strings.ts";
 
@@ -39,6 +40,8 @@ export interface RenderOptions {
    * 기본: 원격 주소와 `/`·`./`로 시작하는 경로는 그대로, 저장소 해시는 null.
    */
   imageUrl?: (image: ImageSource) => string | null;
+  /** 콜아웃 종류별 아이콘 표(이모지나 짧은 글). 아이콘을 모르는 종류(`> [!rocket]`)의 아이콘을 정하거나 기본 종류의 아이콘을 바꾼다. */
+  calloutIcons?: CalloutIcons;
   /** 페이지 링크(`[[…]]`)를 어디로 이을지. 없거나 null이면 링크 없이 글자만 보인다. */
   pageLink?: (pageId: string) => PageReference | null;
   /** 블록 id를 앵커(`id="^id"`)로 남길지. 블록 링크(`#^id`)가 같은 글 안에서 동작하게 하려면 켠다. 기본 꺼짐. */
@@ -53,7 +56,7 @@ export interface RenderOptions {
    */
   renderReference?: (target: { kind: string; id: string; props: Readonly<Record<string, string>> | null }) => ReactNode | undefined;
   /**
-   * 에디터가 구조를 모르는 문법의 원문(`raw` 블록, `rawInline`)을 그린다(블로그 방언의 `::youtube{…}` 등). `undefined`를 돌려주면 원문을 그대로 보이고,
+   * 에디터에 대응 노드가 없는 Markdown 조각의 원문(`raw` 블록, `rawInline`: HTML 등)을 그린다. `undefined`를 돌려주면 원문을 그대로 보이고,
    * `null`이면 아무것도 그리지 않는다. 옵션이 없으면 원문을 보인다.
    */
   renderRaw?: (text: string, inline: boolean) => ReactNode | undefined;

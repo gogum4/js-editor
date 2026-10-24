@@ -5,8 +5,8 @@ import type { Node as PmNode } from "@tiptap/pm/model";
 import { stringsOf } from "../ports/editorPorts";
 
 /**
- * 에디터가 모르는 Markdown 문법(디렉티브: `::youtube{…}`, `:::fold … :::`, `:postlink[글]{…}`)을 **원문 그대로** 담는 노드(docs/EDITOR-PACKAGE.md P6-1).
- * 내보낼 때 한 글자도 바꾸지 않는다. Markdown이 원본인 소비자(블로그)를 위한 것이라 `createCoreExtensions({ raw: true })`로 켠 때만 스키마에 들어간다
+ * 에디터에 대응 노드가 없는 Markdown 조각(HTML 블록·글 중간 HTML, 일반 GFM 문서의 열 정렬 표 등)을 **원문 그대로** 담는 노드(docs/EDITOR-PACKAGE.md P6-1).
+ * 내보낼 때 한 글자도 바꾸지 않는다. Markdown이 원본인 소비자를 위한 것이라 `createCoreExtensions({ raw: true })`로 켠 때만 스키마에 들어간다
  * — 노트 앱은 켜지 않는다(켜면 본문 스키마 버전을 올려야 한다). 화면은 React 없이 DOM으로 그린다: 회색 상자 안의 원문을 그 자리에서 고친다.
  */
 
@@ -201,25 +201,5 @@ export const RawInline = Node.create({
         ignoreMutation: () => true,
       };
     };
-  },
-});
-
-/**
- * 문단 안의 줄바꿈 한 개(소스에서 줄을 나눈 자리). 블로그의 마크다운은 이것을 공백으로 그리므로 하드 브레이크(`hardBreak`)와 다르다 — 에디터에서는 공백으로 보인다.
- * 글자 속 `\n`로 두면 에디터가 근처를 고칠 때 DOM을 다시 읽으며 하드 브레이크로 바꿔 버려서 따로 노드로 둔다. `createCoreExtensions({ raw: true })`로 켠다.
- */
-export const SoftBreak = Node.create({
-  name: "softBreak",
-  group: "inline",
-  inline: true,
-  atom: true,
-  selectable: false,
-
-  parseHTML() {
-    return [{ tag: "span[data-soft-break]" }];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes({ "data-soft-break": "", class: "md-soft-break" }, HTMLAttributes), " "];
   },
 });

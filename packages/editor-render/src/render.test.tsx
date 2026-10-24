@@ -120,6 +120,36 @@ describe("내용", () => {
     expect(out).toContain('aria-label="Footnotes"');
   });
 
+  it("모르는 콜아웃 이름은 이름을 글로, 아이콘은 표에서 찾는다", () => {
+    const d = doc({ type: "callout", attrs: { type: "rocket" }, content: [p(t("출시"))] });
+    const plain = html(d);
+    expect(plain).toContain("callout-rocket");
+    expect(plain).toContain(`aria-label="rocket"`);
+    expect(html(d, { calloutIcons: { rocket: "🚀" } })).toContain("🚀");
+  });
+
+  it("임베드: 허용한 도메인의 iframe만 그리고 크기를 따른다", () => {
+    const embed = (attrs: Record<string, unknown>): PmNode => ({ type: "embed", attrs });
+    const out = html(doc(embed({ provider: "youtube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", width: 400 })));
+    expect(out).toContain('src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"');
+    expect(out).toContain("sandbox=");
+    expect(out).toContain("width:400px");
+    expect(out).toContain('data-provider="youtube"');
+    expect(html(doc(embed({ provider: "x", url: "https://x.com/jack/status/20" })))).toContain("platform.twitter.com/embed/Tweet.html?id=20");
+    expect(html(doc(embed({ provider: "youtube", url: "https://evil.com/x" })))).not.toContain("iframe");
+    expect(html(doc(embed({ provider: "x", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" })))).not.toContain("iframe");
+    expect(html(doc(embed({ provider: "", url: "" })))).not.toContain("iframe");
+    expect(html(doc(embed({ provider: "youtube", url: "https://youtu.be/dQw4w9WgXcQ" })), { strings: enRenderStrings })).toContain('title="youtube embed"');
+  });
+
+  it("문단·제목의 들여쓰기는 단계 × 2em의 왼쪽 여백이고 정렬과 함께 쓴다", () => {
+    const out = html(doc({ type: "paragraph", attrs: { indent: 3, textAlign: "right" }, content: [t("글")] }, { type: "heading", attrs: { level: 2, indent: 1 }, content: [t("제목")] }));
+    expect(out).toContain("margin-left:6em");
+    expect(out).toContain("text-align:right");
+    expect(out).toContain("margin-left:2em");
+    expect(html(doc({ type: "paragraph", attrs: { indent: 99 }, content: [t("글")] }))).not.toContain("margin-left");
+  });
+
   it("className을 더할 수 있다", () => {
     expect(html(doc(p(t("글"))), { className: "prose" })).toContain('class="md-doc prose"');
   });
@@ -130,7 +160,7 @@ describe("내용", () => {
   });
 });
 
-describe("참조·원문·디렉티브·줄바꿈 (P7)", () => {
+describe("참조·원문 (P7)", () => {
   it("참조: 소비자가 그리면 그것을, 안 그리면 종류·id만 적은 대체 표시, null이면 아무것도", () => {
     const d = doc({ type: "reference", attrs: { kind: "table-schema", id: "abc" } });
     expect(html(d)).toContain('data-kind="table-schema"');
@@ -150,18 +180,5 @@ describe("참조·원문·디렉티브·줄바꿈 (P7)", () => {
     const custom = html(d, { renderRaw: (text, inline) => (inline ? <i>{text}</i> : null) });
     expect(custom).toContain("<i>:postlink[a]{b}</i>");
     expect(custom).not.toContain("youtube");
-  });
-
-  it("directive는 안쪽 블록을 그리고 여는 줄을 속성에 남기며, 안의 제목 앵커 번호가 맞는다", () => {
-    const d = doc(h(2, "앞"), { type: "directive", attrs: { head: ":::indent{n=1}" }, content: [h(2, "안"), p(t("글"))] }, h(2, "뒤"));
-    const out = html(d);
-    expect(out).toContain('data-head=":::indent{n=1}"');
-    expect(out).toContain('<h2 id="안">안</h2>');
-    expect(out).toContain('<h2 id="뒤">뒤</h2>');
-  });
-
-  it("softBreak는 공백이고 제목의 앵커·글자에도 공백으로 들어간다", () => {
-    expect(html(doc(p(t("가"), { type: "softBreak" }, t("나"))))).toContain("가 나");
-    expect(collectHeadings(doc({ type: "heading", attrs: { level: 2 }, content: [t("가"), { type: "softBreak" }, t("나")] }))[0]?.id).toBe("가-나");
   });
 });

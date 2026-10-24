@@ -38,21 +38,24 @@
         "language": "(필수)"
       }
     },
-    "directive": {
-      "content": "block+",
-      "group": "block",
-      "inline": false,
-      "atom": false,
-      "attrs": {
-        "head": "(필수)"
-      }
-    },
     "doc": {
       "content": "block+",
       "group": null,
       "inline": false,
       "atom": false,
       "attrs": {}
+    },
+    "embed": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {
+        "height": "(필수)",
+        "provider": "(필수)",
+        "url": "(필수)",
+        "width": "(필수)"
+      }
     },
     "footnote": {
       "content": null,
@@ -77,6 +80,7 @@
       "atom": false,
       "attrs": {
         "id": "(필수)",
+        "indent": "(필수)",
         "level": "(필수)",
         "textAlign": "(필수)"
       }
@@ -148,6 +152,7 @@
       "atom": false,
       "attrs": {
         "id": "(필수)",
+        "indent": "(필수)",
         "textAlign": "(필수)"
       }
     },
@@ -179,13 +184,6 @@
         "kind": "(필수)",
         "props": "(필수)"
       }
-    },
-    "softBreak": {
-      "content": null,
-      "group": "inline",
-      "inline": true,
-      "atom": true,
-      "attrs": {}
     },
     "table": {
       "content": "tableRow+",

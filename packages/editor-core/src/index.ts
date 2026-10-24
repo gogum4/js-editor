@@ -27,9 +27,9 @@ export { enStrings, type EditorStrings, koStrings } from "./strings/index";
 
 // `@gogum4/editor-react`가 쓰는 내부 (수식·각주 편집, 수식 렌더 로더, 자동완성 계산, mermaid 도구, 이미지 캐시)
 export type { Candidate } from "./completion/words";
-export { Raw, RawInline, SoftBreak } from "./raw/Raw";
+export { Raw, RawInline } from "./raw/Raw";
 export { Reference } from "./reference/Reference";
-export { Directive } from "./raw/Directive";
+export { applyEmbedInput, Embed } from "./embed/Embed";
 export { setFootnoteText } from "./footnote/footnoteEdit";
 export type { FootnoteEditState } from "./footnote/footnoteEdit";
 export { FOOTNOTE_NODE, collectFootnotes } from "./footnote/footnotes";

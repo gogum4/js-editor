@@ -362,21 +362,90 @@ export const BEHAVIORS = [
     },
   },
   {
-    name: "directive: 여는 줄 입력칸을 고치고, 안쪽 글은 평소처럼 입력한다",
+    name: "콜아웃: 아무 이름이나 받고(`> [!rocket] `), 아이콘 표의 아이콘이 보인다",
     async run({ page, open }) {
-      await open({ raw: true });
-      const node = () => page.evaluate(() => window.__demo.editor.getJSON().content.find((n) => n.type === "directive"));
-      await page.click("input.md-directive-input");
-      await page.keyboard.press("Control+a");
-      await page.keyboard.type(":::indent{n=3}");
+      await open({ embed: true });
+      await focusScratch(page);
+      await page.keyboard.type("> [!rocket] 출시");
+      const last = await lastFilled(page);
+      eq([last.type, last.attrs.type], ["callout", "rocket"], "입력한 블록");
+      eq(await page.evaluate(() => document.querySelector(".callout-rocket .callout-icon button")?.textContent), "🚀", "아이콘 표의 아이콘");
+    },
+  },
+  {
+    name: "임베드: /임베드로 빈 카드를 끼우고 주소를 적으면 공급자를 알아내 iframe이 된다",
+    async run({ page, open }) {
+      await open({ embed: true });
+      await focusScratch(page);
+      await page.keyboard.type("/임베드");
+      await page.waitForSelector(".slash-menu, [role='listbox'], .md-slash-menu", { timeout: 2000 }).catch(() => {});
       await page.keyboard.press("Enter");
+      await page.waitForSelector("input.md-embed-input", { timeout: 2000 });
+      const focused = await page.evaluate(() => document.activeElement?.classList.contains("md-embed-input"));
+      assert(focused, "빈 카드의 입력 상자에 포커스가 가야 한다");
+      // 지원하지 않는 주소는 안내만 보인다.
+      await page.keyboard.type("https://example.com/video");
+      await page.keyboard.press("Enter");
+      eq(await page.evaluate(() => document.querySelector(".md-embed-message")?.textContent), "지원하지 않는 주소예요", "안내");
+      // 지원하는 주소(YouTube)는 공급자를 알아내 iframe이 된다.
+      await page.keyboard.press("Control+a");
+      await page.keyboard.type("https://youtu.be/dQw4w9WgXcQ?si=abc");
+      await page.keyboard.press("Enter");
+      await page.waitForSelector(".md-embed iframe", { timeout: 2000 });
+      const node = (await json(page)).content.find((n) => n.type === "embed");
+      eq([node.attrs.provider, node.attrs.url], ["youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"], "저장된 값");
+      eq(await page.evaluate(() => document.querySelector(".md-embed iframe").getAttribute("src")), "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", "iframe 주소");
+      eq(await page.evaluate(() => document.querySelector(".md-embed iframe").getAttribute("sandbox")?.includes("allow-scripts")), true, "sandbox");
+    },
+  },
+  {
+    name: "임베드: 빈 카드에서 Esc를 누르면 카드가 지워진다",
+    async run({ page, open }) {
+      await open({ embed: true });
+      await focusScratch(page);
+      await page.keyboard.type("/임베드");
+      await page.keyboard.press("Enter");
+      await page.waitForSelector("input.md-embed-input", { timeout: 2000 });
+      await page.keyboard.press("Escape");
       await page.waitForTimeout(100);
-      eq((await node()).attrs.head, ":::indent{n=3}", "고친 여는 줄");
-      await page.click(".md-directive-body p");
-      await page.keyboard.press("End");
-      await page.keyboard.type("!");
-      await page.waitForTimeout(100);
-      eq(textOf(await node()), "디렉티브 안쪽!", "안쪽 글");
+      eq((await json(page)).content.some((n) => n.type === "embed"), false, "카드 없음");
+    },
+  },
+  {
+    name: "들여쓰기: Tab으로 늘리고 Shift+Tab으로 줄이며, 문단마다 단계가 따로다",
+    async run({ page, open }) {
+      await open({ indent: true });
+      await focusScratch(page);
+      await page.keyboard.type("첫째");
+      await page.keyboard.press("Tab");
+      const indentOf = async (text) => (await json(page)).content.find((n) => n.type === "paragraph" && textOf(n) === text)?.attrs?.indent ?? null;
+      eq(await indentOf("첫째"), 1, "Tab 한 번");
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
+      eq(await indentOf("첫째"), 3, "Tab 세 번");
+      eq(await page.evaluate(() => [...document.querySelectorAll(".ProseMirror p")].find((p) => p.textContent === "첫째").style.marginLeft), "6em", "화면의 왼쪽 여백");
+      await page.keyboard.press("Shift+Tab");
+      eq(await indentOf("첫째"), 2, "Shift+Tab");
+      // 다음 문단은 따로: 엔터로 나눈 새 문단은 단계를 이어받지 않는다(속성은 문단마다).
+      await page.keyboard.press("Enter");
+      await page.keyboard.type("둘째");
+      await page.keyboard.press("Tab");
+      eq([await indentOf("첫째"), await indentOf("둘째")].length, 2, "두 문단");
+      assert((await indentOf("둘째")) !== null, "둘째 문단도 들여쓴다");
+    },
+  },
+  {
+    name: "들여쓰기: 목록 안에서 Tab은 들여쓰기가 아니라 목록 중첩이다",
+    async run({ page, open }) {
+      await open({ indent: true });
+      await focusScratch(page);
+      await page.keyboard.type("- 하나");
+      await page.keyboard.press("Enter");
+      await page.keyboard.type("둘");
+      await page.keyboard.press("Tab");
+      const doc = JSON.stringify(await json(page));
+      assert(!/"indent":\d/.test(doc), "목록 안 문단에 indent가 붙으면 안 된다");
+      assert(doc.includes('"type":"bulletList"') && (doc.match(/"type":"bulletList"/g) ?? []).length >= 2, "둘째 항목이 중첩 목록으로 들어가야 한다");
     },
   },
   {

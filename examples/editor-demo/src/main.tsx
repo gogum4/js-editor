@@ -70,6 +70,8 @@ const schemaResolver: ReferenceResolver = {
 
 const ports = memoryPorts({
   references: { "table-schema": schemaResolver },
+  // 콜아웃 `> [!rocket]`처럼 아이콘을 모르는 종류의 아이콘 표(동작 시험이 쓴다).
+  calloutIcons: { rocket: "🚀" },
   assets,
   links: {
     open: async (url) => {
@@ -83,6 +85,9 @@ const collab = params.has("collab");
 // `?raw=1`이면 모르는 문법을 원문 그대로 담는 `raw` 노드를 켜고 끝에 예를 붙인다(동작 시험 전용; 기준 스타일에는 영향이 없다).
 const raw = params.has("raw");
 const ref = params.has("ref");
+// `?embed=1`·`?indent=1`: 임베드 노드(`/임베드`)와 문단 들여쓰기(Tab)를 켠다(동작 시험 전용).
+const embed = params.has("embed");
+const indent = params.has("indent");
 const withRefs = (base: typeof DEMO_DOC) =>
   ref
     ? {
@@ -101,13 +106,12 @@ const doc = withRefs(raw
       content: [
         ...(DEMO_DOC.content ?? []),
         { type: "raw", attrs: { text: ":::fold{h=1}\n안쪽 줄\n:::" } },
-        { type: "directive", attrs: { head: ":::indent{n=1}" }, content: [{ type: "paragraph", content: [{ type: "text", text: "디렉티브 안쪽" }] }] },
         { type: "paragraph", content: [{ type: "text", text: "앞 " }, { type: "rawInline", attrs: { text: ":postlink[글]{slug=a}" } }, { type: "text", text: " 뒤" }] },
       ],
     }
   : DEMO_DOC);
 const ydoc = collab ? new Y.Doc() : null;
-const extensions = createReactExtensions(ydoc, { ports, raw, reference: ref });
+const extensions = createReactExtensions(ydoc, { ports, raw, reference: ref, embed, indent });
 if (ydoc) prosemirrorJSONToYXmlFragment(getSchema(extensions), doc, ydoc.getXmlFragment("default"));
 
 const editor = new Editor({

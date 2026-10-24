@@ -13,7 +13,10 @@ import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 
 import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-schema/reference";
 import { formatReference } from "./referenceDirective.ts";
-import { type MarkdownDialect, TYPE_TO_BLOG_CALLOUT } from "./dialect.ts";
+import { isBuiltinCalloutType, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
+import { indentPrefix } from "@gogum4/editor-schema/indent";
+import type { MarkdownDialect } from "./dialect.ts";
 
 export interface MarkdownOptions {
   /** 페이지 id로 제목을 찾는다. 삭제됐거나 없는 페이지는 null. */
@@ -35,8 +38,7 @@ export interface MarkdownOptions {
    */
   blockIds?: boolean;
   /**
-   * 내보낼 방언. 기본 `obsidian`. `blog`이면 블로그의 `remark-directive` 문법으로 쓴다: 콜아웃은 `:::note`…`:::`, 정렬은 `:::center|right`…`:::`,
-   * `directive` 노드는 여는 줄 원문 그대로. 블로그에 없는 것(이미지 크기·토글·밑줄·양쪽 정렬)은 평범한 글로 내보내고 안내한다.
+   * 내보낼 방언. 기본 `obsidian`(Obsidian 호환). `gfm`은 일반 GFM 문서: 이미지 크기·토글·밑줄·정렬 같은 Obsidian 쪽 표기를 쓰지 않는다.
    */
   dialect?: MarkdownDialect;
   /**
@@ -61,14 +63,6 @@ export interface MarkdownResult {
 }
 
 export const MISSING_PAGE_TITLE = "삭제된 페이지";
-
-const CALLOUT_LABELS: Record<string, string> = {
-  note: "NOTE",
-  tip: "TIP",
-  important: "IMPORTANT",
-  warning: "WARNING",
-  caution: "CAUTION",
-};
 
 /** 글자 속에서 Markdown 문법으로 읽힐 수 있는 문자를 막는다. 과하게 막아도 보이는 글자는 같다. */
 export function escapeInline(text: string): string {
@@ -152,11 +146,6 @@ class Renderer {
   private missingLinks = 0;
 
   constructor(private readonly options: MarkdownOptions) {}
-
-  /** 블로그 방언(`:::` 디렉티브로 쓴다). */
-  private get blog(): boolean {
-    return this.options.dialect === "blog";
-  }
 
   /** 노트 앱의 Obsidian 방언이 아니다(블로그·일반 GFM): 이미지 크기·토글·밑줄·정렬 같은 Obsidian 쪽 표기를 쓰지 않는다. */
   private get plain(): boolean {
@@ -251,7 +240,7 @@ class Renderer {
 
   /** 하드 브레이크 한 개. `newline` 모양은 양옆이 모두 글(줄바꿈이 아닌 인라인)일 때만 쓴다. */
   private hardBreak(previous: PmNode | undefined, next: PmNode | undefined): string {
-    const plain = (n: PmNode | undefined) => n !== undefined && n.type !== "hardBreak" && n.type !== "softBreak";
+    const plain = (n: PmNode | undefined) => n !== undefined && n.type !== "hardBreak";
     // 일반 GFM(`breaks:true`)은 줄바꿈 한 개가 눈에 보이는 줄바꿈이라 기본이 `newline`이다.
     const style = this.options.hardBreakStyle ?? (this.options.dialect === "gfm" ? "newline" : "backslash");
     return style === "newline" && plain(previous) && plain(next) ? "\n" : "\\\n";
@@ -265,9 +254,6 @@ class Renderer {
         return "\\\n";
       case "pageLink":
         return this.pageLink(node);
-      case "softBreak":
-        // 문단 안의 줄바꿈 한 개(블로그는 공백으로 그린다).
-        return "\n";
       case "rawInline":
         // 에디터가 모르는 글 중간 디렉티브: 원문 그대로.
         return typeof node.attrs?.text === "string" ? node.attrs.text : "";
@@ -321,12 +307,6 @@ class Renderer {
       while (list.length > 0 && isEmptyParagraph(list[list.length - 1])) list = list.slice(0, -1);
     }
     const parts: string[] = [];
-    // 블로그 방언: 이어지는 같은 정렬(가운데·오른쪽)의 블록은 `:::center`…`:::` 하나로 묶는다.
-    let run: { align: string; texts: string[] } | null = null;
-    const flushRun = () => {
-      if (run !== null) parts.push(`:::${run.align}\n${run.texts.join("\n\n")}\n:::`);
-      run = null;
-    };
     let previousFamily: ReturnType<typeof listFamily> = null;
     const gfm = this.options.dialect === "gfm";
     let lastFamily: ReturnType<typeof listFamily> = null; // 바로 앞 블록이 목록이면 그 계열
@@ -339,32 +319,13 @@ class Renderer {
       this.flipList = false;
       if (rendered === null) continue;
       previousFamily = family;
-      const align = this.blog ? this.blogAlign(node) : null;
-      if (align !== null) {
-        if (run !== null && run.align === align) run.texts.push(rendered);
-        else {
-          flushRun();
-          run = { align, texts: [rendered] };
-        }
-        continue;
-      }
-      flushRun();
       // 일반 GFM: 글머리 목록과 할 일 목록이 이어지면 같은 기호로 **빈 줄 없이** 붙여 써서 다시 한 목록(촘촘한 목록)으로 읽히게 한다.
       if (gfm && parts.length > 0 && family !== null && family !== "ordered" && lastFamily !== null && lastFamily !== "ordered" && family !== lastFamily) {
         parts[parts.length - 1] += `\n${rendered}`;
       } else parts.push(this.aligned(node, rendered));
       lastFamily = family;
     }
-    flushRun();
     return parts.join("\n\n");
-  }
-
-  /** 블로그 방언에서 이 블록을 감쌀 정렬 컨테이너 이름(`center`·`right`). 양쪽 정렬은 블로그에 없어 안내만 하고 일반 블록으로 둔다. */
-  private blogAlign(node: PmNode): "center" | "right" | null {
-    if (node.type !== "paragraph" && node.type !== "heading" && node.type !== "image") return null;
-    const align = normalizeTextAlign(node.attrs?.textAlign);
-    if (align === "justify") this.notices.add("양쪽 정렬은 블로그 문법에 없어서 왼쪽 정렬로 내보냈어요.");
-    return align === "center" || align === "right" ? align : null;
   }
 
   /**
@@ -396,11 +357,12 @@ class Renderer {
       case "paragraph": {
         const text = this.inline(node.content);
         if (text.trim() === "") return null; // 빈 문단은 Markdown에서 의미가 없다.
-        return text.split("\n").map(escapeLineStart).join("\n");
+        // 들여쓰기는 줄 맨 앞의 `&emsp;`(문단의 첫 줄만).
+        return indentPrefix(node.attrs?.indent) + text.split("\n").map(escapeLineStart).join("\n");
       }
       case "heading": {
         const level = Math.min(Math.max(Number(node.attrs?.level) || 1, 1), 6);
-        return `${"#".repeat(level)} ${this.inline(node.content).replace(/\n/g, " ")}`.trimEnd();
+        return `${"#".repeat(level)} ${indentPrefix(node.attrs?.indent)}${this.inline(node.content).replace(/\n/g, " ")}`.trimEnd();
       }
       case "bulletList": {
         const mark = this.takeFlip() ? "*" : "-";
@@ -418,12 +380,9 @@ class Renderer {
       case "blockquote":
         return prefixLines(this.blocks(node.content), "> ");
       case "callout": {
-        if (this.blog) {
-          const name = TYPE_TO_BLOG_CALLOUT[String(node.attrs?.type)] ?? "note";
-          const inner = this.blocks(node.content);
-          return inner === "" ? `:::${name}\n:::` : `:::${name}\n${inner}\n:::`;
-        }
-        const label = CALLOUT_LABELS[String(node.attrs?.type)] ?? "NOTE";
+        // 기본 5종은 GitHub 알림 이름(대문자)으로, 그 밖의 이름은 소문자 그대로(Obsidian 콜아웃·사용자 이름).
+        const type = normalizeCalloutType(node.attrs?.type);
+        const label = isBuiltinCalloutType(type) ? type.toUpperCase() : type;
         const body = this.blocks(node.content);
         return prefixLines(body === "" ? `[!${label}]` : `[!${label}]\n${body}`, "> ");
       }
@@ -433,16 +392,12 @@ class Renderer {
         return "---";
       case "image":
         return this.image(node);
+      case "embed":
+        return this.embed(node);
       case "mathBlock": {
         // 블록 수식은 `$$` 줄 사이에 LaTeX를 그대로 둔다. 내용이 빈 수식은 내보내지 않는다.
         const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.trim() : "";
         return latex === "" ? null : `$$\n${latex}\n$$`;
-      }
-      case "directive": {
-        // 여는 줄은 원문 그대로, 닫는 줄은 `:::`(블로그가 바깥 펜스의 콜론 수를 알아서 맞춘다).
-        const head = typeof node.attrs?.head === "string" && node.attrs.head !== "" ? node.attrs.head : ":::note";
-        const inner = this.blocks(node.content);
-        return inner === "" ? `${head}\n:::` : `${head}\n${inner}\n:::`;
       }
       case "reference": {
         const kind = String(node.attrs?.kind ?? "");
@@ -556,6 +511,21 @@ class Renderer {
   }
 
   /** `![대체 글자](경로)`. 해시가 올바르지 않은 이미지는 빼고 안내한다. */
+  /** 외부 임베드는 `![](주소)`(크기가 있으면 `![|500x300](주소)`) — Obsidian의 임베드와 같은 모양이라 지원하는 곳에서는 영상·게시물로 보이고 아닌 곳에서는 이미지·링크 자리에 남는다. */
+  private embed(node: PmNode): string | null {
+    const target = normalizeEmbedTarget(node.attrs?.provider, node.attrs?.url);
+    if (target === null) {
+      // 주소를 아직 적지 않은 카드나 올바르지 않은 값은 내보내지 않는다.
+      if (String(node.attrs?.url ?? "") !== "") this.notices.add("주소가 올바르지 않은 임베드는 내보내지 못했어요.");
+      return null;
+    }
+    const width = this.plain ? null : normalizeEmbedSize(node.attrs?.width);
+    const height = this.plain ? null : normalizeEmbedSize(node.attrs?.height);
+    // Obsidian 크기 표기는 너비가 있어야 하므로 높이만 있는 크기는 내보내지 않는다.
+    const size = width === null ? "" : height === null ? `|${width}` : `|${width}x${height}`;
+    return `![${size}](${target.url})`;
+  }
+
   private image(node: PmNode): string | null {
     const hash = node.attrs?.hash;
     const mime = typeof node.attrs?.mime === "string" ? node.attrs.mime : "";

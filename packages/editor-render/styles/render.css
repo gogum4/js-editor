@@ -335,3 +335,18 @@
   font-weight: 600;
   text-decoration: none;
 }
+
+/* 외부 임베드(영상·게시물) */
+.md-doc .md-embed {
+  margin: 1em 0;
+}
+.md-doc .md-embed-frame {
+  overflow: hidden;
+  border-radius: 8px;
+}
+.md-doc .md-embed-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

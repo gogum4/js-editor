@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { CALLOUT_META, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { calloutMeta, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { normalizeIndent } from "@gogum4/editor-schema/indent";
+import { EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { normalizeReferenceProps } from "@gogum4/editor-schema/reference";
@@ -26,6 +28,14 @@ const LINK_REL = "noopener noreferrer nofollow";
 function alignStyle(node: PmNode): CSSProperties | undefined {
   const align = normalizeTextAlign(node.attrs?.textAlign);
   return align === null ? undefined : { textAlign: align };
+}
+
+/** 문단·제목의 정렬과 들여쓰기(한 단계 2em)를 합친 스타일. */
+function blockStyle(node: PmNode): CSSProperties | undefined {
+  const indent = normalizeIndent(node.attrs?.indent);
+  const align = alignStyle(node);
+  if (indent === null) return align;
+  return { ...align, marginLeft: `${indent * 2}em` };
 }
 
 /** 블록 id를 앵커로 단다(옵션이 켜졌을 때). `[[글#^id]]` 링크의 목적지다. */
@@ -101,9 +111,6 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
           </sup>
         );
       }
-      case "softBreak":
-        // 문단 안의 줄바꿈 한 개(소스에서 줄을 나눈 자리): 공백으로 그린다.
-        return <Keyed key={index}>{" "}</Keyed>;
       case "rawInline": {
         const text = typeof node.attrs?.text === "string" ? node.attrs.text : "";
         const custom = ctx.options.renderRaw?.(text, true);
@@ -255,7 +262,7 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       // 빈 문단(해석되지 않은 페이지 링크만 든 문단 포함)은 보이지 않는다.
       if (!children.some((child) => child !== null)) return null;
       return (
-        <p key={key} id={anchorId(node, ctx)} style={alignStyle(node)}>
+        <p key={key} id={anchorId(node, ctx)} style={blockStyle(node)}>
           {children}
         </p>
       );
@@ -266,7 +273,7 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       const id = ctx.options.headingIds === false ? undefined : ctx.headingIds[ctx.nextHeading];
       ctx.nextHeading += 1;
       return (
-        <Tag key={key} id={id} style={alignStyle(node)}>
+        <Tag key={key} id={id} style={blockStyle(node)}>
           {renderInline(node.content, ctx)}
         </Tag>
       );
@@ -283,11 +290,12 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       );
     case "callout": {
       const type = normalizeCalloutType(node.attrs?.type);
-      const label = ctx.strings.callout[type];
+      const meta = calloutMeta(type, ctx.options.calloutIcons);
+      const label = ctx.strings.callout[type] ?? meta.label;
       return (
         <div key={key} id={anchorId(node, ctx)} className={`callout callout-${type}`} data-callout={type} role="note" aria-label={label}>
           <div className="callout-icon" aria-hidden="true">
-            {CALLOUT_META[type].icon}
+            {meta.icon}
           </div>
           <div className="callout-body">{renderBlocks(node.content, ctx)}</div>
         </div>
@@ -338,6 +346,33 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
         </div>
       );
     }
+    case "embed": {
+      // 외부 임베드: 허용한 도메인의 iframe만 그린다(주소가 올바르지 않으면 아무것도 그리지 않는다).
+      const target = normalizeEmbedTarget(node.attrs?.provider, node.attrs?.url);
+      const src = target === null ? null : embedSource(target);
+      if (target === null || src === null) return null;
+      const defaults = EMBED_DEFAULT_SIZE[target.provider];
+      const width = normalizeEmbedSize(node.attrs?.width) ?? defaults.width;
+      const height = normalizeEmbedSize(node.attrs?.height);
+      const style: CSSProperties = { width: `${width}px`, maxWidth: "100%" };
+      if (height === null && defaults.aspect) style.aspectRatio = `${defaults.width} / ${defaults.height}`;
+      else style.height = `${height ?? defaults.height}px`;
+      return (
+        <div key={key} className="md-embed" data-embed="" data-provider={target.provider}>
+          <div className="md-embed-frame" style={style}>
+            <iframe
+              src={src}
+              title={ctx.strings.embedTitle(target.provider)}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+              allow={EMBED_IFRAME_ALLOW[target.provider]}
+              allowFullScreen={target.provider === "youtube"}
+            />
+          </div>
+        </div>
+      );
+    }
     case "raw": {
       const text = typeof node.attrs?.text === "string" ? node.attrs.text : "";
       if (text === "") return null;
@@ -347,15 +382,6 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
         <pre key={key} className="raw-source" data-raw="">
           {text}
         </pre>
-      );
-    }
-    case "directive": {
-      // 컨테이너 디렉티브(`:::indent{n=1}` 등): 안쪽 블록을 그대로 그리고, 여는 줄은 data 속성에 남긴다(소비자가 CSS·후처리로 꾸민다).
-      const head = typeof node.attrs?.head === "string" ? node.attrs.head : "";
-      return (
-        <div key={key} className="directive" data-directive="" data-head={head}>
-          {renderBlocks(node.content, ctx)}
-        </div>
       );
     }
     case "pageBlock": {
