@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 타입 검사
+        run: npx tsc --noEmit -p .
+      - name: 시험
+        run: pnpm test
+      - name: 패키지 의존 방향·화면 글·CSS 규칙
+        run: pnpm check:deps
+
+  # 패키지의 배포 모양과 Next.js 샘플 앱(서버 컴포넌트에서 렌더러가 도는지)
+  packages:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 패키지 배포본(dist) 컴파일·배포 모양(pack)·소비자 타입·Node 로드
+        run: pnpm check:dist
+      - name: Next.js 샘플 앱 빌드 (App Router, SSG)
+        run: pnpm --filter next-blog-example build
+      - name: 샘플 앱 산출 HTML 검사
+        run: pnpm --filter next-blog-example verify
+
+  # 실제 브라우저(Chromium) 시각·동작 시험: 편집기 화면과 동작이 바뀌지 않았는지. examples/editor-demo/README.md
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 데모 타입 검사
+        run: pnpm --filter editor-demo exec tsc --noEmit
+      - name: Chromium 설치
+        run: pnpm --filter editor-demo exec playwright install --with-deps chromium-headless-shell
+      - name: 시각·동작 시험
+        run: pnpm --filter editor-demo visual
+      - name: 시각·동작 시험 (Tailwind 없이)
+        run: pnpm --filter editor-demo visual:plain
+      - name: 에디터 번들(WebView용) 빌드와 메시지 규약 시험
+        run: pnpm --filter @9um4/editor-embed build && pnpm --filter @9um4/editor-embed e2e
