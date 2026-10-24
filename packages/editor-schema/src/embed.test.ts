@@ -99,3 +99,52 @@ describe("공급자 표와 크기", () => {
     for (const bad of [99, 2001, 1.5, "abc", "", null, undefined, -5, "12345"]) expect(normalizeEmbedSize(bad), String(bad)).toBeNull();
   });
 });
+
+describe("적대적 입력 (보안)", () => {
+  it("주소 속임수는 모두 거절한다", () => {
+    for (const input of [
+      "https://youtube.com@evil.com/watch?v=dQw4w9WgXcQ",
+      "https://evil.com/?u=https://youtu.be/dQw4w9WgXcQ",
+      "https://evil.com#https://youtu.be/dQw4w9WgXcQ",
+      "https://youtu.be.evil.com/dQw4w9WgXcQ",
+      "https://xn--youtu-be-zzc.com/dQw4w9WgXcQ",
+      `https://youtu.be/dQw4w9WgXcQ"><script>alert(1)</script>`,
+      "https://youtu.be/dQw4w9WgXcQ%22%3E",
+      "https://youtu.be/dQw4w9WgXc\nQ",
+      "https://x.com/jack/status/20\"onload=\"1",
+      "https://www.instagram.com/p/abc_def/../../evil",
+      "https://soundcloud.com/a/b c",
+      "//youtu.be/dQw4w9WgXcQ",
+      "youtu.be/dQw4w9WgXcQ",
+    ]) {
+      const target = detectEmbed(input);
+      // 거절하거나, 받더라도 정규화한 주소에 적대적인 글자가 남지 않아야 한다.
+      if (target !== null) expect(target.url, input).toMatch(/^https:\/\/[A-Za-z0-9./_?=&%:-]+$/);
+    }
+    expect(detectEmbed("https://youtube.com@evil.com/watch?v=dQw4w9WgXcQ")).toBeNull();
+    expect(detectEmbed("https://evil.com/?u=https://youtu.be/dQw4w9WgXcQ")).toBeNull();
+    expect(detectEmbed("https://youtu.be.evil.com/dQw4w9WgXcQ")).toBeNull();
+    expect(detectEmbed(`https://youtu.be/dQw4w9WgXcQ"><script>`)).toBeNull();
+  });
+
+  it("무작위 입력 3만 개: 받아들이면 iframe 주소는 허용한 출처이고 따옴표·공백·꺾쇠가 없다", () => {
+    let seed = 7;
+    const next = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    const pieces = ["https://", "http://", "youtu.be/", "www.youtube.com/watch?v=", "x.com/", "twitter.com/", "/status/", "instagram.com/p/", "pinterest.com/pin/", "soundcloud.com/", "dQw4w9WgXcQ", "abc", "20", "\"", "'", "<", ">", " ", "\n", "%22", "@", ":", "#", "?", "&", "../", "evil.com/", "‮", "у", "..", "//"];
+    const allowed = [/^https:\/\/www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]{11}$/, /^https:\/\/platform\.twitter\.com\/embed\/Tweet\.html\?id=\d+$/, /^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/embed\/captioned\/$/, /^https:\/\/assets\.pinterest\.com\/ext\/embed\.html\?id=\d+$/, /^https:\/\/w\.soundcloud\.com\/player\/\?url=[A-Za-z0-9%._~-]+$/];
+    let accepted = 0;
+    for (let i = 0; i < 30000; i++) {
+      const input = Array.from({ length: 1 + Math.floor(next() * 8) }, () => pieces[Math.floor(next() * pieces.length)]).join("");
+      const target = detectEmbed(input);
+      if (target === null) continue;
+      accepted++;
+      const src = embedSource(target);
+      expect(src, input).not.toBeNull();
+      expect(allowed.some((re) => re.test(src!)), `${input} → ${src}`).toBe(true);
+    }
+    expect(accepted).toBeGreaterThan(0);
+  });
+});

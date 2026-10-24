@@ -29,9 +29,12 @@ import { renderMarkdownToHtml, renderDocToHtml } from "@gogum4/editor-render/htm
 import { markdownToDoc, docToMarkdown, parseFrontmatter, type ImportContext } from "@gogum4/editor-markdown";
 import { blockIdOf, blockIdFromForeign } from "@gogum4/editor-schema/blockId";
 import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
+import { calloutMeta, type CalloutIcons } from "@gogum4/editor-schema/callout";
+import { detectEmbed, embedSource, type EmbedTarget } from "@gogum4/editor-schema/embed";
+import { indentPrefix, normalizeIndent } from "@gogum4/editor-schema/indent";
 import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 import * as Y from "yjs";
-import { createCoreExtensions, koStrings, TABLE_ACTIONS, type CoreExtensionsOptions, type EditorStrings } from "@gogum4/editor-core";
+import { createCoreExtensions, koStrings, memoryPorts, TABLE_ACTIONS, type CoreExtensionsOptions, type EditorPorts, type EditorStrings } from "@gogum4/editor-core";
 import { newEditor } from "@gogum4/editor-core/testing";
 import { createReactExtensions, EditorPortsProvider, TableToolbar, useEditorStrings } from "@gogum4/editor-react";
 
@@ -63,10 +66,20 @@ export function editor() {
   const extensions = createReactExtensions(new Y.Doc(), options);
   const plain = createCoreExtensions(null);
   const headless = newEditor(undefined, plain);
-  return { extensions, strings, headless, tableActions: TABLE_ACTIONS.map((a) => a.key), provider: EditorPortsProvider, strings2: useEditorStrings, toolbar: <TableToolbar editor={null} /> };
+  // 0.2: 임베드·들여쓰기 옵션, 콜아웃 아이콘 표, 소비자 입력 접점(parseEmbedInput)이 타입으로 풀린다.
+  const icons: CalloutIcons = { rocket: "🚀" };
+  const ports: EditorPorts = { ...memoryPorts(), calloutIcons: icons, parseEmbedInput: (input: string) => (input.startsWith("post:") ? { kind: "post", id: input.slice(5) } : null) };
+  const rich = createReactExtensions(new Y.Doc(), { ports, embed: true, indent: true, reference: true });
+  const target: EmbedTarget | null = detectEmbed("https://youtu.be/dQw4w9WgXcQ");
+  const src: string | null = target === null ? null : embedSource(target);
+  const meta: { label: string; icon: string } = calloutMeta("rocket", icons);
+  const level: number | null = normalizeIndent("3");
+  return { rich, src, meta, level, prefix: indentPrefix(2), extensions, strings, headless, tableActions: TABLE_ACTIONS.map((a) => a.key), provider: EditorPortsProvider, strings2: useEditorStrings, toolbar: <TableToolbar editor={null} /> };
 }
 // @ts-expect-error — core에 없는 옵션은 오류여야 한다.
 export const badCore: CoreExtensionsOptions = { noSuchOption: true };
+// @ts-expect-error — 지원하지 않는 블로그 방언은 타입에서 사라졌다.
+export const badDialect: ImportContext = { resolvePage: () => null, resolveImage: () => null, dialect: "blog" };
 `,
   );
   writeFileSync(
