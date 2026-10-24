@@ -1,3 +1,5 @@
+> **이 문서는 분리 전 노트 앱 저장소(`9um4-utils/mine`)에서 왔다.** 본문의 `src/`·`src-tauri/`·`server/`·`protocol/` 경로와 `CLAUDE.md` 언급은 그 저장소의 것이고, 이 저장소에는 `packages/`·`examples/`·`scripts/`가 있다. (`@9um4-utils`로 적힌 예전 scope는 `@9um4`다.)
+
 # 에디터 패키지 배포와 버전 규칙 (P8)
 
 패키지 5개(`@9um4/editor-schema·markdown·render·core·react`)를 **공개 npm(scope `@9um4`, MIT)**에 올리고 Changesets로 버전을 관리한다. 결정 배경은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §7·P8. 앱·서버·데모·`editor-embed`(앱 번들)는 버전 대상이 아니다(`.changeset/config.json`의 `ignore`).

@@ -1,3 +1,5 @@
+> **이 문서는 분리 전 노트 앱 저장소(`9um4-utils/mine`)에서 왔다.** 본문의 `src/`·`src-tauri/`·`server/`·`protocol/` 경로와 `CLAUDE.md` 언급은 그 저장소의 것이고, 이 저장소에는 `packages/`·`examples/`·`scripts/`가 있다. (`@9um4-utils`로 적힌 예전 scope는 `@9um4`다.)
+
 # 에디터 임베드 번들과 호스트 메시지 규약 (P6b)
 
 React 에디터를 **WebView·iframe 안에서 돌리고 호스트 앱(Flutter 등)과 JSON 메시지로 대화**하게 하는 번들이다. 캘린더(LunarTask, Flutter)의 일정·할 일 `description`(Markdown 문자열) 편집기가 쓴다. 계획과 결정은 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md)의 "P6b 상세 계획".

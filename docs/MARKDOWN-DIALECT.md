@@ -1,3 +1,5 @@
+> **이 문서는 분리 전 노트 앱 저장소(`9um4-utils/mine`)에서 왔다.** 본문의 `src/`·`src-tauri/`·`server/`·`protocol/` 경로와 `CLAUDE.md` 언급은 그 저장소의 것이고, 이 저장소에는 `packages/`·`examples/`·`scripts/`가 있다. (`@9um4-utils`로 적힌 예전 scope는 `@9um4`다.)
+
 # Markdown 방언 명세 (0.1, 초안)
 
 `@9um4/editor-markdown`이 쓰고 읽는 Markdown의 규칙이다. 에디터 패키지 설계는 [EDITOR-PACKAGE.md](EDITOR-PACKAGE.md) §6과 P3.

@@ -1,3 +1,5 @@
+> **이 문서는 분리 전 노트 앱 저장소(`9um4-utils/mine`)에서 왔다.** 본문의 `src/`·`src-tauri/`·`server/`·`protocol/` 경로와 `CLAUDE.md` 언급은 그 저장소의 것이고, 이 저장소에는 `packages/`·`examples/`·`scripts/`가 있다. (`@9um4-utils`로 적힌 예전 scope는 `@9um4`다.)
+
 # 에디터 패키지 분리 설계 (초안)
 
 이 앱의 에디터(`src/features/editor/`)를 여러 앱이 쓰는 패키지로 빼는 계획. 이 문서는 읽기 전용 조사(2026-10-22)와 결정을 모은 것이다. **P1·P2·P4는 끝났고 P3는 샘플 검증(3-6)만 남았다**(§8): `packages/editor-schema`·`editor-core`·`editor-markdown`·`editor-render`가 있고 앱과 Next.js 샘플이 그것을 쓴다.
