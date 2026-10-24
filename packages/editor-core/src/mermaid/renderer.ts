@@ -30,9 +30,24 @@ function loadMermaid(): Promise<MermaidApi> {
   return loading;
 }
 
-/** 한가한 때 mermaid를 미리 불러온다(처음 그림을 그릴 때의 기다림을 줄인다). 실패해도 나중에 그릴 때 다시 시도한다. */
+/**
+ * 한가한 때 mermaid를 미리 불러온다(처음 그림을 그릴 때의 기다림을 줄인다). 실패해도 나중에 그릴 때 다시 시도한다.
+ * mermaid 본체만 불러서는 부족하다 — 그림 종류별 문법·배치 코드(흐름도 등)는 처음 그릴 때 따로 불러오므로, 가장 흔한 흐름도 하나를 미리 그려 그 조각들도 받아 둔다.
+ */
 export function preloadMermaid(): void {
-  void loadMermaid().catch(() => {});
+  // 다른 그리기와 겹치지 않게 같은 줄에 선다.
+  queue = queue
+    .then(async () => {
+      const mermaid = await loadMermaid();
+      const id = `mermaid-warmup-${++counter}`;
+      try {
+        await mermaid.render(id, "graph TD\nA-->B");
+      } finally {
+        document.getElementById(id)?.remove();
+        document.getElementById(`d${id}`)?.remove();
+      }
+    })
+    .catch(() => {});
 }
 
 /** 언어 이름이 mermaid인지 (대소문자·공백 무시). */
