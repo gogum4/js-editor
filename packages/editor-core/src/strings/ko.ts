@@ -202,6 +202,7 @@ export const koStrings: EditorStrings = {
     apply: "적용",
     remove: "해제",
   },
+  fixed: { toolbar: "서식 막대", undo: "실행 취소", redo: "다시 실행", blockType: "블록 종류", insert: "삽입", insertMenu: "삽입할 블록" },
   table: {
     toolbar: "표 편집",
     actions: {

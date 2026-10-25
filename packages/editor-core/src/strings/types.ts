@@ -139,5 +139,7 @@ export interface EditorStrings {
     apply: string;
     remove: string;
   };
+  /** 에디터 위에 늘 보이는 서식 막대(`FixedToolbar`). 단추 이름은 `selection.marks`·`slash.items`의 글을 다시 쓴다. */
+  fixed: { toolbar: string; undo: string; redo: string; blockType: string; insert: string; insertMenu: string };
   toggle: { expandLabel: string; collapseLabel: string; expandTitle: string; collapseTitle: string };
 }
