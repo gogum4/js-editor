@@ -42,6 +42,11 @@ export interface RenderOptions {
   imageUrl?: (image: ImageSource) => string | null;
   /** 콜아웃 종류별 아이콘 표(이모지나 짧은 글). 아이콘을 모르는 종류(`> [!rocket]`)의 아이콘을 정하거나 기본 종류의 아이콘을 바꾼다. */
   calloutIcons?: CalloutIcons;
+  /**
+   * Bluesky 핸들 → DID 표(소문자 핸들). 핸들 주소의 Bluesky 임베드는 DID를 알아야 그릴 수 있어서(`embed.bsky.app`이 DID만 받는다), 서버에서 그리는 소비자가 미리 알아내 넘긴다.
+   * 모르는 핸들의 임베드는 원본 링크만 그린다.
+   */
+  blueskyDids?: ReadonlyMap<string, string> | Readonly<Record<string, string>>;
   /** 페이지 링크(`[[…]]`)를 어디로 이을지. 없거나 null이면 링크 없이 글자만 보인다. */
   pageLink?: (pageId: string) => PageReference | null;
   /** 블록 id를 앵커(`id="^id"`)로 남길지. 블록 링크(`#^id`)가 같은 글 안에서 동작하게 하려면 켠다. 기본 꺼짐. */

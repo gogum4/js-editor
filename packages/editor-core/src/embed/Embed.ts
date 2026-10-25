@@ -1,7 +1,7 @@
 import { type Editor, mergeAttributes, Node } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 
-import { detectEmbed, EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, isEmbedProvider, normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
+import { blueskyProfile, detectEmbed, EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, isEmbedProvider, normalizeEmbedSize, normalizeEmbedTarget, withBlueskyDid } from "@gogum4/editor-schema/embed";
 import { portsOf, stringsOf } from "../ports/editorPorts";
 import type { NodeViewOptions } from "../ports/ui";
 
@@ -119,6 +119,24 @@ function embedDomView({ node: initial, editor, getPos }: { node: PmNode; editor:
   dom.contentEditable = "false";
 
   let editing = false;
+  // 핸들 주소의 Bluesky 임베드는 DID로 바꿔야 그려진다 — 같은 주소는 한 번만 알아본다.
+  let resolving: string | null = null;
+
+  const resolveBluesky = (target: { provider: "bluesky"; url: string }) => {
+    const resolver = portsOf(editor).resolveBlueskyHandle;
+    const info = blueskyProfile(target);
+    if (resolver === undefined || info === null || resolving === target.url) return;
+    resolving = target.url;
+    void resolver(info.profile)
+      .then((did) => {
+        const pos = getPos();
+        const current = pos === undefined ? null : editor.state.doc.nodeAt(pos);
+        if (did === null || pos === undefined || current === null || current.type.name !== "embed" || current.attrs.url !== target.url) return;
+        const next = withBlueskyDid(target, did);
+        if (next !== null) editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, { ...current.attrs, url: next.url }));
+      })
+      .catch(() => {});
+  };
 
   const render = () => {
     dom.replaceChildren();
@@ -132,6 +150,7 @@ function embedDomView({ node: initial, editor, getPos }: { node: PmNode; editor:
     }
     dom.setAttribute("data-state", "ready");
     const src = embedSource(target);
+    if (src === null && target.provider === "bluesky") resolveBluesky({ provider: "bluesky", url: target.url });
     const defaults = EMBED_DEFAULT_SIZE[target.provider];
     const width = normalizeEmbedSize(node.attrs.width) ?? defaults.width;
     const height = normalizeEmbedSize(node.attrs.height);
@@ -139,6 +158,8 @@ function embedDomView({ node: initial, editor, getPos }: { node: PmNode; editor:
     frame.className = "md-embed-frame";
     frame.style.width = `${width}px`;
     frame.style.maxWidth = "100%";
+    // 아직 그릴 수 없는 임베드(DID를 알아내는 중인 Bluesky)는 틀 없이 원본 링크만 보인다.
+    if (src === null) frame.style.display = "none";
     if (height === null && defaults.aspect) frame.style.aspectRatio = `${defaults.width} / ${defaults.height}`;
     else frame.style.height = `${height ?? defaults.height}px`;
     if (src !== null) {

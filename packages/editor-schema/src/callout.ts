@@ -13,6 +13,23 @@ export const DEFAULT_CALLOUT_TYPE = "note";
 /** 종류 이름: 소문자로 시작하는 소문자·숫자·`_`·`-`, 32자까지. */
 const NAME = /^[a-z][a-z0-9_-]{0,31}$/;
 
+/** 제목 최대 길이(글자 수). */
+export const CALLOUT_TITLE_MAX = 200;
+
+/** 접기 표식: `+`는 접을 수 있고 펼친 채로 시작, `-`는 접힌 채로 시작(Obsidian의 `> [!note]-`). 없으면(null) 접지 않는다. */
+export type CalloutFold = "+" | "-";
+
+/** 저장된 제목을 한 줄 글로 정리한다(줄바꿈은 공백, 앞뒤 공백 제거, `CALLOUT_TITLE_MAX`자까지). 비었거나 글자가 아니면 null — 이때는 종류의 기본 제목을 쓴다. */
+export function normalizeCalloutTitle(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.replace(/\s*[\r\n]+\s*/g, " ").trim().slice(0, CALLOUT_TITLE_MAX).trim();
+  return text === "" ? null : text;
+}
+
+export function normalizeCalloutFold(value: unknown): CalloutFold | null {
+  return value === "+" || value === "-" ? value : null;
+}
+
 export interface CalloutMeta {
   label: string;
   icon: string;

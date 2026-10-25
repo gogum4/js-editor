@@ -15,7 +15,21 @@ export interface EditorStrings {
     items: Readonly<Record<string, { label: string; description: string }>>;
   };
   completion: { label: string; kinds: Readonly<Record<WordKind, string>> };
-  callout: { changeLabel: (current: string) => string; changeTitle: string; types: Readonly<Record<CalloutType, string>> };
+  callout: {
+    changeLabel: (current: string) => string;
+    changeTitle: string;
+    types: Readonly<Record<CalloutType, string>>;
+    /** 제목 입력칸의 안내 글. */
+    titlePlaceholder: string;
+    /** 메뉴 항목: 제목 넣기/빼기, 접기 설정(없음·펼친 채로·접힌 채로). */
+    addTitle: string;
+    removeTitle: string;
+    foldNone: string;
+    foldOpen: string;
+    foldClosed: string;
+    /** 접는 단추의 이름. */
+    toggleFold: string;
+  };
   codeBlock: { show: string; hide: string; copy: string; copied: string; copyFailed: string };
   /** 에디터가 모르는 문법을 원문 그대로 담는 상자(`raw`·`rawInline` 노드, 기본 꺼짐). */
   raw: { blockLabel: string; sourceLabel: string; inlineTitle: string };

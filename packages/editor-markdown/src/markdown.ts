@@ -13,7 +13,7 @@ import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 
 import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-schema/reference";
 import { formatReference } from "./referenceDirective.ts";
-import { isBuiltinCalloutType, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { isBuiltinCalloutType, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
 import { indentPrefix } from "@gogum4/editor-schema/indent";
 import type { MarkdownDialect } from "./dialect.ts";
@@ -384,7 +384,9 @@ class Renderer {
         const type = normalizeCalloutType(node.attrs?.type);
         const label = isBuiltinCalloutType(type) ? type.toUpperCase() : type;
         const body = this.blocks(node.content);
-        return prefixLines(body === "" ? `[!${label}]` : `[!${label}]\n${body}`, "> ");
+        const title = normalizeCalloutTitle(node.attrs?.title);
+        const head = `[!${label}]${normalizeCalloutFold(node.attrs?.fold) ?? ""}${title !== null ? ` ${title}` : ""}`;
+        return prefixLines(body === "" ? head : `${head}\n${body}`, "> ");
       }
       case "codeBlock":
         return this.codeBlock(node);

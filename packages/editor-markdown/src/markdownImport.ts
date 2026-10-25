@@ -14,7 +14,7 @@ import { Lexer, type Token, type Tokens } from "marked";
 
 import { blockIdFromForeign, isBlockIdType } from "@gogum4/editor-schema/blockId";
 import type { ReferenceTarget } from "@gogum4/editor-schema/reference";
-import { calloutTypeFromName, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { calloutTypeFromName, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { detectEmbed, normalizeEmbedSize } from "@gogum4/editor-schema/embed";
 import { indentFromLeadingSpaces } from "@gogum4/editor-schema/indent";
 import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
@@ -687,18 +687,16 @@ function calloutType(name: string): string {
 
 function blockquoteBlocks(token: Tokens.Blockquote, state: State): PmNode[] {
   const first = token.tokens[0];
-  const header = first && first.type === "paragraph" && state.profile.callouts ? /^\[!([A-Za-z][\w-]*)\][+-]?[ \t]*([^\n]*)(?:\n([\s\S]*))?$/.exec((first as Tokens.Paragraph).text) : null;
+  const header = first && first.type === "paragraph" && state.profile.callouts ? /^\[!([A-Za-z][\w-]*)\]([+-])?[ \t]*([^\n]*)(?:\n([\s\S]*))?$/.exec((first as Tokens.Paragraph).text) : null;
   if (!header) {
     const content = convertBlocks(token.tokens, state);
     return [{ type: "blockquote", content: content.length > 0 ? content : [{ type: "paragraph" }] }];
   }
   const content: PmNode[] = [];
-  const title = (header[2] ?? "").trim();
-  // 콜아웃의 제목 줄은 굵은 글씨 문단으로 둔다(기본 제목과 같은 글자면 생략한다).
-  if (title !== "" && title.toLowerCase() !== header[1]!.toLowerCase()) {
-    content.push({ type: "paragraph", content: mergeText(inlineNodes(Lexer.lexInline(title), [{ type: "bold" }], state)) });
-  }
-  const bodyText = header[3] ?? "";
+  // 표식 줄의 나머지는 제목이다(종류 이름과 같은 글자면 기본 제목이라 생략). 제목은 서식 없는 한 줄 글로 둔다.
+  const title = normalizeCalloutTitle(header[3] ?? "");
+  const customTitle = title !== null && title.toLowerCase() !== header[1]!.toLowerCase() ? title : null;
+  const bodyText = header[4] ?? "";
   if (bodyText.trim() !== "") {
     state.foundId = null;
     const bodyBlocks = paragraphsAround(inlineNodes(Lexer.lexInline(bodyText), [], state));
@@ -707,7 +705,7 @@ function blockquoteBlocks(token: Tokens.Blockquote, state: State): PmNode[] {
     content.push(...bodyBlocks);
   }
   content.push(...convertBlocks(token.tokens.slice(1), state));
-  return [{ type: "callout", attrs: { type: calloutType(header[1]!) }, content: content.length > 0 ? content : [{ type: "paragraph" }] }];
+  return [{ type: "callout", attrs: { type: calloutType(header[1]!), ...(customTitle !== null ? { title: customTitle } : {}), ...(header[2] ? { fold: header[2] } : {}) }, content: content.length > 0 ? content : [{ type: "paragraph" }] }];
 }
 
 /** 목록 항목 하나의 안쪽(`paragraph block*`)을 만든다. 글로 시작하지 않으면 빈 문단을 앞에 둔다. */

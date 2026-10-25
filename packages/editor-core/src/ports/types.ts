@@ -83,4 +83,9 @@ export interface EditorPorts {
    * (예: 블로그의 `https://내사이트/글/슬러그` → `{ kind: "post", id: "슬러그" }`). 참조 노드(`reference: true`)가 켜져 있어야 한다.
    */
   parseEmbedInput?: (input: string) => ReferenceTarget | null;
+  /**
+   * Bluesky 핸들(`alice.bsky.social`)을 DID(`did:plc:…`)로 알아낸다(`com.atproto.identity.resolveHandle`). Bluesky의 임베드 주소가 DID만 받기 때문에, 핸들 주소의 임베드를 끼우거나 열면
+   * 이 함수로 DID를 알아내 주소를 DID 모양으로 바꾼다. 없거나 null을 돌려주면 핸들 주소의 임베드는 원본 링크만 보인다. 네트워크 요청이라 소비자가 정한다(코어는 요청하지 않는다).
+   */
+  resolveBlueskyHandle?: (handle: string) => Promise<string | null>;
 }

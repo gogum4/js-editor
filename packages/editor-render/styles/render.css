@@ -175,6 +175,17 @@
 .md-doc .callout-body > :last-child {
   margin-bottom: 0;
 }
+.md-doc .callout-title {
+  margin: 0 0 0.35em;
+  font-weight: 600;
+}
+.md-doc summary.callout-title {
+  margin: 0;
+  cursor: pointer;
+}
+.md-doc details.callout-body[open] > summary.callout-title {
+  margin-bottom: 0.35em;
+}
 .md-doc .callout-note {
   background: var(--md-note-bg);
   border-color: var(--md-note-border);

@@ -24,7 +24,9 @@
       "inline": false,
       "atom": false,
       "attrs": {
+        "fold": "(필수)",
         "id": "(필수)",
+        "title": "(필수)",
         "type": "(필수)"
       }
     },

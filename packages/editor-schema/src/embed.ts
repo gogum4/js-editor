@@ -6,7 +6,7 @@
 
 export const EMBED_NODE = "embed";
 
-export const EMBED_PROVIDERS = ["youtube", "x", "instagram", "pinterest", "soundcloud"] as const;
+export const EMBED_PROVIDERS = ["youtube", "x", "instagram", "pinterest", "soundcloud", "bluesky"] as const;
 export type EmbedProvider = (typeof EMBED_PROVIDERS)[number];
 
 export interface EmbedTarget {
@@ -79,12 +79,26 @@ function soundcloud(p: NonNullable<ReturnType<typeof parse>>): string | null {
   return SC_NAME.test(user) && SC_NAME.test(track) ? `https://soundcloud.com/${user}/${track}` : null;
 }
 
+const BSKY_HANDLE = /^(?=.{1,253}$)([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+const BSKY_DID = /^did:(plc|web):[A-Za-z0-9._:%-]{1,200}$/;
+const BSKY_RKEY = /^[A-Za-z0-9._~-]{1,64}$/;
+
+function bluesky(p: NonNullable<ReturnType<typeof parse>>): string | null {
+  if (p.host !== "bsky.app") return null;
+  const [prefix, profile, post, rkey] = p.parts;
+  if (prefix !== "profile" || profile === undefined || post !== "post" || rkey === undefined || !BSKY_RKEY.test(rkey)) return null;
+  // 핸들은 대소문자를 가리지 않으므로 소문자로 정규화한다(DID는 그대로).
+  if (BSKY_DID.test(profile)) return `https://bsky.app/profile/${profile}/post/${rkey}`;
+  return BSKY_HANDLE.test(profile) ? `https://bsky.app/profile/${profile.toLowerCase()}/post/${rkey}` : null;
+}
+
 const DETECTORS: ReadonlyArray<readonly [EmbedProvider, (p: NonNullable<ReturnType<typeof parse>>) => string | null]> = [
   ["youtube", youtube],
   ["x", x],
   ["instagram", instagram],
   ["pinterest", pinterest],
   ["soundcloud", soundcloud],
+  ["bluesky", bluesky],
 ];
 
 /** 주소가 지원하는 공급자의 것이면 공급자와 정규화한 주소를, 아니면 null. 공급자는 주소만 보고 알아낸다. */
@@ -123,7 +137,29 @@ export function embedSource(target: EmbedTarget): string | null {
       return `https://assets.pinterest.com/ext/embed.html?id=${parsed.parts[1]}`;
     case "soundcloud":
       return `https://w.soundcloud.com/player/?url=${encodeURIComponent(normalized.url)}`;
+    case "bluesky": {
+      // embed.bsky.app은 DID만 받는다. 핸들 주소는 소비자가 DID로 바꾼 뒤(`withBlueskyDid`) 다시 부른다 — 그 전에는 null(원본 링크만 보인다).
+      const profile = blueskyProfile(normalized);
+      return profile !== null && profile.isDid ? `https://embed.bsky.app/embed/${profile.profile}/app.bsky.feed.post/${profile.rkey}?id=${profile.rkey}` : null;
+    }
   }
+}
+
+/** Bluesky 임베드의 프로필(핸들 또는 DID)과 글 키. Bluesky가 아니면 null. */
+export function blueskyProfile(target: EmbedTarget): { profile: string; rkey: string; isDid: boolean } | null {
+  if (target.provider !== "bluesky") return null;
+  const parsed = parse(target.url);
+  if (parsed === null) return null;
+  const [, profile, , rkey] = parsed.parts;
+  if (profile === undefined || rkey === undefined) return null;
+  return { profile, rkey, isDid: BSKY_DID.test(profile) };
+}
+
+/** 핸들 주소의 Bluesky 임베드를 DID 주소로 바꾼다(DID는 소비자가 `com.atproto.identity.resolveHandle` 등으로 알아낸다). DID가 올바르지 않거나 Bluesky가 아니면 null. */
+export function withBlueskyDid(target: EmbedTarget, did: string): EmbedTarget | null {
+  const info = blueskyProfile(target);
+  if (info === null || !BSKY_DID.test(did)) return null;
+  return detectEmbed(`https://bsky.app/profile/${did}/post/${info.rkey}`);
 }
 
 /** 공급자별 기본 크기(px). 너비는 상한이라 좁은 화면에서는 줄어든다. `aspect`가 있으면 높이는 너비에 비례한다. */
@@ -133,6 +169,7 @@ export const EMBED_DEFAULT_SIZE: Readonly<Record<EmbedProvider, { width: number;
   instagram: { width: 540, height: 640, aspect: false },
   pinterest: { width: 345, height: 500, aspect: false },
   soundcloud: { width: 640, height: 166, aspect: false },
+  bluesky: { width: 550, height: 350, aspect: false },
 };
 
 /** iframe `allow` 속성: 공급자가 쓰는 기능만 연다. */
@@ -142,6 +179,7 @@ export const EMBED_IFRAME_ALLOW: Readonly<Record<EmbedProvider, string>> = {
   instagram: "",
   pinterest: "",
   soundcloud: "autoplay",
+  bluesky: "",
 };
 
 const MIN_SIZE = 100;
