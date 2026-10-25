@@ -14,7 +14,7 @@ export { placeMenu } from "./menuPlace";
 
 // 슬래시 메뉴
 export { CORE_SLASH_ITEMS, filterSlashItems, localizeSlashItems, type SlashItem } from "./lib/slashItems";
-export type { SlashHandlers } from "./slash/runSlashCommand";
+export { runSlashCommand, type SlashHandlers } from "./slash/runSlashCommand";
 
 // 포트(앱이 에디터에 연결해 주는 것)
 export { EditorPortsExtension, portsOf, stringsOf, uiOf } from "./ports/editorPorts";

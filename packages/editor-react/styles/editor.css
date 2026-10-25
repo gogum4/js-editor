@@ -1295,3 +1295,82 @@
   font: inherit;
   color: inherit;
 }
+
+/* 에디터 위에 늘 보이는 서식 막대(FixedToolbar) */
+.fixed-toolbar {
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  background: var(--md-c-fff, #fff);
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+.fixed-toolbar button,
+.fixed-toolbar select {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--md-c-404040, #404040);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.fixed-toolbar select {
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  background: var(--md-c-fff, #fff);
+}
+.fixed-toolbar button:hover:not(:disabled),
+.fixed-toolbar select:hover:not(:disabled) {
+  background: var(--md-c-f5f5f5, #f5f5f5);
+}
+.fixed-toolbar button[aria-pressed="true"] {
+  background: var(--md-c-dbeafe, #dbeafe);
+  color: var(--md-c-1d4ed8, #1d4ed8);
+}
+.fixed-toolbar button:disabled,
+.fixed-toolbar select:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.fixed-toolbar-sep {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--md-c-e5e5e5, #e5e5e5);
+}
+.fixed-toolbar-insert {
+  position: relative;
+  flex: none;
+}
+.fixed-toolbar-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 11rem;
+  max-height: min(24rem, 60vh);
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  border-radius: 6px;
+  background: var(--md-c-fff, #fff);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+}
+.fixed-toolbar-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+}

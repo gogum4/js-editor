@@ -235,6 +235,7 @@ export const enStrings: EditorStrings = {
     apply: "Apply",
     remove: "Remove",
   },
+  fixed: { toolbar: "Formatting bar", undo: "Undo", redo: "Redo", blockType: "Block type", insert: "Insert", insertMenu: "Block to insert" },
   table: {
     toolbar: "Edit table",
     actions: {
