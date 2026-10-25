@@ -39,7 +39,7 @@ export const TASK_STATUSES = { "/": "progress", "-": "cancelled", ">": "deferred
 export type TaskStatus = keyof typeof TASK_STATUSES;
 
 export function normalizeTaskStatus(value: unknown): TaskStatus | null {
-  return typeof value === "string" && Object.hasOwn(TASK_STATUSES, value) ? (value as TaskStatus) : null;
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(TASK_STATUSES, value) ? (value as TaskStatus) : null;
 }
 
 /** 상태를 돌려 가며 바꿀 순서(없음 → … → 없음). */
