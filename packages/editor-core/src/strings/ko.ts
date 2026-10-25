@@ -22,6 +22,7 @@ export const koStrings: EditorStrings = {
   codeBlock: { show: "코드 보기", hide: "코드 접기", copy: "복사", copied: "복사됨", copyFailed: "복사 실패", metaPlaceholder: "제목 · 강조 줄  예) title=\"a.ts\" {2,4}", metaLabel: "코드 블록 정보" },
   extras: {
     toc: { title: "목차", empty: "제목이 없어요", jump: "이 제목으로 이동" },
+    bibliography: { title: "참고문헌", empty: "인용한 문헌이 없어요" },
     comment: { placeholder: "주석 (글에는 안 보여요)", label: "주석", edit: "주석 고치기" },
     citation: { placeholder: "@citekey (여러 개는 ; 로 구분)", invalid: "@로 시작하는 인용 키가 필요해요", open: "원본 열기", edit: "인용 고치기" },
     definition: { termPlaceholder: "용어", detailPlaceholder: "설명" },
@@ -31,6 +32,7 @@ export const koStrings: EditorStrings = {
       definitionList: { label: "정의 목록", description: "용어와 설명 (용어 다음 줄 `: 설명`)" },
       comment: { label: "주석", description: "글에는 안 보이는 메모 (%%…%%)" },
       citation: { label: "인용", description: "참고 문헌 인용 ([@citekey])" },
+      bibliography: { label: "참고문헌", description: "인용한 문헌의 목록 ([bibliography])" },
       highlight: { label: "하이라이트", description: "형광펜 (Ctrl+Shift+H, ==글==)" },
       superscript: { label: "위첨자", description: "x² 처럼 올려 쓰기 (Ctrl+., ^글^)" },
       subscript: { label: "아래첨자", description: "H₂O 처럼 내려 쓰기 (Ctrl+,)" },

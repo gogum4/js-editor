@@ -17,8 +17,10 @@ export interface ExtraSyntax {
    * (기본은 Obsidian과 같게 글자가 하나라도 있으면 태그라 `#bad`도 `#fff`도 태그다 — 진짜 태그 `#bad`가 막히는 부작용이 있다).
    */
   tags?: boolean | { skipHexColors?: boolean };
-  /** 인용 `[@citekey]`(Pandoc/Zotero). */
-  citations?: boolean;
+  /**
+   * 인용 `[@citekey]`(Pandoc/Zotero). 객체로 주면 더 켠다: `narrative` — 서술형 인용 `@citekey`(글 속에서 "Smith (2020)"로 읽히는 것), `bibliography` — 참고문헌 목록 블록 `[bibliography]`.
+   */
+  citations?: boolean | { narrative?: boolean; bibliography?: boolean };
   /** 정의 목록: `용어` 다음 줄 `: 설명`. */
   definitions?: boolean;
   /** 목차 `[toc]`: 문서의 제목들로 그려지는 블록. */
@@ -56,6 +58,14 @@ export const DEFINITION_LIST_NODE = "definitionList";
 export const DEFINITION_TERM_NODE = "definitionTerm";
 export const DEFINITION_DETAIL_NODE = "definitionDetail";
 export const TOC_NODE = "toc";
+export const BIBLIOGRAPHY_NODE = "bibliography";
+
+/** 인용 옵션을 펼친다. `citations: true`는 괄호형만이다. */
+export function citationFlags(extras: ExtraSyntax | undefined): { on: boolean; narrative: boolean; bibliography: boolean } {
+  const c = extras?.citations;
+  if (!c) return { on: false, narrative: false, bibliography: false };
+  return { on: true, narrative: typeof c === "object" && c.narrative === true, bibliography: typeof c === "object" && c.bibliography === true };
+}
 
 // ───────────────────────── 색 ─────────────────────────
 
@@ -170,6 +180,14 @@ export function citationKeys(source: string): string[] {
     if (key !== "" && !keys.includes(key)) keys.push(key);
   }
   return keys;
+}
+
+/** 서술형 인용 `@키`를 글 속에서 찾는 패턴의 소스: 줄 처음·공백·여는 괄호 뒤의 `@키`(이메일 `a@b.com`은 앞 글자가 있어 제외). 끝의 구두점은 키가 아니라서 부르는 쪽이 `trimCiteKey`로 뗀다. */
+export const NARRATIVE_CITATION_IN_TEXT_SOURCE = `(?<=^|[\\s(])@(${CITE_KEY_SOURCE})`;
+
+/** 키 끝의 구두점(`.`·`:` 등)을 뗀다. */
+export function trimCiteKey(key: string): string {
+  return key.replace(/[.:#$%&+?<>~/-]+$/, "");
 }
 
 /** Markdown에서 `[@키]` 인용을 찾는 패턴의 소스: 대괄호 안에 `@키`가 있고, 뒤에 `(`·`[`·`:`가 이어지지 않는다(링크·각주·참조 정의와 구별). */

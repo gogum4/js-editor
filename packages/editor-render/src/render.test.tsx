@@ -202,3 +202,34 @@ describe("코드 블록 메타", () => {
     expect(html).not.toContain("code-lines");
   });
 });
+
+describe("서술형 인용과 참고문헌", () => {
+  const doc: PmNode = {
+    type: "doc",
+    content: [
+      { type: "paragraph", content: [{ type: "citation", attrs: { source: "@smith2020", narrative: true } }, { type: "text", text: " 와 " }, { type: "citation", attrs: { source: "@lee19; @smith2020" } }] },
+      { type: "bibliography" },
+    ],
+  };
+  const options: RenderOptions = {
+    citationLabel: (keys, _source, narrative) => keys.map((k) => (narrative ? `${k}(N)` : `${k}(P)`)).join("; "),
+    bibliographyEntry: (key) => (key === "smith2020" ? "Smith. (2020). A title." : null),
+  };
+
+  it("서술형은 괄호 없이, 괄호형은 라벨 그대로 보인다", () => {
+    const html = renderToStaticMarkup(renderDoc(doc, options));
+    expect(html).toContain(">smith2020(N)<");
+    expect(html).toContain("lee19(P); smith2020(P)");
+  });
+
+  it("참고문헌은 인용 순서대로, 모르는 키는 @키로", () => {
+    const html = renderToStaticMarkup(renderDoc(doc, options));
+    expect(html.indexOf("Smith. (2020). A title.")).toBeGreaterThan(-1);
+    expect(html.indexOf("id=\"ref-smith2020\"")).toBeLessThan(html.indexOf("id=\"ref-lee19\""));
+    expect(html).toContain("id=\"ref-lee19\">@lee19</li>");
+  });
+
+  it("글을 줄 소비자가 없으면 참고문헌 블록은 그려지지 않는다", () => {
+    expect(renderToStaticMarkup(renderDoc(doc, {}))).not.toContain("md-bibliography");
+  });
+});

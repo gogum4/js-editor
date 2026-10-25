@@ -17,7 +17,10 @@ import type { ReferenceTarget } from "@gogum4/editor-schema/reference";
 import { calloutTypeFromName, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { detectEmbed, normalizeEmbedSize } from "@gogum4/editor-schema/embed";
 import {
+  citationFlags,
   CITATION_IN_TEXT_SOURCE,
+  NARRATIVE_CITATION_IN_TEXT_SOURCE,
+  trimCiteKey,
   colorsFromStyle,
   type ExtraSyntax,
   isSkippedTag,
@@ -136,7 +139,8 @@ type Placeholder =
   /** 추가 문법(`ImportContext.extras`): 주석 `%%글%%`(여러 줄 가능), 태그, 인용, 인라인 각주 `^[글]`, 목차 `[toc]`, 정의 목록. */
   | { kind: "comment"; text: string; raw: string }
   | { kind: "tag"; name: string; raw: string }
-  | { kind: "citation"; source: string; raw: string }
+  | { kind: "citation"; source: string; raw: string; narrative?: boolean }
+  | { kind: "bibliography"; raw: string }
   | { kind: "inlineFootnote"; text: string; raw: string }
   | { kind: "toc"; raw: string }
   | { kind: "defList"; items: Array<{ term: string; details: string[] }>; raw: string };
@@ -324,6 +328,12 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
           return source === null ? raw : put({ kind: "citation", source, raw });
         });
       }
+      if (citationFlags(extras).narrative) {
+        value = value.replace(new RegExp(NARRATIVE_CITATION_IN_TEXT_SOURCE, "gu"), (raw, key: string) => {
+          const clean = trimCiteKey(key);
+          return clean === "" ? raw : put({ kind: "citation", source: `@${clean}`, raw: `@${clean}`, narrative: true }) + key.slice(clean.length);
+        });
+      }
       if (extras.tags) {
         value = value.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (raw, name: string) => {
           const tag = normalizeTag(name);
@@ -428,6 +438,11 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
     }
     if (fence !== null) {
       out.push(line);
+      continue;
+    }
+    // 참고문헌 `[bibliography]`도 자기 문단이다.
+    if (citationFlags(extras).bibliography && /^ {0,3}\[bibliography\]\s*$/i.test(line)) {
+      out.push("", putRef({ kind: "bibliography", raw: line }), "");
       continue;
     }
     // 목차 `[toc]`는 자기 문단이다.
@@ -656,9 +671,9 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     else if (p.kind === "reference") nodes.push(textNode(p.raw, marks));
     else if (p.kind === "comment") nodes.push({ type: "comment", attrs: { text: p.text } });
     else if (p.kind === "tag") nodes.push({ type: "tag", attrs: { name: p.name } });
-    else if (p.kind === "citation") nodes.push({ type: "citation", attrs: { source: p.source } });
+    else if (p.kind === "citation") nodes.push({ type: "citation", attrs: { source: p.source, ...(p.narrative ? { narrative: true } : {}) } });
     else if (p.kind === "inlineFootnote") nodes.push({ type: "footnote", attrs: { text: p.text } });
-    else if (p.kind === "toc" || p.kind === "defList") nodes.push(textNode(p.raw, marks));
+    else if (p.kind === "toc" || p.kind === "defList" || p.kind === "bibliography") nodes.push(textNode(p.raw, marks));
     else if (p.kind === "footnote") nodes.push({ type: "footnote", attrs: { text: state.footnotes.get(p.id) ?? "" } });
     else nodes.push({ type: "mathInline", attrs: { latex: p.latex } });
   }
@@ -971,6 +986,7 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   if (placeholder?.kind === "mathBlock") return [{ type: "mathBlock", attrs: { latex: placeholder.latex } }];
   if (placeholder?.kind === "reference") return [{ type: "reference", attrs: { ...placeholder.target } }]; // props는 있을 때만 붙는다
   if (placeholder?.kind === "toc") return [{ type: "toc" }];
+  if (placeholder?.kind === "bibliography") return [{ type: "bibliography" }];
   if (placeholder?.kind === "defList") return [definitionListNode(placeholder.items, state)];
   if (placeholder?.kind === "blockId") {
     // 자기 줄에 홀로 있는 `^id`는 바로 앞 블록의 id다(코드·표·수식 같은 줄 끝에 못 붙이는 블록).

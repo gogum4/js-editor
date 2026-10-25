@@ -198,7 +198,7 @@
 .md-editor ul[data-type="taskList"] li[data-status="deferred"] input[type="checkbox"]::before { content: ">"; }
 .md-editor ul[data-type="taskList"] li[data-status="question"] input[type="checkbox"]::before { content: "?"; }
 .md-editor ul[data-type="taskList"] li[data-status="important"] input[type="checkbox"]::before { content: "!"; }
-.md-editor ul[data-type="taskList"] li[data-status="cancelled"] > div { text-decoration: line-through; color: var(--md-muted, #9ca3af); }
+.md-editor ul[data-type="taskList"] li[data-status="cancelled"] > div { text-decoration: line-through; color: var(--md-c-9ca3af, #9ca3af); }
 
 /* 콜아웃 */
 .md-editor .callout {
@@ -1154,6 +1154,31 @@
 }
 .md-editor .md-toc button:hover {
   text-decoration: underline;
+}
+.md-editor section.md-bibliography {
+  margin: 0.8em 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  border-radius: 8px;
+  background: var(--md-c-fafafa, #fafafa);
+}
+.md-editor .md-bibliography-title {
+  margin: 0 0 0.3em;
+  font-weight: 600;
+}
+.md-editor .md-bibliography-empty {
+  margin: 0;
+  color: var(--md-c-737373, #737373);
+}
+.md-editor .md-bibliography ul {
+  margin: 0;
+  padding: 0 0 0 1.4em;
+  text-indent: -1.4em;
+  list-style: none;
+}
+.md-editor .md-bibliography li {
+  margin: 0.2em 0;
+  padding-left: 1.4em;
 }
 
 /* 선택 서식 막대(SelectionToolbar): 글을 선택하면 그 위에 뜬다 */

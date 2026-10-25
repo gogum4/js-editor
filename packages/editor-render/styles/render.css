@@ -497,6 +497,23 @@
   border-radius: 8px;
   background: var(--md-subtle);
 }
+.md-doc section.md-bibliography {
+  margin: 1.5em 0;
+}
+.md-doc .md-bibliography-title {
+  margin: 0 0 0.4em;
+  font-weight: 600;
+}
+.md-doc .md-bibliography ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-doc .md-bibliography li {
+  margin: 0.35em 0;
+  padding-left: 1.6em;
+  text-indent: -1.6em;
+}
 .md-doc .md-toc-title {
   margin: 0 0 0.3em;
   font-weight: 600;

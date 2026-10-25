@@ -74,6 +74,8 @@ export function runSlashCommand(editor: Editor, range: Range, id: string, handle
     // 추가 문법(extras): 항목은 켠 것만 메뉴에 보인다.
     case "toc":
       return chain.insertToc().run();
+    case "bibliography":
+      return chain.insertBibliography().run();
     case "definitionList":
       return chain.insertDefinitionList().run();
     case "comment":

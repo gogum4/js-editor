@@ -271,3 +271,43 @@ describe("할 일 상태", () => {
     expect(docToMarkdown(doc, { pageTitle: () => null }).markdown).toBe("- [ ] 진행 중\n");
   });
 });
+
+describe("서술형 인용과 참고문헌", () => {
+  const cite = { ...ctx, extras: { citations: { narrative: true, bibliography: true } } };
+  const roundtrip = (md: string) => docToMarkdown(markdownToDoc(md, cite, "").doc, { pageTitle: () => null, extras: cite.extras }).markdown;
+
+  it("@키를 서술형 인용으로 읽고 같은 글로 내보낸다", () => {
+    const { doc } = markdownToDoc("보면 @smith2020 는 말한다. 또 (@lee19).\n", cite, "");
+    const cites = doc.content![0]!.content!.filter((n) => n.type === "citation");
+    expect(cites.map((n) => n.attrs)).toEqual([{ source: "@smith2020", narrative: true }, { source: "@lee19", narrative: true }]);
+    expect(roundtrip("보면 @smith2020 는 말한다. 또 (@lee19).\n")).toBe("보면 @smith2020 는 말한다. 또 (@lee19).\n");
+  });
+
+  it("끝의 구두점은 키가 아니다", () => {
+    const { doc } = markdownToDoc("@smith2020.\n", cite, "");
+    expect(doc.content![0]!.content!.map((n) => n.type === "citation" ? n.attrs!.source : n.text)).toEqual(["@smith2020", "."]);
+  });
+
+  it("이메일·글자 속 @는 인용이 아니고, 글자 @키는 이스케이프해 왕복한다", () => {
+    expect(JSON.stringify(markdownToDoc("a@b.com\n", cite, "").doc)).not.toContain("citation");
+    const doc = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "메일 @someone 에게" }] }] };
+    const md = docToMarkdown(doc, { pageTitle: () => null, extras: cite.extras }).markdown;
+    expect(md).toBe("메일 \\@someone 에게\n");
+    expect(JSON.stringify(markdownToDoc(md, cite, "").doc)).not.toContain("citation");
+  });
+
+  it("괄호형 [@키]는 그대로 괄호형이다", () => {
+    expect(markdownToDoc("[@a1; @b2]\n", cite, "").doc.content![0]!.content![0]!.attrs).toEqual({ source: "@a1; @b2" });
+    expect(roundtrip("[@a1; @b2]\n")).toBe("[@a1; @b2]\n");
+  });
+
+  it("narrative를 끄면 @키는 글자", () => {
+    expect(JSON.stringify(markdownToDoc("@smith2020\n", { ...ctx, extras: { citations: true } }, "").doc)).not.toContain("citation");
+  });
+
+  it("[bibliography] 줄은 참고문헌 블록이고, 켜지 않으면 글자", () => {
+    expect(markdownToDoc("글\n\n[bibliography]\n", cite, "").doc.content!.map((n) => n.type)).toEqual(["paragraph", "bibliography"]);
+    expect(roundtrip("글\n\n[bibliography]\n")).toBe("글\n\n[bibliography]\n");
+    expect(markdownToDoc("[bibliography]\n", { ...ctx, extras: { citations: true } }, "").doc.content![0]!.type).toBe("paragraph");
+  });
+});

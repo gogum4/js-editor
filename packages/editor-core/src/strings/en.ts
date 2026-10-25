@@ -55,6 +55,7 @@ export const enStrings: EditorStrings = {
   codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed", metaPlaceholder: "Title · highlight lines  e.g. title=\"a.ts\" {2,4}", metaLabel: "Code block info" },
   extras: {
     toc: { title: "Contents", empty: "No headings", jump: "Jump to this heading" },
+    bibliography: { title: "References", empty: "No citations yet" },
     comment: { placeholder: "Comment (hidden from readers)", label: "Comment", edit: "Edit comment" },
     citation: { placeholder: "@citekey (separate several with ;)", invalid: "A citation key starting with @ is required", open: "Open source", edit: "Edit citation" },
     definition: { termPlaceholder: "Term", detailPlaceholder: "Definition" },
@@ -64,6 +65,7 @@ export const enStrings: EditorStrings = {
       definitionList: { label: "Definition list", description: "Terms and definitions (`: definition` under a term)" },
       comment: { label: "Comment", description: "A note hidden from readers (%%…%%)" },
       citation: { label: "Citation", description: "Cite a reference ([@citekey])" },
+      bibliography: { label: "References", description: "List of cited works ([bibliography])" },
       highlight: { label: "Highlight", description: "Marker (Ctrl+Shift+H, ==text==)" },
       superscript: { label: "Superscript", description: "Raise text like x² (Ctrl+., ^text^)" },
       subscript: { label: "Subscript", description: "Lower text like H₂O (Ctrl+,)" },

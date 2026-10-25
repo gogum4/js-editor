@@ -89,7 +89,7 @@ const ref = params.has("ref");
 const embed = params.has("embed");
 const indent = params.has("indent");
 // `?extras=1`: 추가 문법(하이라이트·첨자·색·약어·주석·태그·인용·정의 목록·목차·이모지)을 모두 켠다(동작 시험 전용).
-const extras = params.has("extras") ? { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true } : undefined;
+const extras = params.has("extras") ? { marks: true, abbr: true, comments: true, tags: true, citations: { narrative: true, bibliography: true }, definitions: true, toc: true, emoji: true, kbd: true, taskStatus: true } : undefined;
 const withRefs = (base: typeof DEMO_DOC) =>
   ref
     ? {

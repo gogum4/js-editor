@@ -93,7 +93,10 @@ export interface EditorPorts {
    * `open`은 Ctrl/⌘+클릭으로 그 키의 항목을 연다(예: Zotero 앱). 둘 다 없으면 칩은 `@키` 그대로 보이고 눌러도 열리지 않는다.
    */
   citations?: {
-    label?(keys: readonly string[]): Promise<string | null>;
+    /** `narrative`가 참이면 서술형 인용(`@키`)이라 "Smith (2020)"처럼, 아니면 괄호형 "Smith 2020"으로 돌려준다. */
+    label?(keys: readonly string[], options?: { narrative?: boolean }): Promise<string | null>;
     open?(key: string): void | Promise<void>;
+    /** 참고문헌 목록(`[bibliography]`)의 한 줄 글. 키마다 하나(모르는 키는 null이라 키가 그대로 보인다). */
+    entries?(keys: readonly string[]): Promise<Array<string | null>>;
   };
 }

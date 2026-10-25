@@ -1,5 +1,12 @@
 {
   "nodes": {
+    "bibliography": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {}
+    },
     "blockquote": {
       "content": "block+",
       "group": "block",
@@ -36,6 +43,7 @@
       "inline": true,
       "atom": true,
       "attrs": {
+        "narrative": "(필수)",
         "source": "(필수)"
       }
     },
@@ -46,7 +54,8 @@
       "atom": false,
       "attrs": {
         "id": "(필수)",
-        "language": "(필수)"
+        "language": "(필수)",
+        "meta": "(필수)"
       }
     },
     "comment": {
@@ -142,6 +151,7 @@
       "atom": true,
       "attrs": {
         "alt": "(필수)",
+        "caption": "(필수)",
         "hash": "(필수)",
         "id": "(필수)",
         "mime": "(필수)",
@@ -281,7 +291,8 @@
       "inline": false,
       "atom": false,
       "attrs": {
-        "checked": "(필수)"
+        "checked": "(필수)",
+        "status": "(필수)"
       }
     },
     "taskList": {
@@ -341,6 +352,9 @@
       "attrs": {}
     },
     "italic": {
+      "attrs": {}
+    },
+    "kbd": {
       "attrs": {}
     },
     "link": {

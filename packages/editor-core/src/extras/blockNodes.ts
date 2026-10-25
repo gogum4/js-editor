@@ -3,7 +3,9 @@ import type { Node as PmNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { canJoin } from "@tiptap/pm/transform";
 
-import { stringsOf } from "../ports/editorPorts";
+import { orderedCitedKeys } from "@gogum4/editor-schema/csl";
+import { citationKeys } from "@gogum4/editor-schema/extras";
+import { portsOf, stringsOf } from "../ports/editorPorts";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -12,6 +14,8 @@ declare module "@tiptap/core" {
       insertToc: () => ReturnType;
       /** 용어 하나와 설명 하나가 든 정의 목록을 끼운다. */
       insertDefinitionList: () => ReturnType;
+      /** 참고문헌 목록 블록을 끼운다. */
+      insertBibliography: () => ReturnType;
     };
   }
 }
@@ -207,6 +211,88 @@ export const Toc = Node.create({
         stopEvent: (event: Event) => event.target instanceof HTMLElement && event.target.tagName === "BUTTON",
         ignoreMutation: () => true,
       };
+    };
+  },
+});
+
+/** 문서에 인용된 키들(처음 나온 순서, 중복 없음). */
+function citedKeysOf(doc: PmNode): string[] {
+  const sources: string[] = [];
+  doc.descendants((node) => {
+    if (node.type.name === "citation") sources.push(String(node.attrs.source ?? ""));
+    return true;
+  });
+  return orderedCitedKeys(sources, citationKeys);
+}
+
+/**
+ * 참고문헌 `[bibliography]`: 저장하는 것은 자리뿐이고, 목록은 문서에 인용된 키들(처음 나온 순서)로 그때그때 그려진다.
+ * 한 줄 글은 소비자의 포트(`citations.entries`)가 준다. 포트가 없거나 모르는 키는 키만 보인다.
+ */
+export const Bibliography = Node.create({
+  name: "bibliography",
+  group: "block",
+  atom: true,
+  selectable: true,
+  draggable: true,
+  parseHTML: () => [{ tag: "section[data-bibliography]" }],
+  renderHTML: ({ HTMLAttributes }) => ["section", mergeAttributes({ "data-bibliography": "", class: "md-bibliography" }, HTMLAttributes)],
+
+  addCommands() {
+    return { insertBibliography: () => ({ commands }) => commands.insertContent({ type: this.name }) };
+  },
+
+  addNodeView() {
+    return ({ editor }) => {
+      const dom = document.createElement("section");
+      dom.className = "md-bibliography";
+      dom.setAttribute("data-bibliography", "");
+      dom.contentEditable = "false";
+
+      let generation = 0;
+      const render = (keys: string[], entries: ReadonlyArray<string | null>) => {
+        const strings = stringsOf(editor).extras.bibliography;
+        dom.replaceChildren();
+        const title = document.createElement("p");
+        title.className = "md-bibliography-title";
+        title.textContent = strings.title;
+        dom.append(title);
+        if (keys.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "md-bibliography-empty";
+          empty.textContent = strings.empty;
+          dom.append(empty);
+          return;
+        }
+        const list = document.createElement("ul");
+        keys.forEach((key, index) => {
+          const item = document.createElement("li");
+          item.setAttribute("data-key", key);
+          item.textContent = entries[index] ?? `@${key}`;
+          list.append(item);
+        });
+        dom.append(list);
+      };
+
+      let last = "";
+      const refresh = () => {
+        const keys = citedKeysOf(editor.state.doc);
+        const signature = keys.join("\u0000");
+        if (signature === last) return;
+        last = signature;
+        const mine = ++generation;
+        render(keys, []);
+        const entries = portsOf(editor).citations?.entries;
+        if (!entries || keys.length === 0) return;
+        void entries(keys)
+          .then((lines) => {
+            if (mine === generation) render(keys, lines);
+          })
+          .catch(() => {});
+      };
+      editor.on("update", refresh);
+      refresh();
+      return { dom, destroy: () => editor.off("update", refresh), ignoreMutation: () => true };
     };
   },
 });

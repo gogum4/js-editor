@@ -55,6 +55,7 @@ export interface EditorStrings {
   /** 추가 문법(`createCoreExtensions({ extras })`)의 화면 글. `items`는 슬래시 메뉴 항목의 이름·설명이다. */
   extras: {
     toc: { title: string; empty: string; jump: string };
+    bibliography: { title: string; empty: string };
     comment: { placeholder: string; label: string; edit: string };
     citation: { placeholder: string; invalid: string; open: string; edit: string };
     definition: { termPlaceholder: string; detailPlaceholder: string };

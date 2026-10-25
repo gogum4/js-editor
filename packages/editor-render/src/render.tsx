@@ -13,7 +13,7 @@ import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 import { MermaidDiagram } from "./client/MermaidDiagram.tsx";
 import { hastToReact } from "./highlight.tsx";
-import { collectHeadings, slugify, textOf } from "./slug.ts";
+import { collectCitedKeys, collectHeadings, slugify, textOf } from "./slug.ts";
 import { koRenderStrings, type RenderStrings } from "./strings.ts";
 import { codeKey, type ImageSource, mathKey, type RenderOptions } from "./types.ts";
 
@@ -158,9 +158,10 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
         const source = normalizeCitationSource(node.attrs?.source);
         if (source === null) return null;
         const keys = citationKeys(source);
-        const label = ctx.options.citationLabel?.(keys, source) ?? null;
+        const narrative = node.attrs?.narrative === true;
+        const label = ctx.options.citationLabel?.(keys, source, narrative) ?? null;
         const href = keys[0] === undefined ? null : (ctx.options.citationHref?.(keys[0]) ?? null);
-        const text = label === null ? `[${source}]` : label;
+        const text = label === null ? (narrative ? source : `[${source}]`) : label;
         return (
           <cite key={index} className="md-citation" data-citation={source}>
             {href === null ? text : <a href={href}>{text}</a>}
@@ -392,6 +393,25 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
             ))}
           </ul>
         </nav>
+      );
+    }
+    case "bibliography": {
+      // 참고문헌: 문서에 인용된 키들(처음 나온 순서). 글을 줄 소비자(`bibliographyEntry`)가 없으면 그리지 않는다.
+      const entry = ctx.options.bibliographyEntry;
+      if (!entry) return null;
+      const keys = collectCitedKeys(ctx.doc);
+      if (keys.length === 0) return null;
+      return (
+        <section key={key} className="md-bibliography" data-bibliography="" aria-label={ctx.strings.bibliography}>
+          <p className="md-bibliography-title">{ctx.strings.bibliography}</p>
+          <ul>
+            {keys.map((citeKey) => (
+              <li key={citeKey} id={`ref-${citeKey}`}>
+                {entry(citeKey) ?? `@${citeKey}`}
+              </li>
+            ))}
+          </ul>
+        </section>
       );
     }
     case "definitionList":

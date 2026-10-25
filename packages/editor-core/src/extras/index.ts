@@ -1,7 +1,8 @@
 import type { AnyExtension } from "@tiptap/core";
 
 import type { ExtraSyntax } from "@gogum4/editor-schema/extras";
-import { DefinitionDetail, DefinitionList, DefinitionTerm, Toc } from "./blockNodes";
+import { citationFlags } from "@gogum4/editor-schema/extras";
+import { Bibliography, DefinitionDetail, DefinitionList, DefinitionTerm, Toc } from "./blockNodes";
 import type { EditorMenus } from "../ports/ui";
 import { EmojiSuggest } from "./EmojiSuggest";
 import { Citation, Comment, EmojiShortcodes, Tag } from "./inlineNodes";
@@ -16,7 +17,8 @@ export function extraExtensions(extras: ExtraSyntax | undefined, menus: EditorMe
     ...(extras.abbr ? [Abbr] : []),
     ...(extras.comments ? [Comment] : []),
     ...(extras.tags ? [Tag.configure({ skipHexColors: typeof extras.tags === "object" && extras.tags.skipHexColors === true })] : []),
-    ...(extras.citations ? [Citation] : []),
+    ...(extras.citations ? [Citation.configure({ narrative: citationFlags(extras).narrative })] : []),
+    ...(citationFlags(extras).bibliography ? [Bibliography] : []),
     ...(extras.definitions ? [DefinitionList, DefinitionTerm, DefinitionDetail] : []),
     ...(extras.toc ? [Toc] : []),
     ...(extras.emoji ? [EmojiShortcodes, EmojiSuggest.configure({ render: menus.emoji ?? null })] : []),
@@ -25,4 +27,4 @@ export function extraExtensions(extras: ExtraSyntax | undefined, menus: EditorMe
 
 export { EmojiSuggest };
 export type { EmojiSuggestion } from "./EmojiSuggest";
-export { Abbr, BackgroundColor, Citation, Comment, DefinitionDetail, DefinitionList, DefinitionTerm, EmojiShortcodes, Highlight, Insert, Kbd, Subscript, Superscript, Tag, TextColor, Toc };
+export { Abbr, BackgroundColor, Bibliography, Citation, Comment, DefinitionDetail, DefinitionList, DefinitionTerm, EmojiShortcodes, Highlight, Insert, Kbd, Subscript, Superscript, Tag, TextColor, Toc };

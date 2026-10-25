@@ -16,7 +16,7 @@ import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-sch
 import { formatReference } from "./referenceDirective.ts";
 import { isBuiltinCalloutType, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
-import { emojiFromShortcode, type ExtraSyntax, isAbbrTerm, isSkippedTag, normalizeAbbrTitle, normalizeTaskStatus, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
+import { emojiFromShortcode, type ExtraSyntax, isAbbrTerm, citationFlags, isSkippedTag, NARRATIVE_CITATION_IN_TEXT_SOURCE, normalizeAbbrTitle, normalizeTaskStatus, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
 import { indentPrefix } from "@gogum4/editor-schema/indent";
 import type { MarkdownDialect } from "./dialect.ts";
 
@@ -121,6 +121,8 @@ function escapeExtras(text: string, extras: ExtraSyntax, atStart: boolean): stri
     const escaped = probe.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (whole, name: string) => (normalizeTag(name) === null || isSkippedTag(name, extras) ? whole : `\\#${name}`));
     out = atStart ? escaped : escaped.slice(1);
   }
+  // 서술형 인용을 켠 문서의 글자 속 `@키`는 인용으로 다시 읽히지 않게 막는다.
+  if (citationFlags(extras).narrative) out = (atStart ? out : `\u0000${out}`).replace(new RegExp(NARRATIVE_CITATION_IN_TEXT_SOURCE, "gu"), "\\@$1").replace(/^\u0000/, "");
   if (extras.comments) out = out.replace(/%%/g, "\\%\\%");
   if (extras.marks) out = out.replace(/==/g, "\\=\\=").replace(/\+\+/g, "\\+\\+").replace(/\^/g, "\\^");
   if (extras.emoji) out = out.replace(/(?<![\w:]):([a-z0-9_+-]{1,40}):(?![\w:])/gi, (whole, name: string) => (emojiFromShortcode(name) === null ? whole : `\\:${name}\\:`));
@@ -317,6 +319,7 @@ class Renderer {
       }
       case "citation": {
         const source = normalizeCitationSource(node.attrs?.source);
+        if (source !== null && node.attrs?.narrative === true && citationFlags(this.options.extras).narrative && /^@[^\s;,\]]+$/.test(source)) return source;
         return source === null ? "" : `[${source}]`;
       }
       case "mathInline": {
@@ -489,6 +492,8 @@ class Renderer {
         return typeof node.attrs?.text === "string" && node.attrs.text !== "" ? node.attrs.text : null;
       case "toc":
         return "[toc]";
+      case "bibliography":
+        return citationFlags(this.options.extras).bibliography ? "[bibliography]" : null;
       case "definitionList":
         return this.definitionList(node);
       case "table":

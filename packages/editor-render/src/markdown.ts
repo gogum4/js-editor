@@ -29,13 +29,14 @@ export interface RenderMarkdownOptions extends Omit<RenderOptions, "prepared"> {
   /** 문단·제목 맨 앞의 `&emsp;`를 들여쓰기로 읽을지. 기본 켜짐. */
   indent?: boolean;
   /**
-   * 추가 문법(하이라이트·첨자·색·약어·주석·태그·인용·정의 목록·목차·이모지, `ImportContext.extras`)을 읽을지. 기본 모두 켜짐 — 끄려면 `false`나 켤 것만 담은 객체.
+   * 추가 문법(하이라이트·첨자·색·약어·주석·태그·인용·정의 목록·목차·이모지·`<kbd>`·할 일 상태, `ImportContext.extras`)을 읽을지. 기본 모두 켜짐(서술형 인용 `@키`와 참고문헌만 제외) — 끄려면 `false`나 켤 것만 담은 객체.
    * `#태그`처럼 일반 글과 닮은 것을 글자로 두고 싶다면 `{ tags: false }`처럼 끈다.
    */
   extras?: ImportContext["extras"] | false;
 }
 
-const ALL_EXTRAS = { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true } as const;
+// 서술형 인용(`@키`)과 참고문헌은 기본으로 켜지 않는다 — 글 속의 `@핸들`이 인용으로 바뀌므로 켜려면 `extras: { ...,  citations: { narrative: true } }`로 직접 준다.
+const ALL_EXTRAS = { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true, kbd: true, taskStatus: true } as const;
 
 export interface RenderedMarkdown {
   /** React 요소. 서버 컴포넌트에서 그대로 반환하면 된다. */
