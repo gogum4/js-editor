@@ -1,5 +1,22 @@
 # @gogum4/editor-core
 
+## 0.3.0
+
+### Minor Changes
+
+- 8ac3767: 콜아웃에 `title`(제목)과 `fold`(`+`/`-`, 접을 수 있음) 속성을 더하고, 임베드에 Bluesky 공급자를 더한다.
+  
+  - **콜아웃**: `> [!note]- 제목`의 제목은 이제 굵은 첫 문단이 아니라 `title` 속성으로, `+`/`-`는 `fold` 속성으로 읽고 그대로 내보낸다. 편집기 콜아웃 메뉴에서 제목과 접기를 정하고 제목 줄에서 접고 편다. 렌더러는 제목을 그리고 접을 수 있으면 `<details>`로 그린다. **이미 굵은 문단으로 저장된 글은 그대로 읽힌다.** 노드에 속성이 더해지므로 본문을 저장하는 소비자는 스키마 버전을 올린다(노트 앱은 콜아웃을 쓰므로 해당). 새 문구(`callout.titlePlaceholder` 등)가 문구 표에 더해졌다.
+  - **Bluesky 임베드**: `![](https://bsky.app/profile/핸들 또는 DID/post/키)`. `embed.bsky.app`이 DID만 받아서 핸들 주소는 `embedSource`가 null(원본 링크만 보임)이다. `withBlueskyDid`·`blueskyProfile`, 편집기 포트 `resolveBlueskyHandle`, 렌더러 옵션 `blueskyDids`로 DID를 주면 그려진다.
+- ec19b9d: Markdown 가져오기에 `ImportContext.profile`(방언 항목 덮어쓰기)과 `DialectProfile` 타입 내보내기를 더한다. `dialect: "obsidian"`에 `{ rawEmbeds: true, keepAnyHref: true, mdLinksToPages: false }`를 얹으면 콜아웃·수식·각주는 Obsidian대로 읽으면서 이미지·HTML·열 정렬 표는 원문으로 보존한다(블로그가 0.1의 `dialect: "blog"`를 대신해 쓴다). 쓰지 않으면 달라지는 것이 없다.
+
+### Patch Changes
+
+- Updated dependencies [8ac3767]
+- Updated dependencies [ec19b9d]
+  - @gogum4/editor-schema@0.3.0
+  - @gogum4/editor-markdown@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
