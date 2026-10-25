@@ -1,4 +1,6 @@
 import type { PmNode } from "@gogum4/editor-schema/pmDoc";
+import { citationKeys } from "@gogum4/editor-schema/extras";
+import { orderedCitedKeys } from "@gogum4/editor-schema/csl";
 
 /** 노드 안의 글자를 모두 이은 것(제목의 앵커·목차에 쓴다). */
 export function textOf(node: PmNode): string {
@@ -48,4 +50,15 @@ export function collectHeadings(doc: PmNode): HeadingInfo[] {
   };
   visit(doc);
   return out;
+}
+
+/** 문서에 인용된 키들(처음 나온 순서, 중복 없음) — 참고문헌 블록이 쓴다. */
+export function collectCitedKeys(doc: PmNode): string[] {
+  const sources: string[] = [];
+  const walk = (node: PmNode) => {
+    if (node.type === "citation" && typeof node.attrs?.source === "string") sources.push(node.attrs.source);
+    node.content?.forEach(walk);
+  };
+  walk(doc);
+  return orderedCitedKeys(sources, citationKeys);
 }

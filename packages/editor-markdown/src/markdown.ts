@@ -7,7 +7,8 @@
 
 import { assetFileName, isAssetHash } from "@gogum4/editor-schema/assets";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
-import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
+import { normalizeCodeMeta } from "@gogum4/editor-schema/codeMeta";
+import { normalizeImageCaption, normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 
@@ -15,7 +16,7 @@ import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-sch
 import { formatReference } from "./referenceDirective.ts";
 import { isBuiltinCalloutType, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
-import { emojiFromShortcode, type ExtraSyntax, isAbbrTerm, isSkippedTag, normalizeAbbrTitle, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
+import { emojiFromShortcode, type ExtraSyntax, isAbbrTerm, citationFlags, isSkippedTag, NARRATIVE_CITATION_IN_TEXT_SOURCE, normalizeAbbrTitle, normalizeTaskStatus, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
 import { indentPrefix } from "@gogum4/editor-schema/indent";
 import type { MarkdownDialect } from "./dialect.ts";
 
@@ -120,6 +121,8 @@ function escapeExtras(text: string, extras: ExtraSyntax, atStart: boolean): stri
     const escaped = probe.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (whole, name: string) => (normalizeTag(name) === null || isSkippedTag(name, extras) ? whole : `\\#${name}`));
     out = atStart ? escaped : escaped.slice(1);
   }
+  // 서술형 인용을 켠 문서의 글자 속 `@키`는 인용으로 다시 읽히지 않게 막는다.
+  if (citationFlags(extras).narrative) out = (atStart ? out : `\u0000${out}`).replace(new RegExp(NARRATIVE_CITATION_IN_TEXT_SOURCE, "gu"), "\\@$1").replace(/^\u0000/, "");
   if (extras.comments) out = out.replace(/%%/g, "\\%\\%");
   if (extras.marks) out = out.replace(/==/g, "\\=\\=").replace(/\+\+/g, "\\+\\+").replace(/\^/g, "\\^");
   if (extras.emoji) out = out.replace(/(?<![\w:]):([a-z0-9_+-]{1,40}):(?![\w:])/gi, (whole, name: string) => (emojiFromShortcode(name) === null ? whole : `\\:${name}\\:`));
@@ -269,6 +272,7 @@ class Renderer {
     if (has("superscript")) out.push({ key: "superscript", open: "<sup>", close: "</sup>" });
     if (has("subscript")) out.push({ key: "subscript", open: "<sub>", close: "</sub>" });
     if (has("insert")) out.push({ key: "insert", open: "<ins>", close: "</ins>" });
+    if (has("kbd")) out.push({ key: "kbd", open: "<kbd>", close: "</kbd>" });
     for (const [type, property] of [["textColor", "color"], ["backgroundColor", "background-color"]] as const) {
       const color = normalizeColor(marks.find((m) => m.type === type)?.attrs?.color);
       if (color !== null) out.push({ key: `${type}:${color}`, open: `<span style="${property}: ${color}">`, close: "</span>" });
@@ -315,6 +319,7 @@ class Renderer {
       }
       case "citation": {
         const source = normalizeCitationSource(node.attrs?.source);
+        if (source !== null && node.attrs?.narrative === true && citationFlags(this.options.extras).narrative && /^@[^\s;,\]]+$/.test(source)) return source;
         return source === null ? "" : `[${source}]`;
       }
       case "mathInline": {
@@ -339,10 +344,10 @@ class Renderer {
   private pageLink(node: PmNode): string {
     const id = typeof node.attrs?.pageId === "string" ? node.attrs.pageId : "";
     // 블록 링크: `blockIds`가 켜져 있으면 `[[제목#^id]]`, 아니면 그 페이지로 가는 링크로 내보낸다(블록 표시 `^id`를 남기지 않는다).
-    const blockId = node.type === "pageLink" ? blockIdOf({ type: "x", attrs: { id: node.attrs?.blockId } }) : null;
+    const blockId = node.type === "pageLink" || node.type === "pageBlock" ? blockIdOf({ type: "x", attrs: { id: node.attrs?.blockId } }) : null;
     const heading = typeof node.attrs?.heading === "string" ? node.attrs.heading.replace(/[[\]|#^\n]/g, " ").replace(/\s+/g, " ").trim() : "";
     const anchor = blockId !== null && this.options.blockIds ? `#^${blockId}` : heading !== "" ? `#${heading}` : "";
-    if (node.type === "pageLink" && typeof node.attrs?.blockId === "string" && node.attrs.blockId !== "" && anchor === "") {
+    if ((node.type === "pageLink" || node.type === "pageBlock") && typeof node.attrs?.blockId === "string" && node.attrs.blockId !== "" && anchor === "") {
       this.notices.add("블록 링크는 그 페이지로 가는 링크로 내보냈어요.");
     }
     const title = id ? this.options.pageTitle(id) : null;
@@ -436,7 +441,11 @@ class Renderer {
       }
       case "taskList": {
         const mark = this.takeFlip() ? "*" : "-";
-        return this.list(node, (_index, item) => (item.attrs?.checked ? `${mark} [x] ` : `${mark} [ ] `));
+        return this.list(node, (_index, item) => {
+          // 상태가 있으면 `[/]`처럼 쓴다(상태 문법을 켠 때만. 꺼져 있으면 상태 없는 항목으로 내보낸다).
+          const status = this.options.extras?.taskStatus ? normalizeTaskStatus(item.attrs?.status) : null;
+          return status !== null ? `${mark} [${status}] ` : item.attrs?.checked ? `${mark} [x] ` : `${mark} [ ] `;
+        });
       }
       case "blockquote":
         return prefixLines(this.blocks(node.content), "> ");
@@ -483,6 +492,8 @@ class Renderer {
         return typeof node.attrs?.text === "string" && node.attrs.text !== "" ? node.attrs.text : null;
       case "toc":
         return "[toc]";
+      case "bibliography":
+        return citationFlags(this.options.extras).bibliography ? "[bibliography]" : null;
       case "definitionList":
         return this.definitionList(node);
       case "table":
@@ -627,14 +638,17 @@ class Renderer {
     if (!this.options.assetPath) {
       this.notices.add("이미지는 assets 폴더의 파일을 가리켜요. 파일은 설정의 전체 내보내기에서 함께 내보내요.");
     }
-    return `![${label}](${path})`;
+    // 캡션은 Markdown 표준의 링크 title이다. 큰따옴표는 이스케이프한다.
+    const caption = this.plain ? null : normalizeImageCaption(node.attrs?.caption);
+    return caption === null ? `![${label}](${path})` : `![${label}](${path} "${caption.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}")`;
   }
 
   private codeBlock(node: PmNode): string {
     const code = (node.content ?? []).map((n) => n.text ?? "").join("");
     const fence = "`".repeat(Math.max(3, longestRun(code, "`") + 1));
     const language = typeof node.attrs?.language === "string" ? node.attrs.language.trim() : "";
-    return `${fence}${language}\n${code}\n${fence}`;
+    const meta = this.plain ? null : normalizeCodeMeta(node.attrs?.meta);
+    return `${fence}${language}${meta === null ? "" : `${language === "" ? "" : " "}${meta}`}\n${code}\n${fence}`;
   }
 
   /** 바로 앞 목록과 기호를 바꿔 써야 하는지(`blocks`·`list`가 정하고, 목록을 쓰는 쪽이 한 번 읽어 간다). */

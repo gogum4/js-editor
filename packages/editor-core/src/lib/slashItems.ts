@@ -55,7 +55,7 @@ export const CORE_SLASH_ITEMS: readonly SlashItem[] = [
   { id: "callout-caution", label: "콜아웃 · 주의", description: "위험할 수 있는 내용", keywords: ["callout", "caution", "danger", "콜아웃", "주의", "위험"] },
 ];
 
-import { COLOR_NAMES, type ExtraSyntax } from "@gogum4/editor-schema/extras";
+import { citationFlags, COLOR_NAMES, type ExtraSyntax } from "@gogum4/editor-schema/extras";
 
 const COLOR_ORDER = Object.keys(COLOR_NAMES);
 
@@ -67,6 +67,8 @@ export function extraSlashItems(extras: ExtraSyntax | undefined): SlashItem[] {
   if (extras.definitions) items.push({ id: "definitionList", label: "정의 목록", description: "용어와 설명", keywords: ["definition", "dl", "glossary", "정의", "용어", "설명", "사전"] });
   if (extras.comments) items.push({ id: "comment", label: "주석", description: "글에는 안 보이는 메모", keywords: ["comment", "note", "hidden", "주석", "메모"] });
   if (extras.citations) items.push({ id: "citation", label: "인용", description: "참고 문헌 인용", keywords: ["citation", "cite", "zotero", "reference", "bibliography", "인용", "참고문헌", "논문"] });
+  if (extras.kbd) items.push({ id: "kbd", label: "키보드 키", description: "<kbd> 키 표시", keywords: ["kbd", "key", "keyboard", "shortcut", "키", "키보드", "단축키"] });
+  if (citationFlags(extras).bibliography) items.push({ id: "bibliography", label: "참고문헌", description: "인용한 문헌의 목록", keywords: ["bibliography", "references", "works cited", "참고문헌", "문헌", "인용"] });
   if (extras.marks) {
     items.push(
       { id: "highlight", label: "하이라이트", description: "형광펜", keywords: ["highlight", "mark", "marker", "하이라이트", "형광펜", "강조"] },

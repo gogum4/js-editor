@@ -1,8 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { calloutMeta, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { normalizeImageCaption } from "@gogum4/editor-schema/imageLayout";
+import { parseCodeMeta } from "@gogum4/editor-schema/codeMeta";
 import { normalizeIndent } from "@gogum4/editor-schema/indent";
-import { citationKeys, normalizeAbbrTitle, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag } from "@gogum4/editor-schema/extras";
+import { citationKeys, normalizeAbbrTitle, normalizeTaskStatus, TASK_STATUSES, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag } from "@gogum4/editor-schema/extras";
 import { blueskyProfile, EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget, withBlueskyDid } from "@gogum4/editor-schema/embed";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
@@ -11,7 +13,7 @@ import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 import { MermaidDiagram } from "./client/MermaidDiagram.tsx";
 import { hastToReact } from "./highlight.tsx";
-import { collectHeadings, slugify, textOf } from "./slug.ts";
+import { collectCitedKeys, collectHeadings, slugify, textOf } from "./slug.ts";
 import { koRenderStrings, type RenderStrings } from "./strings.ts";
 import { codeKey, type ImageSource, mathKey, type RenderOptions } from "./types.ts";
 
@@ -67,6 +69,7 @@ function renderText(node: PmNode, key: number): ReactNode {
   if (has("strike")) out = <s>{out}</s>;
   // 추가 문법의 마크(안쪽부터): 삽입 → 하이라이트 → 위/아래 첨자 → 약어 → 색.
   if (has("insert")) out = <ins>{out}</ins>;
+  if (has("kbd")) out = <kbd>{out}</kbd>;
   if (has("highlight")) out = <mark>{out}</mark>;
   if (has("superscript")) out = <sup>{out}</sup>;
   if (has("subscript")) out = <sub>{out}</sub>;
@@ -155,9 +158,10 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
         const source = normalizeCitationSource(node.attrs?.source);
         if (source === null) return null;
         const keys = citationKeys(source);
-        const label = ctx.options.citationLabel?.(keys, source) ?? null;
+        const narrative = node.attrs?.narrative === true;
+        const label = ctx.options.citationLabel?.(keys, source, narrative) ?? null;
         const href = keys[0] === undefined ? null : (ctx.options.citationHref?.(keys[0]) ?? null);
-        const text = label === null ? `[${source}]` : label;
+        const text = label === null ? (narrative ? source : `[${source}]`) : label;
         return (
           <cite key={index} className="md-citation" data-citation={source}>
             {href === null ? text : <a href={href}>{text}</a>}
@@ -206,9 +210,10 @@ function renderList(node: PmNode, ctx: Context, key: number): ReactNode {
   const items = (node.content ?? []).map((item, index) => {
     if (node.type === "taskList") {
       const checked = item.attrs?.checked === true;
+      const status = normalizeTaskStatus(item.attrs?.status);
       return (
-        <li key={index} className="task-item" data-checked={checked ? "true" : "false"}>
-          <input type="checkbox" checked={checked} disabled readOnly aria-label={checked ? "✓" : "○"} />
+        <li key={index} className="task-item" data-checked={checked ? "true" : "false"} data-status={status === null ? undefined : TASK_STATUSES[status]} data-status-char={status ?? undefined}>
+          <input type="checkbox" checked={checked} disabled readOnly aria-label={status !== null ? TASK_STATUSES[status] : checked ? "✓" : "○"} />
           <div>{renderBlocks(item.content, ctx)}</div>
         </li>
       );
@@ -245,10 +250,36 @@ function renderCode(node: PmNode, ctx: Context, key: number): ReactNode {
     );
   }
   const highlighted = ctx.options.prepared?.code.get(codeKey(language, code));
-  return (
-    <pre key={key} id={id} className="code-block" data-language={language === "" ? undefined : language}>
+  const meta = parseCodeMeta(node.attrs?.meta);
+  const pre = (
+    <pre
+      key={meta.title === null ? key : undefined}
+      id={meta.title === null ? id : undefined}
+      className="code-block"
+      data-language={language === "" ? undefined : language}
+      data-line-numbers={meta.showLineNumbers ? "" : undefined}
+      data-has-highlight={meta.lines.length > 0 ? "" : undefined}
+    >
+      {/* 강조 줄은 글 뒤의 띠로 그린다(줄 높이가 같고 줄바꿈이 없는 코드 글꼴이라 줄 번호만으로 위치가 정해진다). */}
+      {meta.lines.map((line) => (
+        <span key={line} className="code-hl" aria-hidden="true" style={{ top: `calc(${line - 1} * var(--md-code-line, 1.55em))` }} />
+      ))}
+      {meta.showLineNumbers && (
+        <span className="code-lines" aria-hidden="true">
+          {Array.from({ length: code.split("\n").length }, (_, i) => i + 1).join("\n")}
+        </span>
+      )}
       <code className={language === "" ? undefined : `hljs language-${language}`}>{highlighted ? hastToReact(highlighted) : code}</code>
     </pre>
+  );
+  // 제목이 있으면 파일명 줄을 위에 붙인다.
+  return meta.title === null ? (
+    pre
+  ) : (
+    <div key={key} id={id} className="code-figure">
+      <div className="code-title">{meta.title}</div>
+      {pre}
+    </div>
   );
 }
 
@@ -298,6 +329,7 @@ function renderImage(node: PmNode, ctx: Context, key: number): ReactNode {
   };
   const src = (ctx.options.imageUrl ?? defaultImageUrl)(source);
   const id = anchorId(node, ctx);
+  const caption = normalizeImageCaption(node.attrs?.caption);
   return (
     <figure key={key} id={id} className="image" style={alignStyle(node)}>
       {src === null ? (
@@ -307,6 +339,7 @@ function renderImage(node: PmNode, ctx: Context, key: number): ReactNode {
       ) : (
         <img src={src} alt={alt} width={width ?? undefined} loading="lazy" decoding="async" />
       )}
+      {caption !== null && <figcaption>{caption}</figcaption>}
     </figure>
   );
 }
@@ -360,6 +393,25 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
             ))}
           </ul>
         </nav>
+      );
+    }
+    case "bibliography": {
+      // 참고문헌: 문서에 인용된 키들(처음 나온 순서). 글을 줄 소비자(`bibliographyEntry`)가 없으면 그리지 않는다.
+      const entry = ctx.options.bibliographyEntry;
+      if (!entry) return null;
+      const keys = collectCitedKeys(ctx.doc);
+      if (keys.length === 0) return null;
+      return (
+        <section key={key} className="md-bibliography" data-bibliography="" aria-label={ctx.strings.bibliography}>
+          <p className="md-bibliography-title">{ctx.strings.bibliography}</p>
+          <ul>
+            {keys.map((citeKey) => (
+              <li key={citeKey} id={`ref-${citeKey}`}>
+                {entry(citeKey) ?? `@${citeKey}`}
+              </li>
+            ))}
+          </ul>
+        </section>
       );
     }
     case "definitionList":

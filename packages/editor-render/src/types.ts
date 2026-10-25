@@ -52,7 +52,9 @@ export interface RenderOptions {
   /**
    * 인용(`[@키]`)의 표시 글: 키들(`keys`)과 원문(`source`)을 받아 사람이 읽는 글(예: "Smith 2020")을 돌려준다. 없거나 null이면 `[원문]`이 보인다.
    */
-  citationLabel?: (keys: readonly string[], source: string) => string | null;
+  citationLabel?: (keys: readonly string[], source: string, narrative?: boolean) => string | null;
+  /** 참고문헌 목록(`[bibliography]`)의 한 줄 글: 키 → 글(모르는 키는 null이라 `@키`가 보인다). 없으면 목록 블록은 그려지지 않는다. */
+  bibliographyEntry?: (key: string) => string | null;
   /** 인용 키의 링크(예: Zotero의 `zotero://select/items/…`나 참고 문헌 목록의 앵커). 없거나 null이면 링크 없이 보인다. 첫 키에 걸린다. */
   citationHref?: (key: string) => string | null;
   /** 주석(`%%글%%`)을 흐린 글로 보일지. 기본 꺼짐 — 주석은 독자에게 보이지 않는다. */

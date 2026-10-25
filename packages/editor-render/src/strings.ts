@@ -13,6 +13,8 @@ export interface RenderStrings {
   embedTitle: (provider: string) => string;
   /** 목차 블록의 제목. */
   toc: string;
+  /** 참고문헌 블록의 제목. */
+  bibliography: string;
 }
 
 export const koRenderStrings: RenderStrings = {
@@ -22,6 +24,7 @@ export const koRenderStrings: RenderStrings = {
   imageMissing: "이미지를 표시할 수 없어요",
   embedTitle: (provider) => `${provider} 임베드`,
   toc: "목차",
+  bibliography: "참고문헌",
 };
 
 export const enRenderStrings: RenderStrings = {
@@ -31,4 +34,5 @@ export const enRenderStrings: RenderStrings = {
   imageMissing: "Image unavailable",
   embedTitle: (provider) => `${provider} embed`,
   toc: "Contents",
+  bibliography: "References",
 };

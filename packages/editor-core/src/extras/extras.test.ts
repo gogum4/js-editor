@@ -37,7 +37,7 @@ describe("추가 문법: 입력 규칙", () => {
     typeText(editor, "%%메모%%");
     typeText(editor, " #할일/오늘 ");
     typeText(editor, "[@smith2020]");
-    expect(inline(editor)).toEqual([`comment:{"text":"메모"}`, [" ", []], `tag:{"name":"할일/오늘"}`, [" ", []], `citation:{"source":"@smith2020"}`]);
+    expect(inline(editor)).toEqual([`comment:{"text":"메모"}`, [" ", []], `tag:{"name":"할일/오늘"}`, [" ", []], `citation:{"source":"@smith2020","narrative":false}`]);
   });
 
   it(":smile:은 이모지, 모르는 이름과 시간 표기는 그대로", () => {

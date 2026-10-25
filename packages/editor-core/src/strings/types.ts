@@ -30,7 +30,7 @@ export interface EditorStrings {
     /** 접는 단추의 이름. */
     toggleFold: string;
   };
-  codeBlock: { show: string; hide: string; copy: string; copied: string; copyFailed: string };
+  codeBlock: { show: string; hide: string; copy: string; copied: string; copyFailed: string; metaPlaceholder: string; metaLabel: string };
   /** 에디터가 모르는 문법을 원문 그대로 담는 상자(`raw`·`rawInline` 노드, 기본 꺼짐). */
   raw: { blockLabel: string; sourceLabel: string; inlineTitle: string };
   languagePicker: {
@@ -55,6 +55,7 @@ export interface EditorStrings {
   /** 추가 문법(`createCoreExtensions({ extras })`)의 화면 글. `items`는 슬래시 메뉴 항목의 이름·설명이다. */
   extras: {
     toc: { title: string; empty: string; jump: string };
+    bibliography: { title: string; empty: string };
     comment: { placeholder: string; label: string; edit: string };
     citation: { placeholder: string; invalid: string; open: string; edit: string };
     definition: { termPlaceholder: string; detailPlaceholder: string };
@@ -77,6 +78,7 @@ export interface EditorStrings {
   };
   image: {
     alt: string;
+    captionPlaceholder: string;
     loading: string;
     failed: string;
     toolbarLabel: string;

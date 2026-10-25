@@ -177,6 +177,29 @@
   text-decoration: line-through;
 }
 
+/* 할 일 상태(진행 중 / 취소 / 미룸 / 질문 / 중요): 체크 상자 자리에 상태 글자를 그린다. */
+.md-editor ul[data-type="taskList"] li[data-status] input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1em;
+  height: 1em;
+  margin: 0.45em 0 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.75;
+}
+.md-editor ul[data-type="taskList"] li[data-status="progress"] input[type="checkbox"]::before { content: "/"; }
+.md-editor ul[data-type="taskList"] li[data-status="cancelled"] input[type="checkbox"]::before { content: "–"; }
+.md-editor ul[data-type="taskList"] li[data-status="deferred"] input[type="checkbox"]::before { content: ">"; }
+.md-editor ul[data-type="taskList"] li[data-status="question"] input[type="checkbox"]::before { content: "?"; }
+.md-editor ul[data-type="taskList"] li[data-status="important"] input[type="checkbox"]::before { content: "!"; }
+.md-editor ul[data-type="taskList"] li[data-status="cancelled"] > div { text-decoration: line-through; color: var(--md-c-9ca3af, #9ca3af); }
+
 /* 콜아웃 */
 .md-editor .callout {
   display: flex;
@@ -301,6 +324,28 @@
   border-color: var(--md-c-fecaca, #fecaca);
 }
 
+/* 이미지 캡션 입력: 비어 있으면 이미지를 선택했을 때만 보인다. */
+.md-editor .image-caption {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 36rem;
+  margin: 0.3rem auto 0;
+  padding: 0.15rem 0.4rem;
+  font: inherit;
+  font-size: 0.875em;
+  text-align: center;
+  color: var(--md-c-6b7280, #6b7280);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.md-editor .image-caption:hover,
+.md-editor .image-caption:focus {
+  outline: none;
+  border-color: var(--md-border, rgba(0, 0, 0, 0.15));
+}
+
 /* 코드 블록 막대(언어 선택·복사) */
 .md-editor .code-block {
   position: relative;
@@ -325,6 +370,32 @@
   font-size: 0.75rem;
   color: var(--md-c-6b7280, #6b7280);
   user-select: none;
+}
+/* 제목·강조 줄 입력: 평소에는 흐리고(비어 있으면 마우스를 올릴 때만 보인다) 눌러서 고친다. */
+.md-editor .code-block-meta {
+  flex: 1;
+  min-width: 0;
+  margin: 0 0.5rem;
+  padding: 0.15rem 0.4rem;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  opacity: 0.45;
+}
+.md-editor .code-block-meta::placeholder {
+  opacity: 0;
+}
+.md-editor .code-block:hover .code-block-meta::placeholder,
+.md-editor .code-block-meta:focus::placeholder {
+  opacity: 0.6;
+}
+.md-editor .code-block-meta:hover,
+.md-editor .code-block-meta:focus {
+  opacity: 1;
+  outline: none;
+  border-color: var(--md-border, rgba(0, 0, 0, 0.15));
 }
 .md-editor .code-block-actions {
   display: flex;
@@ -994,6 +1065,16 @@
   text-decoration-style: dotted;
   text-underline-offset: 2px;
 }
+.md-editor kbd.md-kbd {
+  padding: 0.1em 0.4em;
+  font: 0.85em ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  color: inherit;
+  background: var(--md-subtle, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--md-border, rgba(0, 0, 0, 0.18));
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
 .md-editor abbr.md-abbr {
   text-decoration: underline dotted;
   cursor: help;
@@ -1073,6 +1154,31 @@
 }
 .md-editor .md-toc button:hover {
   text-decoration: underline;
+}
+.md-editor section.md-bibliography {
+  margin: 0.8em 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  border-radius: 8px;
+  background: var(--md-c-fafafa, #fafafa);
+}
+.md-editor .md-bibliography-title {
+  margin: 0 0 0.3em;
+  font-weight: 600;
+}
+.md-editor .md-bibliography-empty {
+  margin: 0;
+  color: var(--md-c-737373, #737373);
+}
+.md-editor .md-bibliography ul {
+  margin: 0;
+  padding: 0 0 0 1.4em;
+  text-indent: -1.4em;
+  list-style: none;
+}
+.md-editor .md-bibliography li {
+  margin: 0.2em 0;
+  padding-left: 1.4em;
 }
 
 /* 선택 서식 막대(SelectionToolbar): 글을 선택하면 그 위에 뜬다 */

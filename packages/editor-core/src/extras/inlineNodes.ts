@@ -2,6 +2,8 @@ import { type Editor, Extension, InputRule, mergeAttributes, Node } from "@tipta
 
 import {
   CITATION_IN_TEXT_SOURCE,
+  NARRATIVE_CITATION_IN_TEXT_SOURCE,
+  trimCiteKey,
   citationKeys,
   emojiFromShortcode,
   isSkippedTag,
@@ -15,7 +17,7 @@ import { portsOf, stringsOf } from "../ports/editorPorts";
 /** 클릭하면 입력 상자로 바뀌어 글을 고치는 인라인 노드의 공통 화면(React 없이 DOM). 입력이 비면 노드를 지운다. */
 function editableChipView(options: {
   className: string;
-  show: (value: string) => string;
+  show: (value: string, node: { attrs: Record<string, unknown> }) => string;
   read: (node: { attrs: Record<string, unknown> }) => string;
   commit: (input: string) => Record<string, unknown> | null;
   attr: string;
@@ -30,7 +32,7 @@ function editableChipView(options: {
 
     const render = () => {
       dom.replaceChildren();
-      dom.textContent = options.show(options.read(node));
+      dom.textContent = options.show(options.read(node), node);
       if (options.title) dom.title = options.title(editor);
     };
 
@@ -189,8 +191,9 @@ export const Tag = Node.create<{ skipHexColors: boolean }>({
 });
 
 /** 인용 `[@citekey]`(Pandoc/Zotero). 칩에는 원문이나 소비자가 해석한 글(Smith 2020)이 보이고, Ctrl/⌘+클릭으로 원본을 연다. */
-export const Citation = Node.create({
+export const Citation = Node.create<{ narrative: boolean }>({
   name: "citation",
+  addOptions: () => ({ narrative: false }),
   group: "inline",
   inline: true,
   atom: true,
@@ -203,16 +206,22 @@ export const Citation = Node.create({
         parseHTML: (element) => normalizeCitationSource(element.getAttribute("data-citation")) ?? "",
         renderHTML: (attributes) => ({ "data-citation": String(attributes.source ?? "") }),
       },
+      // 서술형 인용(`@키`): 칩에 괄호 없이 `@키`(또는 "Smith (2020)")가 보인다.
+      narrative: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-narrative") === "true",
+        renderHTML: (attributes) => (attributes.narrative ? { "data-narrative": "true" } : {}),
+      },
     };
   },
   parseHTML: () => [{ tag: "cite[data-citation]" }],
-  renderHTML: ({ node, HTMLAttributes }) => ["cite", mergeAttributes({ class: "md-citation" }, HTMLAttributes), `[${String(node.attrs.source ?? "")}]`],
+  renderHTML: ({ node, HTMLAttributes }) => ["cite", mergeAttributes({ class: "md-citation" }, HTMLAttributes), node.attrs.narrative ? String(node.attrs.source ?? "") : `[${String(node.attrs.source ?? "")}]`],
 
   addNodeView() {
     const editor = this.editor;
     const view = editableChipView({
       className: "md-citation",
-      show: (source) => `[${source}]`,
+      show: (source, node) => (node.attrs.narrative ? source : `[${source}]`),
       read: (node) => String(node.attrs.source ?? ""),
       commit: (input) => {
         const source = normalizeCitationSource(input);
@@ -229,9 +238,10 @@ export const Citation = Node.create({
       // 소비자가 키를 사람이 읽는 글로 풀어 주면 칩에 그 글을 보인다.
       const label = portsOf(editor).citations?.label;
       if (label) {
-        void label(citationKeys(source()))
+        const narrative = props.node.attrs.narrative === true;
+        void label(citationKeys(source()), { narrative })
           .then((text) => {
-            if (text && !dom.querySelector("input")) dom.textContent = `[${text}]`;
+            if (text && !dom.querySelector("input")) dom.textContent = narrative ? text : `[${text}]`;
           })
           .catch(() => {});
       }
@@ -254,6 +264,19 @@ export const Citation = Node.create({
 
   addInputRules() {
     return [
+      // 서술형 인용: `@키` 뒤에 공백을 치면 칩이 된다(끝에 구두점이 붙은 키는 건드리지 않는다).
+      ...(this.options.narrative
+        ? [
+            new InputRule({
+              find: new RegExp(`${NARRATIVE_CITATION_IN_TEXT_SOURCE}\\s$`, "u"),
+              handler: ({ state, range, match }) => {
+                const key = match[1] ?? "";
+                if (key === "" || trimCiteKey(key) !== key) return null;
+                state.tr.replaceWith(range.from, range.to, [this.type.create({ source: `@${key}`, narrative: true }), state.schema.text(" ")]);
+              },
+            }),
+          ]
+        : []),
       new InputRule({
         find: new RegExp(`${CITATION_IN_TEXT_SOURCE}$`),
         handler: ({ state, range, match }) => {

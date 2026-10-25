@@ -1,6 +1,7 @@
 import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
 
+import { normalizeCodeMeta } from "@gogum4/editor-schema/codeMeta";
 import { resolveLanguage } from "@gogum4/editor-schema/codeLanguages";
 import { isMermaidLanguage } from "@gogum4/editor-core";
 import { LanguagePicker } from "./LanguagePicker";
@@ -19,6 +20,16 @@ export function CodeBlockView({ node, updateAttributes }: NodeViewProps) {
   const isMermaid = isMermaidLanguage(attrLanguage);
   // 그림이 있는 블록에서만 쓰는 것: 코드를 접고 그림만 볼 수 있다. 접어도 코드는 그대로 남아 있다.
   const [codeHidden, setCodeHidden] = useState(false);
+
+  const meta = (node.attrs.meta as string | null) ?? "";
+  // 입력 중에는 화면 값만 바꾸고, 포커스를 잃거나 Enter를 칠 때 문서에 저장한다(글자마다 되돌리기 단계가 생기지 않게).
+  const [metaDraft, setMetaDraft] = useState<string | null>(null);
+  const commitMeta = () => {
+    if (metaDraft === null) return;
+    const next = normalizeCodeMeta(metaDraft);
+    setMetaDraft(null);
+    if (next !== normalizeCodeMeta(meta)) updateAttributes({ meta: next });
+  };
 
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const resetTimer = useRef<number | undefined>(undefined);
@@ -41,6 +52,23 @@ export function CodeBlockView({ node, updateAttributes }: NodeViewProps) {
       {/* 이 막대는 편집 대상이 아니다. 누를 때 에디터의 선택이 옮겨 가지 않게 mousedown을 막는다. */}
       <div className="code-block-bar" contentEditable={false}>
         <LanguagePicker value={shown} onChange={(language) => updateAttributes({ language })} />
+        <input
+          className="code-block-meta"
+          type="text"
+          value={metaDraft ?? meta}
+          placeholder={strings.codeBlock.metaPlaceholder}
+          aria-label={strings.codeBlock.metaLabel}
+          spellCheck={false}
+          onChange={(event) => setMetaDraft(event.target.value)}
+          onBlur={commitMeta}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitMeta();
+              (event.target as HTMLInputElement).blur();
+            }
+          }}
+        />
         <div className="code-block-actions">
           {isMermaid && (
             <button

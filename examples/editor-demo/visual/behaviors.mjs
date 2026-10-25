@@ -343,6 +343,37 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "할 일 상태·서술형 인용·코드 블록 메타: Ctrl+Alt+Enter와 Alt+클릭으로 상태가 돌고, @키는 칩이 되고, 메타 입력 칸이 값을 지킨다",
+    async run({ page, open }) {
+      await open({ extras: true });
+      await focusScratch(page);
+      await page.keyboard.type("[] 할 일");
+      const status = () => page.evaluate(() => [...document.querySelectorAll("li[data-checked]")].at(-1)?.getAttribute("data-status") ?? null);
+      eq(await status(), null, "처음에는 상태 없음");
+      await page.keyboard.press("Control+Alt+Enter");
+      eq(await status(), "progress", "첫 번째는 진행 중");
+      await page.keyboard.press("Control+Alt+Enter");
+      eq(await status(), "deferred", "다음은 미룸");
+      await page.locator("li[data-checked] input[type=checkbox]").last().click({ modifiers: ["Alt"] });
+      eq(await status(), "question", "Alt+클릭으로 다음 상태");
+      eq(await page.evaluate(() => [...document.querySelectorAll("li[data-checked]")].at(-1)?.getAttribute("data-checked")), "false", "상태가 있으면 완료 표시는 꺼진다");
+      // 서술형 인용
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Enter");
+      await page.keyboard.type("보면 @smith2020 ");
+      const chip = await page.evaluate(() => [...document.querySelectorAll("cite.md-citation, span.md-citation")].map((el) => el.textContent));
+      assert(chip.includes("@smith2020"), `서술형 칩은 괄호 없이 @키: ${JSON.stringify(chip)}`);
+      // 코드 블록 메타
+      await page.keyboard.type("```");
+      await page.keyboard.type(" ");
+      await page.waitForSelector(".code-block-meta", { timeout: 2000 });
+      await page.fill(".code-block-meta", 'title="a.ts" {2}');
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(100);
+      eq(await page.inputValue(".code-block-meta"), 'title="a.ts" {2}', "메타 값이 저장되어 입력 칸에 남는다");
+    },
+  },
+  {
     name: "이모지 자동완성: :글자로 후보가 뜨고 고르면 입력되며, :만 치면 최근에 쓴 이모지를 제안한다",
     async run({ page, open }) {
       await open({ extras: true });
