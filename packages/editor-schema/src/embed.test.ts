@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { detectEmbed, EMBED_DEFAULT_SIZE, EMBED_PROVIDERS, embedSource, isEmbedProvider, normalizeEmbedSize, normalizeEmbedTarget } from "./embed.ts";
+import { blueskyProfile, detectEmbed, EMBED_DEFAULT_SIZE, EMBED_PROVIDERS, embedSource, isEmbedProvider, normalizeEmbedSize, normalizeEmbedTarget, withBlueskyDid } from "./embed.ts";
 
 describe("detectEmbed", () => {
   it("YouTube: 여러 주소 모양을 한 주소로 정규화한다", () => {
@@ -53,6 +53,35 @@ describe("detectEmbed", () => {
       "https://soundcloud.com/artist",
       "https://www.pinterest.com/user/board/",
     ]) {
+      expect(detectEmbed(input), input).toBeNull();
+    }
+  });
+});
+
+describe("Bluesky", () => {
+  const did = "did:plc:z72i7hdynmk6r22z27h6tvur";
+
+  it("핸들·DID 주소를 알아보고 핸들은 소문자로 정규화한다", () => {
+    expect(detectEmbed("https://bsky.app/profile/Alice.Bsky.Social/post/3kabc123xyz?x=1")).toEqual({ provider: "bluesky", url: "https://bsky.app/profile/alice.bsky.social/post/3kabc123xyz" });
+    expect(detectEmbed(`https://bsky.app/profile/${did}/post/3kabc123xyz`)).toEqual({ provider: "bluesky", url: `https://bsky.app/profile/${did}/post/3kabc123xyz` });
+  });
+
+  it("DID 주소만 iframe 주소가 되고, 핸들 주소는 null이다 (embed.bsky.app이 DID만 받는다)", () => {
+    expect(embedSource(detectEmbed(`https://bsky.app/profile/${did}/post/3kabc123xyz`)!)).toBe(`https://embed.bsky.app/embed/${did}/app.bsky.feed.post/3kabc123xyz?id=3kabc123xyz`);
+    expect(embedSource(detectEmbed("https://bsky.app/profile/alice.bsky.social/post/3kabc123xyz")!)).toBeNull();
+  });
+
+  it("withBlueskyDid: 핸들 주소를 DID 주소로 바꾼다 (올바른 DID만)", () => {
+    const handle = detectEmbed("https://bsky.app/profile/alice.bsky.social/post/3kabc123xyz")!;
+    expect(blueskyProfile(handle)).toEqual({ profile: "alice.bsky.social", rkey: "3kabc123xyz", isDid: false });
+    const next = withBlueskyDid(handle, did)!;
+    expect(embedSource(next)).toContain(`/embed/${did}/app.bsky.feed.post/3kabc123xyz`);
+    expect(withBlueskyDid(handle, "not-a-did")).toBeNull();
+    expect(withBlueskyDid(detectEmbed("https://youtu.be/dQw4w9WgXcQ")!, did)).toBeNull();
+  });
+
+  it("다른 모양은 거절한다", () => {
+    for (const input of ["https://bsky.app/profile/alice/post/3k", "https://bsky.app/profile/alice.bsky.social", "https://bsky.app/profile/alice.bsky.social/feed/3k", "https://bsky.app.evil.com/profile/alice.bsky.social/post/3k", "https://bsky.app/profile/a b.social/post/3k", "https://bsky.app/profile/alice.bsky.social/post/3k\"x"]) {
       expect(detectEmbed(input), input).toBeNull();
     }
   });
@@ -134,7 +163,7 @@ describe("적대적 입력 (보안)", () => {
       return seed / 4294967296;
     };
     const pieces = ["https://", "http://", "youtu.be/", "www.youtube.com/watch?v=", "x.com/", "twitter.com/", "/status/", "instagram.com/p/", "pinterest.com/pin/", "soundcloud.com/", "dQw4w9WgXcQ", "abc", "20", "\"", "'", "<", ">", " ", "\n", "%22", "@", ":", "#", "?", "&", "../", "evil.com/", "‮", "у", "..", "//"];
-    const allowed = [/^https:\/\/www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]{11}$/, /^https:\/\/platform\.twitter\.com\/embed\/Tweet\.html\?id=\d+$/, /^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/embed\/captioned\/$/, /^https:\/\/assets\.pinterest\.com\/ext\/embed\.html\?id=\d+$/, /^https:\/\/w\.soundcloud\.com\/player\/\?url=[A-Za-z0-9%._~-]+$/];
+    const allowed = [/^https:\/\/www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]{11}$/, /^https:\/\/platform\.twitter\.com\/embed\/Tweet\.html\?id=\d+$/, /^https:\/\/www\.instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/embed\/captioned\/$/, /^https:\/\/assets\.pinterest\.com\/ext\/embed\.html\?id=\d+$/, /^https:\/\/w\.soundcloud\.com\/player\/\?url=[A-Za-z0-9%._~-]+$/, /^https:\/\/embed\.bsky\.app\/embed\/did:(plc|web):[A-Za-z0-9._:%-]+\/app\.bsky\.feed\.post\/[A-Za-z0-9._~-]+\?id=[A-Za-z0-9._~-]+$/];
     let accepted = 0;
     for (let i = 0; i < 30000; i++) {
       const input = Array.from({ length: 1 + Math.floor(next() * 8) }, () => pieces[Math.floor(next() * pieces.length)]).join("");

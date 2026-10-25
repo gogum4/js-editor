@@ -1,6 +1,13 @@
 import { InputRule, mergeAttributes, Node } from "@tiptap/core";
 
-import { type CalloutType, calloutTypeFromName, DEFAULT_CALLOUT_TYPE, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import {
+  type CalloutType,
+  calloutTypeFromName,
+  DEFAULT_CALLOUT_TYPE,
+  normalizeCalloutFold,
+  normalizeCalloutTitle,
+  normalizeCalloutType,
+} from "@gogum4/editor-schema/callout";
 import type { NodeViewOptions } from "../ports/ui";
 
 declare module "@tiptap/core" {
@@ -28,6 +35,23 @@ export const Callout = Node.create<NodeViewOptions>({
         default: DEFAULT_CALLOUT_TYPE,
         parseHTML: (element) => normalizeCalloutType(element.getAttribute("data-callout")),
         renderHTML: (attributes) => ({ "data-callout": normalizeCalloutType(attributes.type) }),
+      },
+      // 제목(없으면 종류의 기본 제목)과 접기 표식(`+`/`-`, 없으면 접지 않음). Markdown의 `> [!NOTE]- 제목`과 같다.
+      title: {
+        default: null,
+        parseHTML: (element) => normalizeCalloutTitle(element.getAttribute("data-callout-title")),
+        renderHTML: (attributes) => {
+          const title = normalizeCalloutTitle(attributes.title);
+          return title === null ? {} : { "data-callout-title": title };
+        },
+      },
+      fold: {
+        default: null,
+        parseHTML: (element) => normalizeCalloutFold(element.getAttribute("data-callout-fold")),
+        renderHTML: (attributes) => {
+          const fold = normalizeCalloutFold(attributes.fold);
+          return fold === null ? {} : { "data-callout-fold": fold };
+        },
       },
     };
   },

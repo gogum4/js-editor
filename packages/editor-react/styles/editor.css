@@ -202,6 +202,49 @@
 .md-editor .callout-icon > button:hover {
   background: rgba(0, 0, 0, 0.06);
 }
+.md-editor .callout-main {
+  flex: 1;
+  min-width: 0;
+}
+.md-editor .callout-head {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+}
+.md-editor .callout-fold-toggle {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 4px;
+  line-height: 1;
+  cursor: pointer;
+}
+.md-editor .callout-fold-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.md-editor .callout-title-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.1rem 0.25rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+}
+.md-editor .callout-title-input:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.4);
+}
+.md-editor .callout[data-collapsed="true"] .callout-content {
+  display: none;
+}
+.md-editor .callout-menu-sep {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: var(--md-c-e5e5e5, #e5e5e5);
+}
 .md-editor .callout-content {
   flex: 1;
   min-width: 0;

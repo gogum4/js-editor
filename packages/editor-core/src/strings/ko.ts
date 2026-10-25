@@ -11,6 +11,13 @@ export const koStrings: EditorStrings = {
     changeLabel: (current) => `콜아웃 종류 변경 (지금: ${current})`,
     changeTitle: "종류 변경",
     types: { note: "정보", tip: "팁", important: "중요", warning: "경고", caution: "주의" },
+    titlePlaceholder: "제목 (비우면 기본 제목)",
+    addTitle: "제목 넣기",
+    removeTitle: "제목 빼기",
+    foldNone: "접지 않음",
+    foldOpen: "접을 수 있음 (펼친 채로)",
+    foldClosed: "접을 수 있음 (접힌 채로)",
+    toggleFold: "접기/펴기",
   },
   codeBlock: { show: "코드 보기", hide: "코드 접기", copy: "복사", copied: "복사됨", copyFailed: "복사 실패" },
   embed: {

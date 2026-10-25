@@ -399,3 +399,19 @@ describe("hardBreakStyle", () => {
     expect(out(doc, "newline")).toBe(text);
   });
 });
+
+describe("콜아웃 제목과 접기 표식", () => {
+  const out = (attrs: Record<string, unknown>) =>
+    docToMarkdown({ type: "doc", content: [{ type: "callout", attrs, content: [{ type: "paragraph", content: [{ type: "text", text: "내용" }] }] }] }, { pageTitle: () => null }).markdown;
+
+  it("제목은 표식 줄 뒤에, 접기 표식은 ] 바로 뒤에 쓴다", () => {
+    expect(out({ type: "note", title: "제목" })).toBe("> [!NOTE] 제목\n> 내용\n");
+    expect(out({ type: "rocket", fold: "-" })).toBe("> [!rocket]-\n> 내용\n");
+    expect(out({ type: "tip", title: "팁 제목", fold: "+" })).toBe("> [!TIP]+ 팁 제목\n> 내용\n");
+  });
+
+  it("잘못된 값(여러 줄 제목, 이상한 접기 표식)은 정리하거나 버린다", () => {
+    expect(out({ type: "note", title: "한 줄\n둘째 줄" })).toBe("> [!NOTE] 한 줄 둘째 줄\n> 내용\n");
+    expect(out({ type: "note", title: "  ", fold: "x" })).toBe("> [!NOTE]\n> 내용\n");
+  });
+});

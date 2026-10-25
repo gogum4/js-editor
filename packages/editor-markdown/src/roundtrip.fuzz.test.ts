@@ -33,6 +33,7 @@ const EMBEDS: Array<[string, string]> = [
   ["instagram", "https://www.instagram.com/p/Cabc_123/"],
   ["pinterest", "https://www.pinterest.com/pin/123456/"],
   ["soundcloud", "https://soundcloud.com/artist/track-name"],
+  ["bluesky", "https://bsky.app/profile/alice.bsky.social/post/3kabc123xyz"],
 ];
 
 function build(seed: number): PmNode {
@@ -64,7 +65,9 @@ function build(seed: number): PmNode {
       return { type: "embed", attrs: { provider, url, ...(width !== null ? { width } : {}), ...(height !== null ? { height } : {}) } };
     }
     if (roll < 0.66 && depth < 2) {
-      return { type: "callout", attrs: { type: pick(CALLOUTS) }, content: [paragraph({ indent: null }), ...(r() < 0.3 ? [paragraph({ indent: null })] : [])].map(stripIndent) };
+      const title = r() < 0.4 ? pick(["제목", "두 단어 제목", "Title 1"]) : null;
+      const fold = r() < 0.3 ? pick(["+", "-"]) : null;
+      return { type: "callout", attrs: { type: pick(CALLOUTS), ...(title !== null ? { title } : {}), ...(fold !== null ? { fold } : {}) }, content: [paragraph({ indent: null }), ...(r() < 0.3 ? [paragraph({ indent: null })] : [])].map(stripIndent) };
     }
     if (roll < 0.76 && depth < 2) return { type: "blockquote", content: [stripIndent(paragraph())] };
     if (roll < 0.86) {

@@ -280,6 +280,34 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "콜아웃: 메뉴로 제목을 넣고 접을 수 있게 하며, 제목 줄에서 접고 편다",
+    async run({ page, open }) {
+      await open();
+      const attrs = () =>
+        page.evaluate(() => {
+          let value = null;
+          window.__demo.editor.state.doc.descendants((node) => {
+            if (value === null && node.type.name === "callout") value = { title: node.attrs.title, fold: node.attrs.fold };
+          });
+          return value;
+        });
+      await page.click(".ProseMirror .callout-icon button");
+      await page.click('.callout-menu [role="menuitem"]:has-text("제목 넣기")');
+      await page.fill(".ProseMirror .callout-title-input", "내 제목");
+      eq((await attrs()).title, "내 제목", "입력한 제목");
+      await page.click(".ProseMirror .callout-icon button");
+      await page.click('.callout-menu [role="menuitem"]:has-text("접힌 채로")');
+      eq((await attrs()).fold, "-", "접기 표식");
+      const display = () => page.evaluate(() => getComputedStyle(document.querySelector(".ProseMirror .callout-content")).display);
+      await page.waitForTimeout(100);
+      eq(await display(), "none", "접힌 채로 시작하면 본문이 숨는다");
+      await page.click(".ProseMirror .callout-fold-toggle");
+      await page.waitForTimeout(100);
+      assert((await display()) !== "none", "누르면 펼쳐진다");
+      eq((await attrs()).fold, "-", "펴도 문서의 접기 표식은 그대로");
+    },
+  },
+  {
     name: "링크: Ctrl+클릭만 열고 그냥 클릭은 열지 않는다",
     async run({ page, open }) {
       await open();

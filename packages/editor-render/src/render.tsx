@@ -1,8 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { calloutMeta, normalizeCalloutType } from "@gogum4/editor-schema/callout";
+import { calloutMeta, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeIndent } from "@gogum4/editor-schema/indent";
-import { EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
+import { blueskyProfile, EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget, withBlueskyDid } from "@gogum4/editor-schema/embed";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { normalizeReferenceProps } from "@gogum4/editor-schema/reference";
@@ -292,12 +292,25 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
       const type = normalizeCalloutType(node.attrs?.type);
       const meta = calloutMeta(type, ctx.options.calloutIcons);
       const label = ctx.strings.callout[type] ?? meta.label;
+      const title = normalizeCalloutTitle(node.attrs?.title);
+      const fold = normalizeCalloutFold(node.attrs?.fold);
       return (
         <div key={key} id={anchorId(node, ctx)} className={`callout callout-${type}`} data-callout={type} role="note" aria-label={label}>
           <div className="callout-icon" aria-hidden="true">
             {meta.icon}
           </div>
-          <div className="callout-body">{renderBlocks(node.content, ctx)}</div>
+          {fold !== null ? (
+            // 접을 수 있는 콜아웃: 제목(없으면 종류의 기본 제목)이 눌러서 펴고 접는 줄이다.
+            <details className="callout-body" open={fold === "+"}>
+              <summary className="callout-title">{title ?? label}</summary>
+              {renderBlocks(node.content, ctx)}
+            </details>
+          ) : (
+            <div className="callout-body">
+              {title !== null && <div className="callout-title">{title}</div>}
+              {renderBlocks(node.content, ctx)}
+            </div>
+          )}
         </div>
       );
     }
@@ -348,9 +361,25 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
     }
     case "embed": {
       // 외부 임베드: 허용한 도메인의 iframe만 그린다(주소가 올바르지 않으면 아무것도 그리지 않는다).
-      const target = normalizeEmbedTarget(node.attrs?.provider, node.attrs?.url);
+      let target = normalizeEmbedTarget(node.attrs?.provider, node.attrs?.url);
+      if (target !== null && target.provider === "bluesky" && embedSource(target) === null) {
+        // 핸들 주소: 소비자가 미리 알아낸 DID가 있으면 DID 주소로 바꿔 그린다.
+        const info = blueskyProfile(target);
+        const known = info === null ? undefined : lookupDid(ctx.options.blueskyDids, info.profile);
+        target = known === undefined ? target : (withBlueskyDid(target, known) ?? target);
+      }
       const src = target === null ? null : embedSource(target);
-      if (target === null || src === null) return null;
+      if (target === null) return null;
+      if (src === null) {
+        // 그릴 수 없는 임베드(DID를 모르는 Bluesky)는 원본 링크만 그린다.
+        return (
+          <div key={key} className="md-embed" data-embed="" data-provider={target.provider}>
+            <a href={target.url} target="_blank" rel="noopener noreferrer nofollow">
+              {target.url}
+            </a>
+          </div>
+        );
+      }
       const defaults = EMBED_DEFAULT_SIZE[target.provider];
       const width = normalizeEmbedSize(node.attrs?.width) ?? defaults.width;
       const height = normalizeEmbedSize(node.attrs?.height);
@@ -424,6 +453,12 @@ function renderFootnotes(ctx: Context): ReactNode {
  * 본문 JSON을 React 요소로 만든다. **훅·브라우저 API 없이** 문서 순서대로 한 번 도는 순수 함수라서
  * Next.js 서버 컴포넌트, `react-dom/server`, 일반 React 어디서나 같은 결과를 낸다.
  */
+/** 핸들 → DID 표(Map이나 객체)에서 DID를 찾는다. */
+function lookupDid(table: ReadonlyMap<string, string> | Readonly<Record<string, string>> | undefined, handle: string): string | undefined {
+  if (table === undefined) return undefined;
+  return table instanceof Map ? table.get(handle) : (table as Readonly<Record<string, string>>)[handle];
+}
+
 export function renderDoc(doc: PmNode, options: RenderOptions = {}): ReactNode {
   const ctx: Context = {
     options,

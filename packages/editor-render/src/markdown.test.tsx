@@ -119,6 +119,29 @@ describe("방언·참조 (P7)", () => {
     expect(doc.content?.map((n) => n.type)).toEqual(["callout", "embed", "paragraph"]);
   });
 
+  it("콜아웃 제목과 접기 표식을 그린다 (+는 펼친 채, -는 접은 채)", async () => {
+    const html = async (md: string) => renderToStaticMarkup((await renderMarkdown(md)).element as never);
+    const titled = await html("> [!tip] 알아 두기\n> 내용");
+    expect(titled).toContain('<div class="callout-title">알아 두기</div>');
+    const open = await html("> [!note]+ 열린\n> 내용");
+    expect(open).toMatch(/<details class="callout-body" open="">\s*<summary class="callout-title">열린<\/summary>/);
+    const closed = await html("> [!note]-\n> 내용");
+    expect(closed).toContain('<details class="callout-body"><summary class="callout-title">정보</summary>');
+    expect(closed).not.toContain("open=");
+  });
+
+  it("Bluesky: DID 주소는 iframe, 핸들 주소는 미리 알아낸 DID가 있으면 iframe, 없으면 원본 링크만", async () => {
+    const did = "did:plc:z72i7hdynmk6r22z27h6tvur";
+    const html = async (md: string, options = {}) => renderToStaticMarkup((await renderMarkdown(md, options)).element as never);
+    expect(await html(`![](https://bsky.app/profile/${did}/post/3kabc123xyz)`)).toContain(`embed.bsky.app/embed/${did}/app.bsky.feed.post/3kabc123xyz`);
+    const handle = "![](https://bsky.app/profile/alice.bsky.social/post/3kabc123xyz)";
+    const bare = await html(handle);
+    expect(bare).not.toContain("<iframe");
+    expect(bare).toContain('href="https://bsky.app/profile/alice.bsky.social/post/3kabc123xyz"');
+    expect(await html(handle, { blueskyDids: new Map([["alice.bsky.social", did]]) })).toContain(`embed.bsky.app/embed/${did}`);
+    expect(await html(handle, { blueskyDids: { "alice.bsky.social": did } })).toContain("<iframe");
+  });
+
   it("embeds·indent를 끄면 일반 이미지·글자로 본다", async () => {
     const { doc } = await renderMarkdown("![](https://youtu.be/dQw4w9WgXcQ)\n\n&emsp;글\n", { embeds: false, indent: false });
     expect(doc.content?.some((n) => n.type === "embed")).toBe(false);

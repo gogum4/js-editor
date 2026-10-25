@@ -44,6 +44,13 @@ export const enStrings: EditorStrings = {
     changeLabel: (current) => `Change callout type (now: ${current})`,
     changeTitle: "Change type",
     types: { note: "Info", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution" },
+    titlePlaceholder: "Title (empty = default title)",
+    addTitle: "Add title",
+    removeTitle: "Remove title",
+    foldNone: "Not collapsible",
+    foldOpen: "Collapsible (open)",
+    foldClosed: "Collapsible (closed)",
+    toggleFold: "Collapse / expand",
   },
   codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed" },
   embed: {

@@ -102,9 +102,13 @@ describe("블록", () => {
   it("인용과 콜아웃(종류 이름·제목 줄)", () => {
     expect(blocks("> 인용\n> 둘째 줄")[0]).toMatchObject({ type: "blockquote" });
     expect(blocks("> [!WARNING]\n> 조심")[0]).toEqual({ type: "callout", attrs: { type: "warning" }, content: [para(text("조심"))] });
-    // Obsidian의 다른 종류 이름도 이름 그대로 보존하고, 제목 줄은 굵은 문단으로.
+    // Obsidian의 다른 종류 이름도 이름 그대로 보존하고, 표식 줄의 나머지는 제목(title 속성)이다.
     const info = blocks("> [!info] 알아 두기\n> 내용")[0]!;
-    expect(info).toEqual({ type: "callout", attrs: { type: "info" }, content: [para(text("알아 두기", "bold")), para(text("내용"))] });
+    expect(info).toEqual({ type: "callout", attrs: { type: "info", title: "알아 두기" }, content: [para(text("내용"))] });
+    // 종류 이름과 같은 글자는 기본 제목이라 생략하고, `+`/`-`는 접기 표식(fold)이다.
+    expect(blocks("> [!tip] Tip\n> 내용")[0]).toEqual({ type: "callout", attrs: { type: "tip" }, content: [para(text("내용"))] });
+    expect(blocks("> [!note]- 접힌 제목\n> 내용")[0]).toEqual({ type: "callout", attrs: { type: "note", title: "접힌 제목", fold: "-" }, content: [para(text("내용"))] });
+    expect(blocks("> [!faq]+\n> 내용")[0]).toEqual({ type: "callout", attrs: { type: "faq", fold: "+" }, content: [para(text("내용"))] });
     expect(blocks("> [!rocket] 출시\n> 내용")[0]).toMatchObject({ type: "callout", attrs: { type: "rocket" } });
     expect(blocks("> [!tip]")[0]).toEqual({ type: "callout", attrs: { type: "tip" }, content: [{ type: "paragraph" }] });
   });
