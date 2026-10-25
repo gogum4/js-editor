@@ -4,6 +4,7 @@ import type * as Y from "yjs";
 import { type CoreExtensionsOptions, createCoreExtensions } from "@gogum4/editor-core";
 import type { EditorMenus, EditorUi, EditorViews } from "@gogum4/editor-core";
 import { completionMenuRender } from "./menus/completionMenuRender";
+import { emojiMenuRender } from "./menus/emojiMenuRender";
 import { slashMenuRender } from "./menus/slashMenuRender";
 import { openFootnoteEditor } from "./stores/footnoteEditStore";
 import { openMathEditor } from "./stores/mathEditStore";
@@ -28,6 +29,7 @@ export const reactViews: EditorViews = {
 /** React로 그리는 메뉴 일체. */
 export const reactMenus: EditorMenus = {
   slash: slashMenuRender,
+  emoji: emojiMenuRender,
   codeCompletion: completionMenuRender,
 };
 

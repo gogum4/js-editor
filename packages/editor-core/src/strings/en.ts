@@ -58,6 +58,7 @@ export const enStrings: EditorStrings = {
     comment: { placeholder: "Comment (hidden from readers)", label: "Comment", edit: "Edit comment" },
     citation: { placeholder: "@citekey (separate several with ;)", invalid: "A citation key starting with @ is required", open: "Open source", edit: "Edit citation" },
     definition: { termPlaceholder: "Term", detailPlaceholder: "Definition" },
+    emojiMenu: { label: "Emoji suggestions", recent: "Recently used", suggested: "Suggested" },
     items: {
       toc: { label: "Table of contents", description: "Built from the headings" },
       definitionList: { label: "Definition list", description: "Terms and definitions (`: definition` under a term)" },

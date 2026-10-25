@@ -58,6 +58,8 @@ export interface EditorStrings {
     comment: { placeholder: string; label: string; edit: string };
     citation: { placeholder: string; invalid: string; open: string; edit: string };
     definition: { termPlaceholder: string; detailPlaceholder: string };
+    /** 이모지 자동완성 메뉴(`:`). `recent`는 `:`만 쳤을 때 위에 붙는 제목이다. */
+    emojiMenu: { label: string; recent: string; suggested: string };
     items: Readonly<Record<string, { label: string; description: string }>>;
   };
   /** 임베드 노드(주소로 끼워 넣는 영상·게시물, `createCoreExtensions({ embed: true })`). */

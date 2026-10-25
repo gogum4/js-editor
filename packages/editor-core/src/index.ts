@@ -30,6 +30,8 @@ export type { Candidate } from "./completion/words";
 export { Raw, RawInline } from "./raw/Raw";
 export { Reference } from "./reference/Reference";
 export { applyEmbedInput, Embed } from "./embed/Embed";
+export { EmojiSuggest } from "./extras/EmojiSuggest";
+export type { EmojiSuggestion } from "./extras/EmojiSuggest";
 export { setFootnoteText } from "./footnote/footnoteEdit";
 export type { FootnoteEditState } from "./footnote/footnoteEdit";
 export { FOOTNOTE_NODE, collectFootnotes } from "./footnote/footnotes";

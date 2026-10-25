@@ -162,7 +162,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     ...(options.raw ? [Raw, RawInline] : []),
     ...(options.reference ? [Reference.configure({ nodeView: views.reference ?? null })] : []),
     ...(options.embed ? [Embed.configure({ nodeView: views.embed ?? null })] : []),
-    ...extraExtensions(options.extras),
+    ...extraExtensions(options.extras, options.menus),
     ...(options.settle ? [Settle] : []),
     SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),

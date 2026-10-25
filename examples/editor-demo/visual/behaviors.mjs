@@ -343,6 +343,53 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "이모지 자동완성: :글자로 후보가 뜨고 고르면 입력되며, :만 치면 최근에 쓴 이모지를 제안한다",
+    async run({ page, open }) {
+      await open({ extras: true });
+      await focusScratch(page);
+      const menu = () => page.evaluate(() => [...document.querySelectorAll(".md-menu-emoji [data-emoji-name]")].map((li) => li.getAttribute("data-emoji-name")));
+      // 시간 표기나 한 글자는 메뉴를 띄우지 않는다.
+      await page.keyboard.type("시각 10:3");
+      await page.waitForTimeout(150);
+      eq(await menu(), [], "시간 표기에서는 메뉴 없음");
+      await page.keyboard.press("Backspace");
+      await page.keyboard.press("Backspace");
+      await page.keyboard.press("Backspace");
+      await page.keyboard.press("Backspace");
+      // 쓴 기록이 없을 때 ':'만 치면 기본 제안(제목이 "이모지 제안").
+      await page.keyboard.type(" :");
+      await page.waitForSelector(".md-menu-emoji [data-emoji-name]", { timeout: 2000 });
+      eq(await page.evaluate(() => document.querySelector(".md-menu-emoji .md-menu-heading")?.textContent), "이모지 제안", "기록이 없으면 기본 제안 제목");
+      eq((await menu())[0], "+1", "기본 제안의 첫 항목");
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Backspace");
+      await page.keyboard.press("Backspace");
+      // 공백 뒤의 ":smi" → 후보
+      await page.keyboard.type(" :smi");
+      await page.waitForSelector(".md-menu-emoji [data-emoji-name]", { timeout: 2000 });
+      assert((await menu())[0] === "smile", `첫 후보는 smile: ${(await menu()).join(",")}`);
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+      assert((await lastText(page)).includes("😄"), `이모지가 입력된다: ${await lastText(page)}`);
+      assert(!(await lastText(page)).includes(":smi"), "입력한 :smi는 사라진다");
+      eq(await menu(), [], "고른 뒤 메뉴가 닫힌다");
+      // 한국어 동의어로도 찾는다.
+      await page.keyboard.type(" :로켓");
+      await page.waitForSelector(".md-menu-emoji [data-emoji-name]", { timeout: 2000 });
+      eq((await menu())[0], "rocket", "한국어 동의어");
+      await page.keyboard.press("ArrowDown").catch(() => {});
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(100);
+      eq(await menu(), [], "Esc로 닫힌다");
+      // ':'만 치면 최근에 쓴 이모지(맨 앞이 방금 쓴 😄)
+      await page.keyboard.type(" :");
+      await page.waitForSelector(".md-menu-emoji [data-emoji-name]", { timeout: 2000 });
+      eq((await menu())[0], "smile", "최근에 쓴 것이 먼저");
+      eq(await page.evaluate(() => document.querySelector(".md-menu-emoji .md-menu-heading")?.textContent), "최근에 쓴 이모지", "기록이 있으면 최근 제목");
+      assert(await page.evaluate(() => !!document.querySelector(".md-menu-emoji .md-menu-heading")), "최근 제목이 보인다");
+    },
+  },
+  {
     name: "선택 서식 막대: 글을 선택하면 뜨고 서식·색·약어를 건다",
     async run({ page, open }) {
       await open({ extras: true });
