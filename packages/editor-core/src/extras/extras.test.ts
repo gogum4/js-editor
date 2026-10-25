@@ -1,12 +1,22 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from "vitest";
+import type { Editor } from "@tiptap/core";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { createCoreExtensions } from "../coreExtensions";
 import { runSlashCommand } from "../slash/runSlashCommand";
 import { newEditor, typeText } from "../testing/typing";
 
 const all = { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true } as const;
-const editorWith = (extras = all) => newEditor(undefined, createCoreExtensions(null, { extras }));
+// 만든 편집기는 시험이 끝나면 모두 닫는다(닫지 않으면 ProseMirror의 타이머가 시험 환경이 사라진 뒤에 돌아 `document is not defined`가 난다).
+const created: Editor[] = [];
+afterEach(() => {
+  for (const editor of created.splice(0)) editor.destroy();
+});
+const editorWith = (extras = all) => {
+  const editor = newEditor(undefined, createCoreExtensions(null, { extras }));
+  created.push(editor);
+  return editor;
+};
 const inline = (editor: ReturnType<typeof newEditor>) => {
   const out: Array<string | [string, string[]]> = [];
   editor.state.doc.firstChild!.forEach((child) => out.push(child.isText ? [child.text!, child.marks.map((mark) => mark.type.name)] : `${child.type.name}:${JSON.stringify(child.attrs)}`));
@@ -38,6 +48,7 @@ describe("추가 문법: 입력 규칙", () => {
 
   it("켜지 않은 문법은 입력 규칙도 스키마도 없다", () => {
     const plain = newEditor();
+    created.push(plain);
     typeText(plain, "==x== %%y%% #z ");
     expect(plain.state.doc.firstChild!.textContent).toBe("==x== %%y%% #z ");
     expect(plain.schema.marks.highlight).toBeUndefined();
