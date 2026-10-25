@@ -311,6 +311,11 @@ export interface ImportContext {
    */
   dialect?: MarkdownDialect;
   /**
+   * 방언의 항목을 하나씩 덮어쓴다. 방언 둘 사이의 조합이 필요한 소비자를 위한 것이다 — 예: `dialect: "obsidian"`(콜아웃·수식·각주)에
+   * `{ rawEmbeds: true, keepAnyHref: true, mdLinksToPages: false }`를 얹으면 이미지·HTML·열 정렬 표를 원문으로 보존하면서(글 원본을 잃지 않는다) Obsidian 문법을 읽는다.
+   */
+  profile?: Partial<DialectProfile>;
+  /**
    * 참조 노드(`reference`)로 읽을 줄. `true`면 기본 표기 `::ref{kind=… id=…}`, 함수면 소비자의 표기(한 줄을 받아 대상이거나 null).
    * 끄면(기본) 글자로 읽는다. `createCoreExtensions({ reference: true })`와 짝이다.
    */
@@ -920,7 +925,7 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
  * 이미지 노드는 `importPath`만 가지고 있다 — 이미지를 저장소에 넣은 뒤 `finalizeImages`로 해시와 형식을 채운다.
  */
 export function markdownToDoc(markdown: string, ctx: ImportContext, fromDir: string): MarkdownImportResult {
-  const profile = profileOf(ctx.dialect);
+  const profile = profileOf(ctx.dialect, ctx.profile);
   const { text, store, footnotes } = protect(markdown, profile, ctx.references ?? false);
   const state: State = { ctx, profile, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
   const tokens = new Lexer({ gfm: true, breaks: false }).lex(text);

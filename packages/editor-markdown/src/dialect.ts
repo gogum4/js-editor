@@ -40,6 +40,8 @@ const PROFILES: Readonly<Record<MarkdownDialect, DialectProfile>> = {
   gfm: { ...OBSIDIAN, wikiExtras: false, blockIds: false, callouts: false, math: false, footnotes: false, imageWidth: false, rawEmbeds: true, mdLinksToPages: false, keepAnyHref: true, singleTildeStrike: false },
 };
 
-export function profileOf(dialect: MarkdownDialect | undefined): DialectProfile {
-  return PROFILES[dialect ?? "obsidian"];
+/** 방언의 묶음. `override`로 항목을 하나씩 바꿀 수 있다(예: 콜아웃·수식은 Obsidian대로 읽으면서 이미지·HTML은 원문으로 보존하는 블로그). */
+export function profileOf(dialect: MarkdownDialect | undefined, override?: Partial<DialectProfile>): DialectProfile {
+  const base = PROFILES[dialect ?? "obsidian"];
+  return override === undefined ? base : { ...base, ...override };
 }

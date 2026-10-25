@@ -172,6 +172,20 @@ GFM 표는 병합 셀, 머리글 없는 표, 셀 안의 여러 블록을 표현�
 - **내보내기**: `pageLink`는 `[[제목]]`/`[[제목|표시 글자]]`(`pageTitle(pageId)`가 대상 글자를 돌려준다). `_`·`[`·`*` 앞에 `\`를 붙이는 이스케이프 정규화는 렌더 결과가 같다.
 - **참조 설정**: `{{table:이름 rows=5}}` 같은 표기는 `references`(가져오기 함수·내보내기 `toMarkdown(kind, id, props)`)로 연결한다. 기본 표기는 `::ref{kind=… id=… rows=5}`(나머지 속성이 `props`).
 
+## 방언 항목 덮어쓰기 (`profile`, 옵션)
+
+방언 둘(`obsidian`·`gfm`)의 중간이 필요하면 가져오기 `ImportContext.profile`로 `DialectProfile`의 항목을 하나씩 덮어쓴다. 예: 블로그는 콜아웃·수식·각주는 Obsidian대로 읽고(`dialect: "obsidian"`), 이미지·HTML·열 정렬 표는 에디터가 구조를 모르므로 원문으로 보존하고(`rawEmbeds: true`), `/글-슬러그` 같은 상대 링크의 주소를 그대로 둔다(`keepAnyHref: true`, `mdLinksToPages: false`).
+
+```ts
+const ctx: ImportContext = {
+  resolvePage: () => null,
+  resolveImage: () => null,
+  profile: { rawEmbeds: true, keepAnyHref: true, mdLinksToPages: false },
+};
+```
+
+내보내기는 `dialect`만 본다(원문 `raw`·`rawInline`은 그대로 나가므로 따로 덮어쓸 것이 없다).
+
 ## 알려진 손실 (0.2)
 
 내보냈다가 다시 읽으면 다음이 달라진다. 골든의 `lossless: false` 픽스처와 `*.imported.json`이 실제 모양을 보여 준다.
