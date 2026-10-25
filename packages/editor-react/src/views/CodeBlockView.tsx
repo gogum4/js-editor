@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { normalizeCodeMeta } from "@gogum4/editor-schema/codeMeta";
 import { resolveLanguage } from "@gogum4/editor-schema/codeLanguages";
 import { isMermaidLanguage } from "@gogum4/editor-core";
+import { isPlotLanguage } from "@gogum4/editor-schema/plot";
 import { LanguagePicker } from "./LanguagePicker";
 import { MermaidPreview } from "./MermaidPreview";
+import { PlotPreview } from "./PlotPreview";
 import { useEditorStrings } from "../context";
 
 type CopyState = "idle" | "copied" | "failed";
@@ -18,7 +20,9 @@ export function CodeBlockView({ node, updateAttributes }: NodeViewProps) {
   const shown = resolveLanguage(attrLanguage) ?? (attrLanguage?.trim() ? attrLanguage : null);
 
   const isMermaid = isMermaidLanguage(attrLanguage);
-  // 그림이 있는 블록에서만 쓰는 것: 코드를 접고 그림만 볼 수 있다. 접어도 코드는 그대로 남아 있다.
+  const isPlot = isPlotLanguage(attrLanguage);
+  const hasPreview = isMermaid || isPlot;
+  // 그림이 있는 블록(mermaid·plot)에서만 쓰는 것: 코드를 접고 그림만 볼 수 있다. 접어도 코드는 그대로 남아 있다.
   const [codeHidden, setCodeHidden] = useState(false);
 
   const meta = (node.attrs.meta as string | null) ?? "";
@@ -70,7 +74,7 @@ export function CodeBlockView({ node, updateAttributes }: NodeViewProps) {
           }}
         />
         <div className="code-block-actions">
-          {isMermaid && (
+          {hasPreview && (
             <button
               type="button"
               className="code-block-toggle"
@@ -91,10 +95,11 @@ export function CodeBlockView({ node, updateAttributes }: NodeViewProps) {
         </div>
       </div>
       {/* 코드를 접어도 NodeViewContent는 그대로 두어야 문서 내용이 유지된다. 화면에서만 숨긴다. */}
-      <pre hidden={isMermaid && codeHidden}>
+      <pre hidden={hasPreview && codeHidden}>
         <NodeViewContent<"code"> as="code" />
       </pre>
       {isMermaid && <MermaidPreview source={node.textContent} />}
+      {isPlot && <PlotPreview source={node.textContent} />}
     </NodeViewWrapper>
   );
 }

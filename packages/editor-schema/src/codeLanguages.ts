@@ -13,9 +13,9 @@ const EXTRA_ALIASES: Readonly<Record<string, string>> = {
 
 /**
  * highlight.js 언어는 아니지만 언어 선택 목록에 넣는 것들. 색은 입히지 않고(`resolveLanguage`는 모른다고 답한다),
- * 코드 블록이 그에 맞는 화면으로 바꾼다. 예: mermaid는 다이어그램 그림.
+ * 코드 블록이 그에 맞는 화면으로 바꾼다. 예: mermaid는 다이어그램 그림, plot은 수식 그래프.
  */
-const SPECIAL_LANGUAGES: readonly string[] = ["mermaid"];
+const SPECIAL_LANGUAGES: readonly string[] = ["mermaid", "plot"];
 
 /** 언어 선택 목록에서 검색어가 없을 때 맨 위에 보여 줄 자주 쓰는 언어. */
 const POPULAR = [

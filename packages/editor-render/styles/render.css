@@ -392,6 +392,17 @@
   height: auto;
 }
 
+/* 수식 그래프(plot) */
+.md-doc figure.plot {
+  margin: 1em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+.md-doc figure.plot svg {
+  display: block;
+  margin-inline: auto;
+}
+
 /* 각주 */
 .md-doc .footnote-ref a {
   text-decoration: none;

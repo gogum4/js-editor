@@ -211,6 +211,34 @@ Obsidian·Joplin·Zotero(Pandoc)·Notion에서 자주 쓰는 표기를 **하나�
 - **Zotero 링크** `zotero://select/…`는 열 수 있는 링크다(`isSafeToOpen`).
 - 글자 속의 `#글`·`%%`·`==`·`++`·`^`·`:이름:`처럼 문법과 닮은 것은 내보낼 때 `\`로 막아 다시 읽어도 글자로 돌아온다(켠 옵션에 대해서만).
 
+## 수식 그래프 (```plot)
+
+**노드를 더하지 않는다** — 언어가 `plot`인 평범한 코드 블록이라 본문 스키마와 Markdown 왕복(다른 도구에서는 그냥 코드로 보인다)은 그대로다. 편집기는 코드 아래에 그림을 그리고(`PlotPreview`), 렌더러(`renderDoc`)는 SVG 그림(`figure.plot`)으로 낸다. 식이 틀리면 편집기는 오류를 보이고 렌더러는 일반 코드 블록으로 둔다(글을 잃지 않는다).
+
+````
+```plot
+title: 사인과 코사인
+x: -2pi..2pi
+y: -1.5..1.5
+y = sin(x)    # 사인
+y = cos(x)    # 코사인
+```
+````
+
+| 쓰기 | 뜻 |
+|---|---|
+| `y = 식`, `f(x) = 식`, 그냥 `식` | 2D 함수(x만 쓰면) |
+| `(cos(t), sin(t)), t = 0..2pi` (`for t in a..b`도) | 2D 매개변수 곡선 |
+| `z = 식`, `z(x,y) = 식`, 그냥 `식`(y도 쓰면) | 3D 곡면 — 편집기에서 **끌어서 돌리고** 더블클릭으로 처음 시점 |
+| `(cos(t), sin(t), t/5), t = 0..6pi` | 3D 곡선 |
+| `title:` · `x:` `y:` `z:`(`a..b`, 식 가능) · `grid: off` · `aspect: equal` | 설정 |
+| 줄 끝 ` # 이름` | 범례 이름(계열이 여럿이면 식이 이름) |
+
+- 식: 숫자·`x` `y` `t`·`pi`(π) `tau` `e`·`+ - * / % ^`(`**`)·괄호·함수(`sin cos tan asin acos atan atan2 sinh cosh tanh exp ln log log2 log10 sqrt cbrt abs floor ceil round sign min max pow mod hypot sinc`)·**생략된 곱셈**(`2x`, `2pi`, `(x+1)(x-1)`). `eval`·`Function`을 쓰지 않고 허용한 이름만 읽는 자체 계산기(`@gogum4/editor-schema/mathExpr`)라서 사용자 글로 코드를 실행할 수 없다.
+- 2D와 3D를 한 그림에 섞을 수 없다. 한 그림에 2D 8개·3D 곡면 3개·40줄까지. 점근선은 선을 끊고 세로 범위를 극단값에 휘둘리지 않게 자동으로 잡는다.
+- 색은 `currentColor`와 `--md-plot-1`…`--md-plot-8`(없으면 기본 색)이라 라이트/다크에서 읽힌다.
+- 소비자가 쓸 수 있는 순수 함수: `@gogum4/editor-schema/plot`(`parsePlot`·`sample2D`·`sample3D`·`isPlotLanguage`)와 `plotSvg`(`plotToSvg(spec, { yaw, pitch })`). 블로그처럼 자체 파이프라인을 쓰는 곳은 `plot` 코드 블록을 이 둘로 SVG로 바꾸면 된다.
+
 ## 방언 항목 덮어쓰기 (`profile`, 옵션)
 
 방언 둘(`obsidian`·`gfm`)의 중간이 필요하면 가져오기 `ImportContext.profile`로 `DialectProfile`의 항목을 하나씩 덮어쓴다. 예: 블로그는 콜아웃·수식·각주는 Obsidian대로 읽고(`dialect: "obsidian"`), 이미지·HTML·열 정렬 표는 에디터가 구조를 모르므로 원문으로 보존하고(`rawEmbeds: true`), `/글-슬러그` 같은 상대 링크의 주소를 그대로 둔다(`keepAnyHref: true`, `mdLinksToPages: false`).

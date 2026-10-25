@@ -233,3 +233,32 @@ describe("서술형 인용과 참고문헌", () => {
     expect(renderToStaticMarkup(renderDoc(doc, {}))).not.toContain("md-bibliography");
   });
 });
+
+describe("수식 그래프(plot) 코드 블록", () => {
+  const plot = (source: string): PmNode => ({ type: "doc", content: [{ type: "codeBlock", attrs: { language: "plot" }, content: [{ type: "text", text: source }] }] });
+
+  it("올바른 식은 SVG 그림(figure.plot)으로 그린다", () => {
+    const html = renderToStaticMarkup(renderDoc(plot("title: 사인\ny = sin(x)")));
+    expect(html).toContain('<figure class="plot">');
+    expect(html).toContain("<svg ");
+    expect(html).toContain(">사인</text>");
+    expect(html).not.toContain("<pre");
+  });
+
+  it("3D 곡면도 정지 그림으로", () => {
+    const html = renderToStaticMarkup(renderDoc(plot("z = x^2 + y^2")));
+    expect(html).toContain("<polygon");
+  });
+
+  it("식이 틀리면 일반 코드 블록으로 보인다 (글을 잃지 않는다)", () => {
+    const html = renderToStaticMarkup(renderDoc(plot("y = foo(x)")));
+    expect(html).toContain("<pre");
+    expect(html).toContain("y = foo(x)");
+    expect(html).not.toContain("<svg");
+  });
+
+  it("사용자 글은 이스케이프된다", () => {
+    const html = renderToStaticMarkup(renderDoc(plot("title: <b>x</b>\ny = x")));
+    expect(html).not.toContain("<b>x</b>");
+  });
+});

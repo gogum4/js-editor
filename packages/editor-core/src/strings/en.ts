@@ -53,6 +53,42 @@ export const enStrings: EditorStrings = {
     toggleFold: "Collapse / expand",
   },
   codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed", metaPlaceholder: "Title · highlight lines  e.g. title=\"a.ts\" {2,4}", metaLabel: "Code block info" },
+  plot: {
+    syntaxError: "Check the plot expressions",
+    empty: "Type an expression to see the plot. Example: y = sin(x)",
+    dragHint: "Drag to rotate · double-click to reset the view",
+    error: ({ code, line, name }) => {
+      const where = line > 0 ? `Line ${line}: ` : "";
+      switch (code) {
+        case "empty_plot":
+          return "Nothing to plot. Example: y = sin(x)";
+        case "empty":
+          return `${where}the expression is empty`;
+        case "unknown_name":
+          return `${where}unknown name '${name ?? ""}' (variables: x, y, t · functions: sin, cos, sqrt …)`;
+        case "bad_args":
+          return `${where}wrong number of arguments for ${name ?? "the function"}`;
+        case "unbalanced":
+          return `${where}unbalanced parentheses`;
+        case "bad_range":
+          return `${where}a range looks like 'a..b' with a < b (e.g. x: -2pi..2pi)`;
+        case "bad_option":
+          return `${where}unknown setting${name ? ` (${name})` : ""}. Use title, x, y, z, grid or aspect`;
+        case "bad_line":
+          return `${where}couldn't read this line. Example: (cos(t), sin(t)), t = 0..2pi`;
+        case "mixed_dims":
+          return "Can't mix 2D and 3D expressions in one plot (an expression using y is a 3D surface)";
+        case "too_many":
+          return "Too many lines (up to 8 curves in 2D, 3 surfaces in 3D, 40 lines)";
+        case "too_long":
+          return `${where}the expression is too long`;
+        case "too_deep":
+          return `${where}parentheses are nested too deeply`;
+        default:
+          return `${where}couldn't understand the expression`;
+      }
+    },
+  },
   extras: {
     toc: { title: "Contents", empty: "No headings", jump: "Jump to this heading" },
     bibliography: { title: "References", empty: "No citations yet" },

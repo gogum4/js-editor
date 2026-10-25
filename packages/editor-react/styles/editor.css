@@ -410,6 +410,34 @@
 .md-editor .code-block-bar button:hover {
   background: rgba(0, 0, 0, 0.06);
 }
+/* 수식 그래프(plot) 그림 */
+.md-editor .plot-preview {
+  padding: 0.4rem 0.8rem 0.8rem;
+  overflow-x: auto;
+  text-align: center;
+  user-select: none;
+}
+.md-editor .plot-preview svg {
+  display: block;
+  margin-inline: auto;
+}
+.md-editor .plot-3d {
+  cursor: grab;
+  touch-action: none;
+}
+.md-editor .plot-3d:active {
+  cursor: grabbing;
+}
+.md-editor .plot-empty {
+  color: var(--md-c-9ca3af, #9ca3af);
+  font-size: 0.8125rem;
+}
+.md-editor .plot-error {
+  text-align: left;
+  color: var(--md-c-b91c1c, #b91c1c);
+  font-size: 0.8125rem;
+}
+
 /* mermaid 다이어그램 그림 */
 .md-editor .mermaid-preview {
   padding: 0.6rem 1rem 1rem;
