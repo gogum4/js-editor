@@ -330,8 +330,11 @@ export const BEHAVIORS = [
       await page.click(".ProseMirror .md-comment");
       await page.waitForSelector(".md-comment-input", { timeout: 2000 }).catch(async () => { throw new Error("주석 입력 상자가 안 뜬다: " + (await page.evaluate(() => document.querySelector(".ProseMirror").innerHTML.slice(0, 600)))); });
       await page.keyboard.press("Escape");
+      // 입력 상자가 닫히고 편집기가 포커스를 돌려받을 때까지 기다린 뒤, 위치를 명시해 문서 끝으로 간다(곧바로 키를 치면 포커스가 돌아오기 전에 들어가 사라질 수 있다).
+      await page.waitForSelector(".md-comment-input", { state: "detached", timeout: 2000 });
+      await page.waitForFunction(() => document.activeElement?.classList.contains("ProseMirror"), null, { timeout: 2000 });
+      await page.evaluate(() => window.__demo.editor.commands.focus("end"));
       // 목차 슬래시 명령
-      await page.keyboard.press("End");
       await page.keyboard.press("Enter");
       await page.keyboard.type("/목차");
       await page.keyboard.press("Enter");
