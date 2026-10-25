@@ -34,6 +34,8 @@ export type SuggestionRender = NonNullable<SuggestionOptions<any, any>["render"]
 export interface EditorMenus {
   /** `/` 명령 메뉴. */
   slash?: SuggestionRender;
+  /** 이모지 자동완성 메뉴(`:`로 연다, `createCoreExtensions({ extras: { emoji: true } })`). 항목은 `{ name, emoji }`이고 `command(항목)`을 부르면 입력된다. */
+  emoji?: SuggestionRender;
   /** 코드 블록 자동완성 메뉴. */
   codeCompletion?: SuggestionRender;
 }

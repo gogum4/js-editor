@@ -25,6 +25,7 @@ export const koStrings: EditorStrings = {
     comment: { placeholder: "주석 (글에는 안 보여요)", label: "주석", edit: "주석 고치기" },
     citation: { placeholder: "@citekey (여러 개는 ; 로 구분)", invalid: "@로 시작하는 인용 키가 필요해요", open: "원본 열기", edit: "인용 고치기" },
     definition: { termPlaceholder: "용어", detailPlaceholder: "설명" },
+    emojiMenu: { label: "이모지 후보", recent: "최근에 쓴 이모지", suggested: "이모지 제안" },
     items: {
       toc: { label: "목차", description: "문서의 제목들로 만든 목차" },
       definitionList: { label: "정의 목록", description: "용어와 설명 (용어 다음 줄 `: 설명`)" },
