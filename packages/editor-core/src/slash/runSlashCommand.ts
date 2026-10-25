@@ -4,6 +4,7 @@ import { type CalloutType, isCalloutType } from "@gogum4/editor-schema/callout";
 import { openImagePicker } from "../image/insertImages";
 import { findEmptyMathBlock } from "../math/mathEdit";
 import { uiOf } from "../ports/editorPorts";
+import { BACKGROUND_COLOR_PALETTE, TEXT_COLOR_PALETTE } from "@gogum4/editor-schema/extras";
 
 /** 앱이 더한 슬래시 항목의 동작. `chain`은 입력한 `/검색어`를 이미 지운 상태다. */
 export type SlashHandlers = Record<string, (editor: Editor, chain: ChainedCommands) => boolean>;
@@ -30,6 +31,11 @@ export function runSlashCommand(editor: Editor, range: Range, id: string, handle
     if (!isCalloutType(type)) return false;
     return chain.setCallout(type as CalloutType).run();
   }
+
+  const textColor = /^color-([a-z]+)$/.exec(id);
+  if (textColor && TEXT_COLOR_PALETTE[textColor[1]!] !== undefined) return chain.setTextColor(TEXT_COLOR_PALETTE[textColor[1]!]!).run();
+  const backgroundColor = /^bg-([a-z]+)$/.exec(id);
+  if (backgroundColor && BACKGROUND_COLOR_PALETTE[backgroundColor[1]!] !== undefined) return chain.setBackgroundColor(BACKGROUND_COLOR_PALETTE[backgroundColor[1]!]!).run();
 
   switch (id) {
     case "paragraph":
@@ -65,6 +71,26 @@ export function runSlashCommand(editor: Editor, range: Range, id: string, handle
       if (ok) openImagePicker(editor);
       return ok;
     }
+    // 추가 문법(extras): 항목은 켠 것만 메뉴에 보인다.
+    case "toc":
+      return chain.insertToc().run();
+    case "definitionList":
+      return chain.insertDefinitionList().run();
+    case "comment":
+      // 예시 글이 든 주석을 끼운다(눌러서 고친다).
+      return chain.insertContent({ type: "comment", attrs: { text: "memo" } }).run();
+    case "citation":
+      return chain.insertContent({ type: "citation", attrs: { source: "@citekey" } }).run();
+    case "highlight":
+      return chain.toggleHighlight().run();
+    case "superscript":
+      return chain.toggleSuperscript().run();
+    case "subscript":
+      return chain.toggleSubscript().run();
+    case "insert":
+      return chain.toggleInsert().run();
+    case "color-reset":
+      return chain.unsetTextColor().unsetBackgroundColor().run();
     case "embed":
       // 주소를 적는 빈 카드를 끼운다(카드가 입력 상자를 보여 주고 포커스를 받는다).
       return chain.insertEmptyEmbed().run();

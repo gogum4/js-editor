@@ -88,6 +88,8 @@ const ref = params.has("ref");
 // `?embed=1`·`?indent=1`: 임베드 노드(`/임베드`)와 문단 들여쓰기(Tab)를 켠다(동작 시험 전용).
 const embed = params.has("embed");
 const indent = params.has("indent");
+// `?extras=1`: 추가 문법(하이라이트·첨자·색·약어·주석·태그·인용·정의 목록·목차·이모지)을 모두 켠다(동작 시험 전용).
+const extras = params.has("extras") ? { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true } : undefined;
 const withRefs = (base: typeof DEMO_DOC) =>
   ref
     ? {
@@ -111,7 +113,7 @@ const doc = withRefs(raw
     }
   : DEMO_DOC);
 const ydoc = collab ? new Y.Doc() : null;
-const extensions = createReactExtensions(ydoc, { ports, raw, reference: ref, embed, indent });
+const extensions = createReactExtensions(ydoc, { ports, raw, reference: ref, embed, indent, ...(extras ? { extras } : {}) });
 if (ydoc) prosemirrorJSONToYXmlFragment(getSchema(extensions), doc, ydoc.getXmlFragment("default"));
 
 const editor = new Editor({

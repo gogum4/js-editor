@@ -55,6 +55,36 @@ export const CORE_SLASH_ITEMS: readonly SlashItem[] = [
   { id: "callout-caution", label: "콜아웃 · 주의", description: "위험할 수 있는 내용", keywords: ["callout", "caution", "danger", "콜아웃", "주의", "위험"] },
 ];
 
+import { COLOR_NAMES, type ExtraSyntax } from "@gogum4/editor-schema/extras";
+
+const COLOR_ORDER = Object.keys(COLOR_NAMES);
+
+/** 켠 추가 문법에 맞는 슬래시 항목(글은 `strings.extras.items`에서 온다). */
+export function extraSlashItems(extras: ExtraSyntax | undefined): SlashItem[] {
+  if (!extras) return [];
+  const items: SlashItem[] = [];
+  if (extras.toc) items.push({ id: "toc", label: "목차", description: "문서의 제목들로 만든 목차", keywords: ["toc", "contents", "outline", "목차", "차례"] });
+  if (extras.definitions) items.push({ id: "definitionList", label: "정의 목록", description: "용어와 설명", keywords: ["definition", "dl", "glossary", "정의", "용어", "설명", "사전"] });
+  if (extras.comments) items.push({ id: "comment", label: "주석", description: "글에는 안 보이는 메모", keywords: ["comment", "note", "hidden", "주석", "메모"] });
+  if (extras.citations) items.push({ id: "citation", label: "인용", description: "참고 문헌 인용", keywords: ["citation", "cite", "zotero", "reference", "bibliography", "인용", "참고문헌", "논문"] });
+  if (extras.marks) {
+    items.push(
+      { id: "highlight", label: "하이라이트", description: "형광펜", keywords: ["highlight", "mark", "marker", "하이라이트", "형광펜", "강조"] },
+      { id: "superscript", label: "위첨자", description: "올려 쓰기", keywords: ["superscript", "sup", "위첨자", "제곱"] },
+      { id: "subscript", label: "아래첨자", description: "내려 쓰기", keywords: ["subscript", "sub", "아래첨자"] },
+      { id: "insert", label: "삽입", description: "추가된 글 표시", keywords: ["insert", "ins", "삽입", "추가"] },
+      { id: "color-reset", label: "색 지우기", description: "글자색과 배경색 없애기", keywords: ["color", "clear", "reset", "색", "지우기", "초기화"] },
+    );
+    for (const name of COLOR_ORDER) {
+      items.push({ id: `color-${name}`, label: `글자색 · ${name}`, description: "글자색", keywords: ["color", "text", "font", "글자색", "글씨색", "색", name] });
+    }
+    for (const name of COLOR_ORDER) {
+      items.push({ id: `bg-${name}`, label: `배경색 · ${name}`, description: "배경색", keywords: ["background", "bg", "color", "배경색", "배경", "색", name] });
+    }
+  }
+  return items;
+}
+
 /** 항목의 이름·설명을 사전의 글로 바꾼다(사전에 없는 항목은 그대로). 검색 이름(keywords)은 한국어·영어를 모두 남겨 어느 언어로도 찾게 한다. */
 export function localizeSlashItems(
   items: readonly SlashItem[],

@@ -175,6 +175,31 @@ GFM 표는 병합 셀, 머리글 없는 표, 셀 안의 여러 블록을 표현�
 - **내보내기**: `pageLink`는 `[[제목]]`/`[[제목|표시 글자]]`(`pageTitle(pageId)`가 대상 글자를 돌려준다). `_`·`[`·`*` 앞에 `\`를 붙이는 이스케이프 정규화는 렌더 결과가 같다.
 - **참조 설정**: `{{table:이름 rows=5}}` 같은 표기는 `references`(가져오기 함수·내보내기 `toMarkdown(kind, id, props)`)로 연결한다. 기본 표기는 `::ref{kind=… id=… rows=5}`(나머지 속성이 `props`).
 
+## 추가 문법 (`extras`, 옵션)
+
+Obsidian·Joplin·Zotero(Pandoc)·Notion에서 자주 쓰는 표기를 **하나씩 켜서** 쓴다. `createCoreExtensions({ extras })`(편집기 노드·마크·입력 규칙·슬래시 항목), 가져오기는 `ImportContext.extras`, 내보내기는 `MarkdownOptions.extras`(글자 속의 같은 모양을 이스케이프하는 데만 쓴다), 렌더러 `renderMarkdown`은 **기본 모두 켜짐**(끄려면 `extras: false`나 `{ tags: false }`). 마크·노드를 더하는 것이라 노트 앱은 켜지 않는다 — 켜는 소비자는 본문 스키마 버전을 올린다.
+
+| 옵션 | 쓰기 | 읽기 | 비고 |
+|---|---|---|---|
+| `marks` 하이라이트 | `==글==` (일반 GFM 방언은 `<mark>`) | `==글==`, `<mark>` | 입력 규칙, Ctrl+Shift+H, `/하이라이트` |
+| `marks` 위첨자 | `<sup>글</sup>` | `^글^`(공백 없는 글), `<sup>` | Ctrl+. · 각주 번호(`sup[data-footnote]`)와 구별 |
+| `marks` 아래첨자 | `<sub>글</sub>` | `<sub>` | Ctrl+, · `~글~`은 취소선(GFM)이라 아래첨자로 읽지 않는다 |
+| `marks` 삽입 | `<ins>글</ins>` | `++글++`, `<ins>` | 위첨자와 아래첨자는 함께 걸리지 않는다 |
+| `marks` 글자색·배경색 | `<span style="color: #rrggbb">` · `<span style="background-color: #rrggbb">` | 같은 span. 색은 `#rgb`·`#rrggbb`·기본 색 이름(red, orange, yellow, green, blue, purple, pink, gray)만 | 그 밖의 CSS는 버린다. `/글자색 …`·`/배경색 …`·`/색 지우기`는 선택(없으면 이어서 쓰는 글)에 건다 |
+| `abbr` 약어 | `<abbr title="설명">HTML</abbr>` | `<abbr title>`, 문서의 `*[HTML]: 설명` 정의(줄은 글에서 빠지고, 글 속 낱말 전부에 마크가 달린다) | 편집기 명령 `setAbbr(설명)` |
+| `comments` 주석 | `%%글%%` | `%%글%%`, 줄을 넘는 `%%…%%`(자기 문단) | 편집기에서는 흐린 칩(눌러서 고침), 렌더러에서는 숨김(`showComments`로 보임). 코드 안·닫히지 않은 `%%`는 글자 |
+| `tags` 태그 | `#태그` | 줄 처음이나 공백 뒤의 `#이름` — 글자·숫자(모든 언어)·`_`·`-`·`/`, 글자가 하나는 있어야 한다(`#123`은 아님) | `#fff` 같은 16진 색도 태그다(Obsidian과 같다). 링크 주소의 `#앵커`, HTML 속성 안은 태그가 아니다. 입력은 `#이름` + 공백 |
+| `citations` 인용 | `[@키]`, `[@a; @b, p. 3]`, `[see @a]` | 대괄호 안에 `@키`가 있는 것(링크 `[…](…)`·각주·참조 정의와 구별) | 원문을 그대로 보존한다. `EditorPorts.citations.label/open`·렌더러 `citationLabel/citationHref`로 표시 글·링크를 정한다 |
+| `definitions` 정의 목록 | `용어` 다음 줄마다 `: 설명`, 용어 묶음 사이는 빈 줄 | 같음(설명이 여러 개, 이어지는 줄은 들여쓴다) | 용어·설명은 한 줄 인라인. 정의 목록 둘이 바로 이어지면 한 목록으로 읽힌다 |
+| `toc` 목차 | `[toc]` 한 줄 | `[toc]`(대소문자 무시) | 문서의 제목들로 그때그때 그려진다(저장하는 것은 자리뿐). 편집기에서 항목을 누르면 이동 |
+| `emoji` 이모지 | 글자(😄) | `:smile:` → 😄 | 자주 쓰는 약 260개. 모르는 이름·시간 표기(`10:30:45`)·코드 안은 그대로. 입력은 `:smile:`을 치면 바뀐다 |
+
+그 밖의 읽기·쓰기 표기:
+- **인라인 각주 `^[글]`**은 각주 노드로 읽는다(`[^1]`과 같은 각주; 방언이 각주를 읽을 때). 내보내기는 `[^번호]`.
+- **페이지의 제목 위치** `[[노트#제목]]`·`![[노트#제목]]`: `ImportContext.anchors: true`를 켜면 페이지 링크·페이지 블록의 `heading` 속성으로 보존하고 같은 표기로 내보낸다(끄면 예전처럼 위치를 버리고 안내). 렌더러는 `pageLink` 해석이 준 주소 뒤에 제목 앵커(`#제목-slug`)를 붙인다.
+- **Zotero 링크** `zotero://select/…`는 열 수 있는 링크다(`isSafeToOpen`).
+- 글자 속의 `#글`·`%%`·`==`·`++`·`^`·`:이름:`처럼 문법과 닮은 것은 내보낼 때 `\`로 막아 다시 읽어도 글자로 돌아온다(켠 옵션에 대해서만).
+
 ## 방언 항목 덮어쓰기 (`profile`, 옵션)
 
 방언 둘(`obsidian`·`gfm`)의 중간이 필요하면 가져오기 `ImportContext.profile`로 `DialectProfile`의 항목을 하나씩 덮어쓴다. 예: 블로그는 콜아웃·수식·각주는 Obsidian대로 읽고(`dialect: "obsidian"`), 이미지·HTML·열 정렬 표는 에디터가 구조를 모르므로 원문으로 보존하고(`rawEmbeds: true`), `/글-슬러그` 같은 상대 링크의 주소를 그대로 둔다(`keepAnyHref: true`, `mdLinksToPages: false`).

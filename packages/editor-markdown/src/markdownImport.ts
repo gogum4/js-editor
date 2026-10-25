@@ -16,6 +16,17 @@ import { blockIdFromForeign, isBlockIdType } from "@gogum4/editor-schema/blockId
 import type { ReferenceTarget } from "@gogum4/editor-schema/reference";
 import { calloutTypeFromName, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { detectEmbed, normalizeEmbedSize } from "@gogum4/editor-schema/embed";
+import {
+  CITATION_IN_TEXT_SOURCE,
+  colorsFromStyle,
+  type ExtraSyntax,
+  normalizeAbbrTitle,
+  normalizeCitationSource,
+  normalizeCommentText,
+  normalizeTag,
+  replaceEmojiShortcodes,
+  TAG_IN_TEXT_SOURCE,
+} from "@gogum4/editor-schema/extras";
 import { indentFromLeadingSpaces } from "@gogum4/editor-schema/indent";
 import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
@@ -118,12 +129,115 @@ type Placeholder =
   /** 줄 끝의 `^블록id`(Obsidian). 글자에서는 빠지고 그 블록의 id가 된다. */
   | { kind: "blockId"; id: string; raw: string }
   /** 참조 노드로 읽은 한 줄(`ImportContext.references`). */
-  | { kind: "reference"; target: ReferenceTarget; raw: string };
+  | { kind: "reference"; target: ReferenceTarget; raw: string }
+  /** 추가 문법(`ImportContext.extras`): 주석 `%%글%%`(여러 줄 가능), 태그, 인용, 인라인 각주 `^[글]`, 목차 `[toc]`, 정의 목록. */
+  | { kind: "comment"; text: string; raw: string }
+  | { kind: "tag"; name: string; raw: string }
+  | { kind: "citation"; source: string; raw: string }
+  | { kind: "inlineFootnote"; text: string; raw: string }
+  | { kind: "toc"; raw: string }
+  | { kind: "defList"; items: Array<{ term: string; details: string[] }>; raw: string };
 
 interface Protected {
   text: string;
   store: Placeholder[];
   footnotes: Map<string, string>;
+  /** 약어 정의(낱말 → 설명). */
+  abbrs: Map<string, string>;
+}
+
+const DEFINITION_DETAIL = /^ {0,3}:[ \t]+\S/;
+
+/** `kept[at]`이 정의 목록의 용어(들여쓰지 않은 일반 줄)이고 바로 다음 줄이 `: 설명`인가. */
+function isDefinitionStart(lines: readonly string[], at: number): boolean {
+  const line = lines[at];
+  if (line === undefined || line.trim() === "" || /^[ \t>#|:-]/.test(line) || /^(\d+[.)]|[*+])\s/.test(line) || FENCE.test(line)) return false;
+  return DEFINITION_DETAIL.test(lines[at + 1] ?? "");
+}
+
+/** 코드 울타리와 인라인 코드 밖의 `%%…%%`를 주석 자리표시자로 바꾼다. 닫히지 않은 `%%`는 글자로 둔다. 줄 전체가 주석이면 자기 문단이 된다. */
+function protectComments(lines: readonly string[], put: (placeholder: Placeholder) => string): string[] {
+  const out: string[] = [];
+  let fence: string | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const fenceMatch = FENCE.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1]!;
+      if (fence === null) fence = marker;
+      else if (marker[0] === fence[0] && marker.length >= fence.length) fence = null;
+      out.push(line);
+      continue;
+    }
+    if (fence !== null || !line.includes("%%")) {
+      out.push(line);
+      continue;
+    }
+    let rest = line;
+    let result = "";
+    for (;;) {
+      const open = indexOutsideCode(rest, "%%");
+      if (open < 0) {
+        result += rest;
+        break;
+      }
+      const afterOpen = rest.slice(open + 2);
+      let body: string;
+      let after = "";
+      const close = afterOpen.indexOf("%%");
+      if (close >= 0) {
+        body = afterOpen.slice(0, close);
+        after = afterOpen.slice(close + 2);
+      } else {
+        // 여러 줄 주석: 닫는 `%%`가 있는 줄까지(코드 울타리를 만나면 닫히지 않은 것이다).
+        const parts = [afterOpen];
+        let j = i + 1;
+        let found = false;
+        for (; j < lines.length; j++) {
+          if (FENCE.test(lines[j]!)) break;
+          const at = lines[j]!.indexOf("%%");
+          if (at >= 0) {
+            parts.push(lines[j]!.slice(0, at));
+            after = lines[j]!.slice(at + 2);
+            found = true;
+            break;
+          }
+          parts.push(lines[j]!);
+        }
+        if (!found) {
+          result += rest;
+          break;
+        }
+        body = parts.join("\n");
+        i = j;
+      }
+      const text = normalizeCommentText(body);
+      const prefix = rest.slice(0, open);
+      if (text === null) {
+        result += `${prefix}%%${body}%%`;
+      } else {
+        result += prefix + put({ kind: "comment", text, raw: `%%${body}%%` });
+      }
+      rest = after;
+    }
+    // 줄 전체가 주석 하나뿐이면 자기 문단으로 둔다.
+    if (new RegExp(`^\\s*${OPEN}\\d+${CLOSE}\\s*$`).test(result)) out.push("", result.trim(), "");
+    else out.push(result);
+  }
+  return out;
+}
+
+/** 인라인 코드 조각 밖에서 `needle`이 처음 나오는 자리(없으면 -1). */
+function indexOutsideCode(line: string, needle: string): number {
+  let offset = 0;
+  for (const part of splitCodeSpans(line)) {
+    if (!part.code) {
+      const at = part.text.indexOf(needle);
+      if (at >= 0) return offset + at;
+    }
+    offset += part.text.length;
+  }
+  return -1;
 }
 
 const FENCE = /^ {0,3}(`{3,}|~{3,})/;
@@ -147,7 +261,26 @@ function looksLikeMoney(latex: string): boolean {
   return /^\s*\d[\d.,]*\s*$/.test(latex);
 }
 
-function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>, profile: DialectProfile): string {
+/** HTML 태그(`<span style="…">` 등) 밖의 조각에만 `fn`을 적용한다. */
+function outsideHtmlTags(text: string, fn: (piece: string) => string): string {
+  if (!text.includes("<")) return fn(text);
+  return text
+    .split(/(<\/?[a-zA-Z][^<>]*>)/)
+    // 태그 바로 뒤의 조각은 줄이나 공백 뒤가 아니므로, 맨 앞 표지를 달아 `#태그`의 "앞이 공백" 검사에 걸리지 않게 한다.
+    .map((piece, index) => (index % 2 === 1 ? piece : index === 0 ? fn(piece) : fn(`\u0000${piece}`).slice(1)))
+    .join("");
+}
+
+/** `==글==`·`++글++`·`^글^`를 HTML 마크 태그로 바꾼다(`marked`가 인라인 HTML로 통과시키고 읽을 때 마크가 된다). */
+function marksToHtml(text: string): string {
+  // 안쪽에는 `\=`처럼 이스케이프한 글자가 올 수 있다(내보내기가 글자 속의 `==`를 그렇게 막는다).
+  return text
+    .replace(/(?<![=\\])==(?![\s=])((?:\\.|[^=\n\\])+)(?<!\s)==(?!=)/g, "<mark>$1</mark>")
+    .replace(/(?<![+\\])\+\+(?![\s+])((?:\\.|[^+\n\\])+)(?<!\s)\+\+(?!\+)/g, "<ins>$1</ins>")
+    .replace(/(?<![\\^[])\^((?:\\.|[^\s^\n\\[\]])+)\^/g, "<sup>$1</sup>");
+}
+
+function protectInline(line: string, store: Placeholder[], footnotes: Map<string, string>, profile: DialectProfile, extras: ExtraSyntax = {}): string {
   const put = (placeholder: Placeholder) => `${OPEN}${store.push(placeholder) - 1}${CLOSE}`;
   const joined = splitCodeSpans(line)
     .map((part) => {
@@ -155,7 +288,9 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
       let text = part.text;
       // `markdown-it`처럼 물결표 하나를 취소선으로 읽지 않는 방언: 홀로 있는 `~`를 이스케이프해서 파서가 글자로 두게 한다.
       if (!profile.singleTildeStrike) text = text.replace(/(?<![\\~])~(?!~)/g, "\\~");
-      return text
+      // 인라인 각주 `^[글]`(`[^1]`과 다른 표기)는 각주 노드가 된다.
+      if (profile.footnotes) text = text.replace(/\^\[([^\]\n]+)\]/g, (raw, body: string) => put({ kind: "inlineFootnote", text: body.trim(), raw }));
+      const chained = text
         .replace(/(!?)\[\[([^[\]\n]+?)\]\]/g, (raw, bang: string, inner: string) => {
           // 위키 링크가 없는 방언(블로그)에서는 `[[글]]`이 그냥 글자다. `![[…]]` 임베드가 없는 방언에서 `!`는 글자다.
           if (!profile.wikiLinks || (bang === "!" && !profile.wikiExtras)) return raw;
@@ -177,6 +312,26 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
           !profile.math || looksLikeMoney(latex) ? raw : put({ kind: "math", latex, raw }),
         )
         .replace(/\[\^([^\]\s]+)\]/g, (raw, id: string) => (profile.footnotes && footnotes.has(id) ? put({ kind: "footnote", id, raw }) : raw));
+      // HTML 태그 안(`<span style="color:#fff">`의 `#fff` 같은 것)은 태그·이모지·마크로 읽지 않는다.
+      const extra = outsideHtmlTags(chained, (piece) => {
+        let value = piece;
+      if (extras.citations) {
+        value = value.replace(new RegExp(CITATION_IN_TEXT_SOURCE, "g"), (raw, inner: string) => {
+          const source = normalizeCitationSource(inner);
+          return source === null ? raw : put({ kind: "citation", source, raw });
+        });
+      }
+      if (extras.tags) {
+        value = value.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (raw, name: string) => {
+          const tag = normalizeTag(name);
+          return tag === null ? raw : put({ kind: "tag", name: tag, raw });
+        });
+      }
+      if (extras.emoji) value = replaceEmojiShortcodes(value);
+      if (extras.marks) value = marksToHtml(value);
+        return value;
+      });
+      return extra;
     })
     .join("");
   // 줄 끝의 `^블록id`. 글자가 있는 id만(`x ^2` 같은 지수 표기가 id로 읽히지 않게 3글자 이상, 글자 포함).
@@ -190,10 +345,12 @@ const BLOCK_ID_AT_END = /(^|[ \t])\^([A-Za-z0-9][A-Za-z0-9-]{2,})[ \t]*$/;
  * `marked`가 망가뜨릴 것들을 자리표시자로 바꾼다: 위키 링크, 수식(`_`·`*`가 기울임으로 읽힌다), 각주 정의와 참조.
  * 코드 블록(``` 울타리)과 인라인 코드 안은 그대로 둔다. 블록 수식(`$$ … $$`)은 자기 문단이 되도록 앞뒤에 빈 줄을 둔다.
  */
-function protect(source: string, profile: DialectProfile, references: ImportContext["references"] = false): Protected {
+function protect(source: string, profile: DialectProfile, references: ImportContext["references"] = false, extras: ExtraSyntax = {}): Protected {
   let lines = source.replace(/\r\n/g, "\n").split("\n");
   const store: Placeholder[] = [];
   const footnotes = new Map<string, string>();
+  const abbrs = new Map<string, string>();
+  const putRef = (placeholder: Placeholder) => `${OPEN}${store.push(placeholder) - 1}${CLOSE}`;
 
   // 참조 노드: 한 줄 전체가 참조 표기인 줄은 자기 문단이 되는 자리표시자로 바꾼다(코드 울타리 안은 건드리지 않는다). 디렉티브 처리보다 먼저다.
   if (references) {
@@ -229,6 +386,13 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
       kept.push(line);
       continue;
     }
+    // 약어 정의 `*[HTML]: 설명`는 글에서 빠지고, 글 속 낱말에 약어 마크가 달린다.
+    const abbr = fence === null && extras.abbr ? /^\*\[([^\]\n]+)\]:\s*(.+?)\s*$/.exec(line) : null;
+    if (abbr) {
+      const title = normalizeAbbrTitle(abbr[2]);
+      if (title !== null) abbrs.set(abbr[1]!.trim(), title);
+      continue;
+    }
     const def = fence === null && profile.footnotes ? /^\[\^([^\]\s]+)\]:\s?(.*)$/.exec(line) : null;
     if (!def) {
       kept.push(line);
@@ -237,6 +401,13 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
     const parts = [def[2]!];
     while (i + 1 < lines.length && /^( {4}|\t)/.test(lines[i + 1]!)) parts.push(lines[++i]!.replace(/^( {4}|\t)/, ""));
     footnotes.set(def[1]!, parts.join("\n").trim());
+  }
+
+  // 1.5) 주석 `%%…%%`(여러 줄도 된다)는 어느 서식보다 먼저 떼어 낸다.
+  if (extras.comments) {
+    const commented = protectComments(kept, putRef);
+    kept.length = 0;
+    kept.push(...commented);
   }
 
   // 2) 줄마다 자리표시자로 바꾼다.
@@ -254,6 +425,35 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
     }
     if (fence !== null) {
       out.push(line);
+      continue;
+    }
+    // 목차 `[toc]`는 자기 문단이다.
+    if (extras.toc && /^ {0,3}\[toc\]\s*$/i.test(line)) {
+      out.push("", putRef({ kind: "toc", raw: line }), "");
+      continue;
+    }
+    // 정의 목록: `용어` 다음 줄 `: 설명`(설명은 여러 개, 이어지는 줄은 들여쓴다), 묶음 사이의 빈 줄은 한 목록 안이다.
+    if (extras.definitions && isDefinitionStart(kept, i)) {
+      const items: Array<{ term: string; details: string[] }> = [];
+      let j = i;
+      while (j < kept.length && isDefinitionStart(kept, j)) {
+        const details: string[] = [];
+        let k = j + 1;
+        while (k < kept.length && DEFINITION_DETAIL.test(kept[k]!)) {
+          let detail = kept[k]!.replace(/^ {0,3}:[ \t]+/, "").trim();
+          k++;
+          while (k < kept.length && /^( {2,}|\t)\S/.test(kept[k]!)) detail += ` ${kept[k++]!.trim()}`;
+          details.push(protectInline(detail, store, footnotes, profile, extras));
+        }
+        items.push({ term: protectInline(kept[j]!.trim(), store, footnotes, profile, extras), details });
+        j = k;
+        let m = j;
+        while (m < kept.length && kept[m]!.trim() === "") m++;
+        if (m > j && isDefinitionStart(kept, m)) j = m;
+        else break;
+      }
+      out.push("", putRef({ kind: "defList", items, raw: kept.slice(i, j).join("\n") }), "");
+      i = j - 1;
       continue;
     }
     const block = profile.math ? /^ {0,3}\$\$(.*)$/.exec(line) : null;
@@ -278,7 +478,7 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
         }
         if (!closed) {
           // 닫히지 않은 `$$`는 수식이 아니라 그냥 글자다.
-          out.push(protectInline(line, store, footnotes, profile));
+          out.push(protectInline(line, store, footnotes, profile, extras));
           continue;
         }
         latex = body.join("\n").trim();
@@ -288,9 +488,9 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
       out.push("", ref, "");
       continue;
     }
-    out.push(protectInline(line, store, footnotes, profile));
+    out.push(protectInline(line, store, footnotes, profile, extras));
   }
-  return { text: out.join("\n"), store, footnotes };
+  return { text: out.join("\n"), store, footnotes, abbrs };
 }
 
 // ───────────────────────── 변환 ─────────────────────────
@@ -315,6 +515,15 @@ export interface ImportContext {
    * `{ rawEmbeds: true, keepAnyHref: true, mdLinksToPages: false }`를 얹으면 이미지·HTML·열 정렬 표를 원문으로 보존하면서(글 원본을 잃지 않는다) Obsidian 문법을 읽는다.
    */
   profile?: Partial<DialectProfile>;
+  /**
+   * 추가 문법: 켠 것만 읽는다(`createCoreExtensions({ extras })`와 짝). 하이라이트 `==글==`·위첨자 `^글^`·삽입 `++글++`와 `<sup>`·`<sub>`·`<ins>`·`<mark>`·`<span style>`(글자색·배경색),
+   * 약어 `*[HTML]: 설명`·`<abbr>`, 주석 `%%글%%`, 태그 `#태그`, 인용 `[@키]`, 정의 목록, 목차 `[toc]`, 이모지 `:smile:`. docs/MARKDOWN-DIALECT.md "추가 문법".
+   */
+  extras?: ExtraSyntax;
+  /**
+   * 참이면 `[[페이지#제목]]`·`![[페이지#제목]]`의 제목 위치를 `heading` 속성으로 보존한다(페이지 링크·페이지 블록 노드가 그 속성을 가진 소비자). 끄면 위치를 버리고 안내한다.
+   */
+  anchors?: boolean;
   /**
    * 참조 노드(`reference`)로 읽을 줄. `true`면 기본 표기 `::ref{kind=… id=…}`, 함수면 소비자의 표기(한 줄을 받아 대상이거나 null).
    * 끄면(기본) 글자로 읽는다. `createCoreExtensions({ reference: true })`와 짝이다.
@@ -360,8 +569,11 @@ interface State {
   footnotes: Map<string, string>;
   notices: Map<string, number>;
   images: Set<string>;
-  /** `<u>` 안에 있는 동안 1 이상. */
-  underline: number;
+  /** 열려 있는 인라인 HTML 서식 태그(`<u>`·`<mark>`·`<span style>` …)와 그 태그가 거는 마크. 닫는 태그가 오면 가장 가까운 같은 태그가 빠진다. */
+  htmlMarks: Array<{ tag: string; marks: PmMark[] }>;
+  /** 약어 낱말 → 설명, 그리고 글 속에서 낱말을 찾는 패턴(약어가 없으면 null). */
+  abbrs: ReadonlyMap<string, string>;
+  abbrPattern: RegExp | null;
   /** 방금 읽은 글에서 찾은 줄 끝 `^id`(블록이 만들어지면 그 블록에 단다). */
   foundId: string | null;
   /** 자기 줄에 홀로 있던 `^id`(앞 블록의 id다). */
@@ -409,9 +621,10 @@ function wikiNode(p: Extract<Placeholder, { kind: "wiki" }>, marks: readonly PmM
   if (p.anchor !== null && p.anchor.startsWith("^") && p.anchor.length > 1) {
     return { type: "pageLink", attrs: { pageId, blockId: blockIdFromForeign(p.anchor.slice(1)), ...(p.alias !== null ? { label: p.alias } : {}) } };
   }
-  if (p.anchor !== null) note(state, NOTICE.anchorLink);
-  // `[[대상|표시]]`의 표시 글자는 `label`로 남긴다(`label` 속성이 없는 스키마는 무시한다).
-  return { type: "pageLink", attrs: { pageId, ...(p.alias !== null ? { label: p.alias } : {}) } };
+  const heading = state.ctx.anchors === true && p.anchor !== null ? p.anchor : null;
+  if (p.anchor !== null && heading === null) note(state, NOTICE.anchorLink);
+  // `[[대상|표시]]`의 표시 글자는 `label`로 남긴다(`label` 속성이 없는 스키마는 무시한다). 제목 위치는 `anchors`를 켠 소비자만 `heading`으로 받는다.
+  return { type: "pageLink", attrs: { pageId, ...(heading !== null ? { heading } : {}), ...(p.alias !== null ? { label: p.alias } : {}) } };
 }
 
 /** 글자 하나를 자리표시자 기준으로 나누어 글자·링크·수식·각주 노드로 만든다. */
@@ -422,7 +635,7 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     // 줄바꿈은 눈에 보이는 줄바꿈으로 둔다(Obsidian의 기본 보기와 같다).
     value.split("\n").forEach((piece, index) => {
       if (index > 0) nodes.push({ type: "hardBreak" });
-      if (piece !== "") nodes.push(textNode(decodeEntities(piece), marks));
+      if (piece !== "") nodes.push(...abbreviated(decodeEntities(piece), marks, state));
     });
   };
   let last = 0;
@@ -434,11 +647,40 @@ function restoreText(text: string, marks: readonly PmMark[], state: State): PmNo
     if (p.kind === "wiki") nodes.push(wikiNode(p, marks, state));
     else if (p.kind === "blockId") state.foundId = p.id;
     else if (p.kind === "reference") nodes.push(textNode(p.raw, marks));
+    else if (p.kind === "comment") nodes.push({ type: "comment", attrs: { text: p.text } });
+    else if (p.kind === "tag") nodes.push({ type: "tag", attrs: { name: p.name } });
+    else if (p.kind === "citation") nodes.push({ type: "citation", attrs: { source: p.source } });
+    else if (p.kind === "inlineFootnote") nodes.push({ type: "footnote", attrs: { text: p.text } });
+    else if (p.kind === "toc" || p.kind === "defList") nodes.push(textNode(p.raw, marks));
     else if (p.kind === "footnote") nodes.push({ type: "footnote", attrs: { text: state.footnotes.get(p.id) ?? "" } });
     else nodes.push({ type: "mathInline", attrs: { latex: p.latex } });
   }
   PLACEHOLDER.lastIndex = 0;
   push(text.slice(last));
+  return nodes;
+}
+
+/** 약어 낱말을 찾는 패턴(길이가 긴 낱말이 먼저, 앞뒤가 글자·숫자가 아닐 때만). */
+function abbrPatternOf(abbrs: ReadonlyMap<string, string>): RegExp | null {
+  if (abbrs.size === 0) return null;
+  const terms = [...abbrs.keys()].sort((a, b) => b.length - a.length).map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return new RegExp(`(?<![\\p{L}\\p{N}_])(${terms.join("|")})(?![\\p{L}\\p{N}_])`, "gu");
+}
+
+/** 글자를 약어 낱말 기준으로 나눠 약어 마크를 단 글자 노드들로(약어가 없으면 글자 하나). */
+function abbreviated(text: string, marks: readonly PmMark[], state: State): PmNode[] {
+  const pattern = state.abbrPattern;
+  if (pattern === null) return [textNode(text, marks)];
+  const nodes: PmNode[] = [];
+  let last = 0;
+  pattern.lastIndex = 0;
+  for (let m = pattern.exec(text); m; m = pattern.exec(text)) {
+    if (m.index > last) nodes.push(textNode(text.slice(last, m.index), marks));
+    nodes.push(textNode(m[0], toggleMark(marks, "abbr", { title: state.abbrs.get(m[0]) ?? "" })));
+    last = m.index + m[0].length;
+  }
+  if (last === 0) return [textNode(text, marks)];
+  if (last < text.length) nodes.push(textNode(text.slice(last), marks));
   return nodes;
 }
 
@@ -505,10 +747,45 @@ function toggleMark(marks: readonly PmMark[], type: string, attrs?: Record<strin
   return [...marks.filter((m) => m.type !== type), attrs ? { type, attrs } : { type }];
 }
 
+const HTML_MARK_TAGS: Readonly<Record<string, string>> = { mark: "highlight", sup: "superscript", sub: "subscript", ins: "insert" };
+
+/**
+ * 인라인 HTML 서식 태그(`<u>`, 추가 문법을 켰으면 `<mark>`·`<sup>`·`<sub>`·`<ins>`·`<span style>`·`<abbr title>`)를 읽어 열려 있는 서식에 반영한다. 다룬 태그면 true.
+ * `rawEmbeds` 방언(블로그)에서 `<u>`는 기존대로 원문이다.
+ */
+function htmlMarkTag(raw: string, state: State): boolean {
+  const match = /^<(\/)?([a-z][a-z0-9]*)((?:\s[^>]*)?)\/?>$/i.exec(raw.trim());
+  if (!match) return false;
+  const closing = match[1] !== undefined;
+  const name = match[2]!.toLowerCase();
+  const attrs = match[3] ?? "";
+  const extras = state.ctx.extras;
+  let marks: PmMark[] | null = null;
+  if (name === "u" && !state.profile.rawEmbeds) marks = [{ type: "underline" }];
+  else if (extras?.marks && HTML_MARK_TAGS[name] !== undefined) marks = [{ type: HTML_MARK_TAGS[name]! }];
+  else if (extras?.marks && name === "span") {
+    const { color, background } = colorsFromStyle(/style\s*=\s*"([^"]*)"/i.exec(attrs)?.[1] ?? "");
+    marks = [...(color !== null ? [{ type: "textColor", attrs: { color } }] : []), ...(background !== null ? [{ type: "backgroundColor", attrs: { color: background } }] : [])];
+  } else if (extras?.abbr && name === "abbr") {
+    const title = normalizeAbbrTitle(decodeEntities(/title\s*=\s*"([^"]*)"/i.exec(attrs)?.[1] ?? ""));
+    marks = title === null ? [] : [{ type: "abbr", attrs: { title } }];
+  }
+  if (marks === null) return false;
+  if (closing) {
+    for (let i = state.htmlMarks.length - 1; i >= 0; i--) {
+      if (state.htmlMarks[i]!.tag === name) {
+        state.htmlMarks.splice(i, 1);
+        break;
+      }
+    }
+  } else state.htmlMarks.push({ tag: name, marks });
+  return true;
+}
+
 /** 인라인 토큰들을 노드로. 이미지는 블록이라 이미지 노드가 섞여 나오고, 부르는 쪽이 문단에서 떼어 낸다. */
 function inlineNodes(tokens: readonly Token[], marks: readonly PmMark[], state: State): PmNode[] {
   const nodes: PmNode[] = [];
-  const active = () => (state.underline > 0 ? toggleMark(marks, "underline") : [...marks]);
+  const active = () => state.htmlMarks.reduce<PmMark[]>((current, entry) => entry.marks.reduce((acc, mark) => toggleMark(acc, mark.type, mark.attrs), current), [...marks]);
   for (const token of tokens) {
     switch (token.type) {
       case "text": {
@@ -564,12 +841,11 @@ function inlineNodes(tokens: readonly Token[], marks: readonly PmMark[], state: 
       }
       case "html": {
         const tag = (token as Tokens.HTML).raw.trim().toLowerCase();
+        if (htmlMarkTag((token as Tokens.HTML).raw, state)) break;
         if (state.profile.rawEmbeds) {
           // 블로그는 HTML을 그리지 않는다 → 태그 글자를 잃지 않게 원문 그대로 둔다.
           nodes.push({ type: "rawInline", attrs: { text: (token as Tokens.HTML).raw } });
-        } else if (/^<u(\s[^>]*)?>$/.test(tag)) state.underline++;
-        else if (tag === "</u>") state.underline = Math.max(0, state.underline - 1);
-        else if (/^<br\s*\/?>$/.test(tag)) nodes.push({ type: "hardBreak" });
+        } else if (/^<br\s*\/?>$/.test(tag)) nodes.push({ type: "hardBreak" });
         else if (!/^<!--/.test(tag)) note(state, NOTICE.unsupportedHtml);
         break;
       }
@@ -655,12 +931,32 @@ function withIndent(blocks: PmNode[], indent: number | null): PmNode[] {
   return blocks.map((block, at) => (at === index ? { ...target, attrs: { ...target.attrs, indent } } : block));
 }
 
+const INLINE_TYPES = new Set(["text", "hardBreak", "pageLink", "mathInline", "footnote", "rawInline", "comment", "tag", "citation"]);
+
+/** 정의 목록 노드: 용어와 설명은 한 줄 인라인이다. */
+function definitionListNode(items: ReadonlyArray<{ term: string; details: readonly string[] }>, state: State): PmNode {
+  const inline = (text: string): PmNode[] => {
+    state.htmlMarks = [];
+    return mergeText(inlineNodes(Lexer.lexInline(text), [], state)).filter((node) => INLINE_TYPES.has(node.type));
+  };
+  const withContent = (type: string, text: string): PmNode => {
+    const content = inline(text);
+    return content.length > 0 ? { type, content } : { type };
+  };
+  return {
+    type: "definitionList",
+    content: items.flatMap((item) => [withContent("definitionTerm", item.term), ...item.details.map((detail) => withContent("definitionDetail", detail))]),
+  };
+}
+
 /** 문단 토큰 하나를 블록들로. 수식 블록·페이지 임베드·이미지 임베드만 든 문단은 그 블록이 된다. */
 function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): PmNode[] {
   const only = /^(\d+)$/.exec(token.text.trim());
   const placeholder = only ? state.store[Number(only[1])] : undefined;
   if (placeholder?.kind === "mathBlock") return [{ type: "mathBlock", attrs: { latex: placeholder.latex } }];
   if (placeholder?.kind === "reference") return [{ type: "reference", attrs: { ...placeholder.target } }]; // props는 있을 때만 붙는다
+  if (placeholder?.kind === "toc") return [{ type: "toc" }];
+  if (placeholder?.kind === "defList") return [definitionListNode(placeholder.items, state)];
   if (placeholder?.kind === "blockId") {
     // 자기 줄에 홀로 있는 `^id`는 바로 앞 블록의 id다(코드·표·수식 같은 줄 끝에 못 붙이는 블록).
     state.orphanId = placeholder.id;
@@ -671,10 +967,12 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
     if (image) return [image];
     const pageId = placeholder.target === "" ? null : state.ctx.resolvePage(placeholder.target, state.fromDir);
     if (pageId !== null) {
-      if (placeholder.anchor !== null) note(state, NOTICE.embedAnchor);
-      return [{ type: "pageBlock", attrs: { pageId, mode: "embed" } }];
+      const heading = state.ctx.anchors === true && placeholder.anchor !== null && !placeholder.anchor.startsWith("^") ? placeholder.anchor : null;
+      if (placeholder.anchor !== null && heading === null) note(state, NOTICE.embedAnchor);
+      return [{ type: "pageBlock", attrs: { pageId, mode: "embed", ...(heading !== null ? { heading } : {}) } }];
     }
   }
+  state.htmlMarks = [];
   const tokens = [...(token.tokens ?? [])];
   const indent = takeIndent(tokens, state);
   return withIndent(paragraphsAround(inlineNodes(tokens, [], state)), indent);
@@ -924,8 +1222,8 @@ function convertBlocks(tokens: readonly Token[], state: State): PmNode[] {
  */
 export function markdownToDoc(markdown: string, ctx: ImportContext, fromDir: string): MarkdownImportResult {
   const profile = profileOf(ctx.dialect, ctx.profile);
-  const { text, store, footnotes } = protect(markdown, profile, ctx.references ?? false);
-  const state: State = { ctx, profile, fromDir, store, footnotes, notices: new Map(), images: new Set(), underline: 0, foundId: null, orphanId: null };
+  const { text, store, footnotes, abbrs } = protect(markdown, profile, ctx.references ?? false, ctx.extras ?? {});
+  const state: State = { ctx, profile, fromDir, store, footnotes, notices: new Map(), images: new Set(), htmlMarks: [], abbrs, abbrPattern: abbrPatternOf(abbrs), foundId: null, orphanId: null };
   const tokens = new Lexer({ gfm: true, breaks: false }).lex(text);
   const content = convertBlocks(tokens, state);
   return {

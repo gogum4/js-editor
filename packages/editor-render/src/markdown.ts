@@ -28,7 +28,14 @@ export interface RenderMarkdownOptions extends Omit<RenderOptions, "prepared"> {
   embeds?: boolean;
   /** 문단·제목 맨 앞의 `&emsp;`를 들여쓰기로 읽을지. 기본 켜짐. */
   indent?: boolean;
+  /**
+   * 추가 문법(하이라이트·첨자·색·약어·주석·태그·인용·정의 목록·목차·이모지, `ImportContext.extras`)을 읽을지. 기본 모두 켜짐 — 끄려면 `false`나 켤 것만 담은 객체.
+   * `#태그`처럼 일반 글과 닮은 것을 글자로 두고 싶다면 `{ tags: false }`처럼 끈다.
+   */
+  extras?: ImportContext["extras"] | false;
 }
+
+const ALL_EXTRAS = { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true } as const;
 
 export interface RenderedMarkdown {
   /** React 요소. 서버 컴포넌트에서 그대로 반환하면 된다. */
@@ -53,7 +60,7 @@ export interface RenderedMarkdown {
  * ```
  */
 export async function renderMarkdown(source: string, options: RenderMarkdownOptions = {}): Promise<RenderedMarkdown> {
-  const { resolvePage, resolveImage, remoteImages = true, dialect, references, embeds = true, indent = true, ...renderOptions } = options;
+  const { resolvePage, resolveImage, remoteImages = true, dialect, references, embeds = true, indent = true, extras = ALL_EXTRAS, ...renderOptions } = options;
   const { data, body } = parseFrontmatter(source);
   const context: ImportContext = {
     resolvePage: resolvePage ?? (() => null),
@@ -61,6 +68,7 @@ export async function renderMarkdown(source: string, options: RenderMarkdownOpti
     remoteImages,
     embeds,
     indent,
+    ...(extras !== false ? { extras } : {}),
     ...(dialect !== undefined ? { dialect } : {}),
     ...(references !== undefined ? { references } : {}),
   };

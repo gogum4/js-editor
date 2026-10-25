@@ -1,5 +1,6 @@
 import type { AnyExtension } from "@tiptap/core";
 import type { ImportContext } from "@gogum4/editor-markdown";
+import type { ExtraSyntax } from "@gogum4/editor-schema/extras";
 import Collaboration from "@tiptap/extension-collaboration";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
@@ -22,6 +23,7 @@ import { Footnote } from "./footnote/Footnote";
 import { MathBlock } from "./math/MathBlock";
 import { Raw, RawInline } from "./raw/Raw";
 import { Embed } from "./embed/Embed";
+import { extraExtensions } from "./extras";
 import { Indent } from "./extensions/Indent";
 import { Reference } from "./reference/Reference";
 import { MathInline } from "./math/MathInline";
@@ -31,7 +33,7 @@ import { MarkdownPaste } from "./extensions/MarkdownPaste";
 import { Settle } from "./extensions/Settle";
 import { CodeHighlight } from "./highlight/CodeHighlight";
 import { ImageBlock } from "./image/ImageBlock";
-import { CORE_SLASH_ITEMS, EMBED_SLASH_ITEM, localizeSlashItems, type SlashItem } from "./lib/slashItems";
+import { CORE_SLASH_ITEMS, EMBED_SLASH_ITEM, extraSlashItems, localizeSlashItems, type SlashItem } from "./lib/slashItems";
 import type { SlashHandlers } from "./slash/runSlashCommand";
 import { SlashCommand } from "./slash/SlashCommand";
 import { Toggle } from "./toggle/Toggle";
@@ -74,6 +76,11 @@ export interface CoreExtensionsOptions {
    */
   indent?: boolean;
   /**
+   * 추가 문법(마크: 하이라이트·위/아래 첨자·삽입·글자색·배경색 / 약어 / 주석 / 태그 / 인용 / 정의 목록 / 목차 / 이모지 입력 규칙)을 하나씩 켠다(기본 모두 꺼짐, docs/MARKDOWN-DIALECT.md "추가 문법").
+   * 켠 것은 Markdown 붙여넣기에서도 읽는다. **노드·마크를 더하는 것이므로** 본문을 저장하는 소비자는 본문 스키마 버전을 올려야 한다 — 노트 앱은 켜지 않는다.
+   */
+  extras?: ExtraSyntax;
+  /**
    * 에디터를 만들자마자 문서의 자동 정리(끝 문단 등)를 끝낸다(기본 꺼짐). 켜지 않으면 **처음 원자 노드(링크·카드·원문 상자)를 누를 때** "Selection passed to setSelection…" 오류가 날 수 있다
    * (`extensions/Settle.ts`). 켜면 열자마자 `onUpdate`가 한 번 불릴 수 있으니, 내보낸 결과를 기준과 비교해서 바뀐 때만 저장하는 소비자가 켠다. 노트 앱은 켜지 않는다.
    */
@@ -99,9 +106,10 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
   const views = options.views ?? {};
   const baseItems = localizeSlashItems(CORE_SLASH_ITEMS, strings.slash.items);
   // `/임베드`는 임베드 노드를 켠 때만 보이고, 글은 `strings.embed`에서 온다.
-  const localizedItems = options.embed
+  const withEmbed = options.embed
     ? [...baseItems, { ...EMBED_SLASH_ITEM, label: strings.embed.slashLabel, description: strings.embed.slashDescription, keywords: [...EMBED_SLASH_ITEM.keywords, EMBED_SLASH_ITEM.label] }]
     : baseItems;
+  const localizedItems = [...withEmbed, ...localizeSlashItems(extraSlashItems(options.extras), strings.extras.items)];
   const list: AnyExtension[] = [
     EditorPortsExtension.configure({ ports: options.ports ?? null, strings, ui: options.ui ?? null }),
     // Yjs가 있으면 되돌리기/다시하기는 Yjs UndoManager(Collaboration)가 맡고(ProseMirror history와 함께 쓰면 충돌한다),
@@ -119,7 +127,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
       },
     }),
     LinkOpener,
-    MarkdownPaste.configure({ context: { ...(options.reference ? { references: true } : {}), ...(options.embed ? { embeds: true } : {}), ...(options.indent ? { indent: true } : {}), ...options.markdown } }),
+    MarkdownPaste.configure({ context: { ...(options.reference ? { references: true } : {}), ...(options.embed ? { embeds: true } : {}), ...(options.indent ? { indent: true } : {}), ...(options.extras ? { extras: options.extras } : {}), ...options.markdown } }),
     MarkdownCopy.configure({ markdown: options.copyAsMarkdown ?? null }),
     BlockId,
     BlockFlash,
@@ -154,6 +162,7 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     ...(options.raw ? [Raw, RawInline] : []),
     ...(options.reference ? [Reference.configure({ nodeView: views.reference ?? null })] : []),
     ...(options.embed ? [Embed.configure({ nodeView: views.embed ?? null })] : []),
+    ...extraExtensions(options.extras),
     ...(options.settle ? [Settle] : []),
     SlashCommand.configure({ items: options.slashItems?.(localizedItems) ?? localizedItems, handlers: options.slashHandlers ?? {}, render: options.menus?.slash ?? null }),
     ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),

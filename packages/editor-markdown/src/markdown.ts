@@ -15,6 +15,7 @@ import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-sch
 import { formatReference } from "./referenceDirective.ts";
 import { isBuiltinCalloutType, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
+import { emojiFromShortcode, type ExtraSyntax, normalizeAbbrTitle, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
 import { indentPrefix } from "@gogum4/editor-schema/indent";
 import type { MarkdownDialect } from "./dialect.ts";
 
@@ -52,6 +53,11 @@ export interface MarkdownOptions {
    * `::ref{kind=… id=…}`를 쓴다. 블로그처럼 해석기가 없는 소비자는 기본 표기나 대체 표현을 고른다.
    */
   references?: { toMarkdown?: (kind: string, id: string, props: ReferenceProps | null) => string | null | undefined };
+  /**
+   * 켠 추가 문법(`ImportContext.extras`와 짝). 글자 속의 `#태그`·`%%`·`==`·`:이모지:` 같은 모양이 다시 읽을 때 문법으로 읽히지 않게 이스케이프하는 데 쓴다.
+   * 마크·노드는 이 값과 상관없이 문서에 있으면 내보낸다.
+   */
+  extras?: ExtraSyntax;
 }
 
 export interface MarkdownResult {
@@ -90,6 +96,28 @@ export function escapeInlineGfm(text: string): string {
     else if (c === "~") out += prev === "~" || next === "~" ? `\\${c}` : c;
     else out += c;
   }
+  return out;
+}
+
+/** HTML 속성값에 넣을 글: `& < > "`를 개체로. */
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/**
+ * 추가 문법을 켠 문서에서, 글자 속의 같은 모양(`#글`, `%%`, `==`, `++`, `^`, `:smile:`)이 다시 읽을 때 문법으로 읽히지 않게 `\`로 막는다.
+ * `atStart`는 이 글이 줄(또는 공백) 바로 뒤에서 시작하는가 — `#태그`는 그때만 태그다.
+ */
+function escapeExtras(text: string, extras: ExtraSyntax, atStart: boolean): string {
+  let out = text;
+  if (extras.tags) {
+    const probe = atStart ? out : `\u0000${out}`;
+    const escaped = probe.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (whole, name: string) => (normalizeTag(name) === null ? whole : `\\#${name}`));
+    out = atStart ? escaped : escaped.slice(1);
+  }
+  if (extras.comments) out = out.replace(/%%/g, "\\%\\%");
+  if (extras.marks) out = out.replace(/==/g, "\\=\\=").replace(/\+\+/g, "\\+\\+").replace(/\^/g, "\\^");
+  if (extras.emoji) out = out.replace(/(?<![\w:]):([a-z0-9_+-]{1,40}):(?![\w:])/gi, (whole, name: string) => (emojiFromShortcode(name) === null ? whole : `\\:${name}\\:`));
   return out;
 }
 
@@ -205,7 +233,8 @@ class Renderer {
           out += syntax.open;
           open.push(syntax);
         }
-        out += isCode ? renderCode(core) : this.options.dialect === "gfm" ? escapeInlineGfm(core) : escapeInline(core);
+        const escaped = isCode ? renderCode(core) : this.options.dialect === "gfm" ? escapeInlineGfm(core) : escapeInline(core);
+        out += isCode || !this.options.extras ? escaped : escapeExtras(escaped, this.options.extras, out === "" || /\s$/.test(out));
         out += trail;
         return;
       }
@@ -228,6 +257,18 @@ class Renderer {
     if (has("bold")) out.push({ key: "bold", open: "**", close: "**" });
     if (has("italic")) out.push({ key: "italic", open: "*", close: "*" });
     if (has("strike")) out.push({ key: "strike", open: "~~", close: "~~" });
+    // 추가 문법의 마크: 하이라이트는 `==`(일반 GFM은 `<mark>`), 나머지는 어디서나 읽히는 HTML.
+    if (has("highlight")) out.push(this.plain ? { key: "highlight", open: "<mark>", close: "</mark>" } : { key: "highlight", open: "==", close: "==" });
+    if (has("superscript")) out.push({ key: "superscript", open: "<sup>", close: "</sup>" });
+    if (has("subscript")) out.push({ key: "subscript", open: "<sub>", close: "</sub>" });
+    if (has("insert")) out.push({ key: "insert", open: "<ins>", close: "</ins>" });
+    for (const [type, property] of [["textColor", "color"], ["backgroundColor", "background-color"]] as const) {
+      const color = normalizeColor(marks.find((m) => m.type === type)?.attrs?.color);
+      if (color !== null) out.push({ key: `${type}:${color}`, open: `<span style="${property}: ${color}">`, close: "</span>" });
+    }
+    const abbr = marks.find((m) => m.type === "abbr");
+    const abbrTitle = normalizeAbbrTitle(abbr?.attrs?.title);
+    if (abbr && abbrTitle !== null) out.push({ key: `abbr:${abbrTitle}`, open: `<abbr title="${escapeAttr(abbrTitle)}">`, close: "</abbr>" });
     if (has("underline")) {
       if (this.plain) this.notices.add("밑줄은 이 방언의 문법에 없어서 일반 글자로 내보냈어요.");
       else {
@@ -257,6 +298,18 @@ class Renderer {
       case "rawInline":
         // 에디터가 모르는 글 중간 디렉티브: 원문 그대로.
         return typeof node.attrs?.text === "string" ? node.attrs.text : "";
+      case "comment": {
+        const text = normalizeCommentText(node.attrs?.text);
+        return text === null ? "" : `%%${text}%%`;
+      }
+      case "tag": {
+        const name = normalizeTag(node.attrs?.name);
+        return name === null ? "" : `#${name}`;
+      }
+      case "citation": {
+        const source = normalizeCitationSource(node.attrs?.source);
+        return source === null ? "" : `[${source}]`;
+      }
       case "mathInline": {
         // 인라인 수식은 `$…$`. 줄바꿈은 공백으로, 앞뒤 공백은 없앤다(`$ x $`는 수식으로 읽히지 않는다).
         const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex.replace(/\s+/g, " ").trim() : "";
@@ -280,7 +333,8 @@ class Renderer {
     const id = typeof node.attrs?.pageId === "string" ? node.attrs.pageId : "";
     // 블록 링크: `blockIds`가 켜져 있으면 `[[제목#^id]]`, 아니면 그 페이지로 가는 링크로 내보낸다(블록 표시 `^id`를 남기지 않는다).
     const blockId = node.type === "pageLink" ? blockIdOf({ type: "x", attrs: { id: node.attrs?.blockId } }) : null;
-    const anchor = blockId !== null && this.options.blockIds ? `#^${blockId}` : "";
+    const heading = typeof node.attrs?.heading === "string" ? node.attrs.heading.replace(/[[\]|#^\n]/g, " ").replace(/\s+/g, " ").trim() : "";
+    const anchor = blockId !== null && this.options.blockIds ? `#^${blockId}` : heading !== "" ? `#${heading}` : "";
     if (node.type === "pageLink" && typeof node.attrs?.blockId === "string" && node.attrs.blockId !== "" && anchor === "") {
       this.notices.add("블록 링크는 그 페이지로 가는 링크로 내보냈어요.");
     }
@@ -420,6 +474,10 @@ class Renderer {
       case "raw":
         // 에디터가 모르는 블록 디렉티브: 원문 그대로(한 글자도 바꾸지 않는다). 빈 원문은 내보내지 않는다.
         return typeof node.attrs?.text === "string" && node.attrs.text !== "" ? node.attrs.text : null;
+      case "toc":
+        return "[toc]";
+      case "definitionList":
+        return this.definitionList(node);
       case "table":
         return this.table(node);
       case "toggle":
@@ -434,6 +492,21 @@ class Renderer {
         this.notices.add(`지원하지 않는 블록(${node.type})은 안의 내용만 내보냈어요.`);
         return this.blocks(node.content) || null;
     }
+  }
+
+  /** 정의 목록: `용어` 다음 줄마다 `: 설명`, 용어 묶음 사이는 빈 줄. 용어·설명은 한 줄(줄바꿈은 공백)이다. */
+  private definitionList(node: PmNode): string | null {
+    const groups: string[] = [];
+    let current: string[] = [];
+    for (const child of node.content ?? []) {
+      const text = this.inline(child.content).replace(/\s*\n\s*/g, " ").trim();
+      if (child.type === "definitionTerm") {
+        if (current.length > 0) groups.push(current.join("\n"));
+        current = [text === "" ? "\u00a0" : text];
+      } else current.push(`: ${text}`);
+    }
+    if (current.length > 0) groups.push(current.join("\n"));
+    return groups.length === 0 ? null : groups.join("\n\n");
   }
 
   /**

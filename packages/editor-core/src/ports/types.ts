@@ -88,4 +88,12 @@ export interface EditorPorts {
    * 이 함수로 DID를 알아내 주소를 DID 모양으로 바꾼다. 없거나 null을 돌려주면 핸들 주소의 임베드는 원본 링크만 보인다. 네트워크 요청이라 소비자가 정한다(코어는 요청하지 않는다).
    */
   resolveBlueskyHandle?: (handle: string) => Promise<string | null>;
+  /**
+   * 인용(`[@citekey]`, `createCoreExtensions({ extras: { citations: true } })`)의 해석. `label`이 키들의 사람이 읽는 글(예: "Smith 2020")을 돌려주면 인용 칩에 그 글이 보이고,
+   * `open`은 Ctrl/⌘+클릭으로 그 키의 항목을 연다(예: Zotero 앱). 둘 다 없으면 칩은 `@키` 그대로 보이고 눌러도 열리지 않는다.
+   */
+  citations?: {
+    label?(keys: readonly string[]): Promise<string | null>;
+    open?(key: string): void | Promise<void>;
+  };
 }

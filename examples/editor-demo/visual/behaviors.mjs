@@ -308,6 +308,38 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "추가 문법: 하이라이트·태그·주석·인용 입력 규칙과 목차 슬래시 명령",
+    async run({ page, open }) {
+      await open({ extras: true });
+      await focusScratch(page);
+      await page.keyboard.type("==강조== ");
+      await page.keyboard.type("#할일 ");
+      await page.keyboard.type("%%메모%% ");
+      await page.keyboard.type("[@smith2020]");
+      const kinds = await page.evaluate(() => {
+        const found = [];
+        const last = window.__demo.editor.state.doc.lastChild;
+        const paragraph = last.type.name === "paragraph" ? last : window.__demo.editor.state.doc.child(window.__demo.editor.state.doc.childCount - 2);
+        paragraph.forEach((child) => found.push(child.isText ? `text:${child.marks.map((m) => m.type.name).join("+")}` : child.type.name));
+        return found;
+      });
+      assert(kinds.includes("text:highlight") && kinds.includes("tag") && kinds.includes("comment") && kinds.includes("citation"), `입력 규칙 결과: ${kinds.join(", ")}`);
+      assert(await page.evaluate(() => !!document.querySelector(".ProseMirror mark")), "하이라이트가 <mark>로 보인다");
+      assert(await page.evaluate(() => !!document.querySelector(".ProseMirror .md-tag")), "태그 칩");
+      // 주석 칩을 누르면 입력 상자로 바뀐다.
+      await page.click(".ProseMirror .md-comment");
+      await page.waitForSelector(".md-comment-input", { timeout: 2000 });
+      await page.keyboard.press("Escape");
+      // 목차 슬래시 명령
+      await page.keyboard.press("End");
+      await page.keyboard.press("Enter");
+      await page.keyboard.type("/목차");
+      await page.keyboard.press("Enter");
+      await page.waitForSelector(".ProseMirror nav.md-toc", { timeout: 2000 });
+      assert(await page.evaluate(() => document.querySelector(".ProseMirror nav.md-toc").textContent.length > 0), "목차가 보인다");
+    },
+  },
+  {
     name: "링크: Ctrl+클릭만 열고 그냥 클릭은 열지 않는다",
     async run({ page, open }) {
       await open();

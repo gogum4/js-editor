@@ -980,3 +980,97 @@
 .md-editor .ProseMirror-selectednode.md-embed .md-embed-frame {
   outline: 2px solid var(--md-c-93c5fd, #93c5fd);
 }
+
+/* 추가 문법(extras): 마크, 주석·태그·인용 칩, 정의 목록, 목차 */
+.md-editor mark.md-highlight,
+.md-editor mark {
+  padding: 0 0.1em;
+  border-radius: 3px;
+  background: var(--md-c-fef08a, #fef08a);
+  color: inherit;
+}
+.md-editor ins.md-ins {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+.md-editor abbr.md-abbr {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+.md-editor .md-comment {
+  padding: 0 0.3em;
+  border-radius: 4px;
+  background: var(--md-c-f5f5f5, #f5f5f5);
+  color: var(--md-c-737373, #737373);
+  font-size: 0.9em;
+  cursor: pointer;
+}
+.md-editor .md-tag {
+  padding: 0 0.4em;
+  border-radius: 999px;
+  background: var(--md-c-eff6ff, #eff6ff);
+  color: var(--md-c-1d4ed8, #1d4ed8);
+  font-size: 0.92em;
+}
+.md-editor .md-citation {
+  padding: 0 0.3em;
+  border-radius: 4px;
+  background: var(--md-c-f0fdf4, #f0fdf4);
+  color: var(--md-c-166534, #166534);
+  font-style: normal;
+  cursor: pointer;
+}
+.md-editor .md-comment-input,
+.md-editor .md-citation-input {
+  font: inherit;
+  padding: 0 0.3em;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  border-radius: 4px;
+}
+.md-editor dl.md-dl {
+  margin: 0.7em 0;
+}
+.md-editor dt.md-dt {
+  font-weight: 600;
+  margin-top: 0.4em;
+}
+.md-editor dd.md-dd {
+  margin: 0 0 0.2em 1.6em;
+}
+.md-editor dd.md-dd:empty::before,
+.md-editor dt.md-dt:empty::before {
+  color: var(--md-c-737373, #737373);
+  content: attr(data-placeholder);
+}
+.md-editor nav.md-toc {
+  margin: 0.8em 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--md-c-e5e5e5, #e5e5e5);
+  border-radius: 8px;
+  background: var(--md-c-fafafa, #fafafa);
+}
+.md-editor .md-toc-title {
+  margin: 0 0 0.3em;
+  font-weight: 600;
+}
+.md-editor .md-toc-empty {
+  margin: 0;
+  color: var(--md-c-737373, #737373);
+}
+.md-editor .md-toc ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-editor .md-toc button {
+  padding: 0.1em 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.md-editor .md-toc button:hover {
+  text-decoration: underline;
+}
