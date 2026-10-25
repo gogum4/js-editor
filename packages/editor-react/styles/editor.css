@@ -1350,13 +1350,10 @@
   background: var(--md-c-e5e5e5, #e5e5e5);
 }
 .fixed-toolbar-insert {
-  position: relative;
   flex: none;
 }
 .fixed-toolbar-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  position: fixed;
   z-index: 40;
   min-width: 11rem;
   max-height: min(24rem, 60vh);

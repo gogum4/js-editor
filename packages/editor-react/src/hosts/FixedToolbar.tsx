@@ -51,6 +51,8 @@ export function FixedToolbar({ editor }: { editor: Editor | null }) {
   const strings = useEditorStrings();
   const [, refresh] = useReducer((n: number) => n + 1, 0);
   const [menuOpen, setMenuOpen] = useState(false);
+  /** 메뉴의 화면 좌표. 막대가 가로로 스크롤되는 칸이라 메뉴를 막대 안에 두면 잘려서, 단추 위치에서 `fixed`로 띄운다. */
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,9 +76,14 @@ export function FixedToolbar({ editor }: { editor: Editor | null }) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMenuOpen(false);
     };
+    const onScroll = () => setMenuOpen(false); // 메뉴는 화면에 고정이라 스크롤하면 단추에서 떨어진다
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
     return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
     };
@@ -168,11 +175,21 @@ export function FixedToolbar({ editor }: { editor: Editor | null }) {
       ))}
       {insertItems.length > 0 && (
         <div className="fixed-toolbar-insert">
-          <button type="button" aria-haspopup="menu" aria-expanded={menuOpen} data-action="insert" onClick={() => setMenuOpen((open) => !open)}>
+          <button
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            data-action="insert"
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setMenuPos({ top: rect.bottom + 4, left: Math.max(8, Math.min(rect.left, window.innerWidth - 190)) });
+              setMenuOpen((open) => !open);
+            }}
+          >
             + {strings.fixed.insert}
           </button>
-          {menuOpen && (
-            <ul role="menu" aria-label={strings.fixed.insertMenu} className="fixed-toolbar-menu">
+          {menuOpen && menuPos && (
+            <ul role="menu" aria-label={strings.fixed.insertMenu} className="fixed-toolbar-menu" style={{ top: menuPos.top, left: menuPos.left }}>
               {insertItems.map((item) => (
                 <li key={item.id} role="none">
                   <button
