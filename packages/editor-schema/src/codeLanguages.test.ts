@@ -37,6 +37,7 @@ describe("resolveLanguage", () => {
     expect(resolveLanguage(undefined)).toBeNull();
     // mermaid는 highlight.js 언어가 아니다 (M4.5에서 따로 그린다)
     expect(resolveLanguage("mermaid")).toBeNull();
+    expect(resolveLanguage("plot")).toBeNull(); // 수식 그래프도 같다
   });
 });
 
@@ -62,7 +63,7 @@ describe("generated language data", () => {
 describe("languageOptions", () => {
   it("lists every language once, popular ones first, the rest alphabetical", () => {
     const options = languageOptions();
-    expect(options).toHaveLength(LANGUAGE_NAMES.length + 1); // + mermaid
+    expect(options).toHaveLength(LANGUAGE_NAMES.length + 2); // + mermaid, plot
     expect(new Set(options.map((o) => o.name)).size).toBe(options.length);
 
     expect(options[0].name).toBe("plaintext");
@@ -85,8 +86,8 @@ describe("languageOptions", () => {
 
 describe("searchLanguages", () => {
   it("returns everything for an empty query", () => {
-    expect(searchLanguages("")).toHaveLength(LANGUAGE_NAMES.length + 1);
-    expect(searchLanguages("   ")).toHaveLength(LANGUAGE_NAMES.length + 1);
+    expect(searchLanguages("")).toHaveLength(LANGUAGE_NAMES.length + 2);
+    expect(searchLanguages("   ")).toHaveLength(LANGUAGE_NAMES.length + 2);
   });
 
   it("finds a language by name, prefix or alias", () => {

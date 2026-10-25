@@ -3,6 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { calloutMeta, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeImageCaption } from "@gogum4/editor-schema/imageLayout";
 import { parseCodeMeta } from "@gogum4/editor-schema/codeMeta";
+import { isPlotLanguage, parsePlot } from "@gogum4/editor-schema/plot";
+import { plotToSvg } from "@gogum4/editor-schema/plotSvg";
 import { normalizeIndent } from "@gogum4/editor-schema/indent";
 import { citationKeys, normalizeAbbrTitle, normalizeTaskStatus, TASK_STATUSES, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag } from "@gogum4/editor-schema/extras";
 import { blueskyProfile, EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget, withBlueskyDid } from "@gogum4/editor-schema/embed";
@@ -248,6 +250,11 @@ function renderCode(node: PmNode, ctx: Context, key: number): ReactNode {
         <MermaidDiagram source={code} theme={ctx.options.mermaidTheme} />
       </div>
     );
+  }
+  // 수식 그래프: 식이 올바르면 SVG 그림(서버에서 한 번에 그린다 — 3D는 처음 시점의 정지 그림). 틀렸으면 아래 일반 코드 블록으로 보인다.
+  if (isPlotLanguage(language)) {
+    const plot = parsePlot(code);
+    if (plot.ok) return <figure key={key} id={id} className="plot" dangerouslySetInnerHTML={{ __html: plotToSvg(plot.spec) }} />;
   }
   const highlighted = ctx.options.prepared?.code.get(codeKey(language, code));
   const meta = parseCodeMeta(node.attrs?.meta);

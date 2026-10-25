@@ -61,7 +61,7 @@ function collect(node: PmNode, out: Targets): void {
   if (node.type === "codeBlock") {
     const language = typeof node.attrs?.language === "string" ? node.attrs.language.trim() : "";
     // mermaid는 브라우저가 그린다. 언어가 없으면 강조하지 않는다.
-    if (language !== "" && language.toLowerCase() !== "mermaid") out.code.push({ language, code: textOf(node) });
+    if (language !== "" && language.toLowerCase() !== "mermaid" && language.toLowerCase() !== "plot") out.code.push({ language, code: textOf(node) });
     return;
   }
   for (const child of node.content ?? []) collect(child, out);

@@ -374,6 +374,40 @@ export const BEHAVIORS = [
     },
   },
   {
+    name: "수식 그래프: ```plot 블록이 2D 그래프와 3D 곡면(드래그로 회전)을 그리고, 틀린 식은 오류를 보인다",
+    async run({ page, open }) {
+      await open({});
+      await focusScratch(page);
+      await page.keyboard.type("```plot ");
+      await page.keyboard.type("y = sin(x)");
+      await page.waitForSelector(".plot-preview svg", { timeout: 3000 });
+      assert(await page.evaluate(() => document.querySelectorAll(".plot-preview svg path").length >= 2), "2D 그래프에 곡선 경로가 있다");
+      assert(!(await page.evaluate(() => !!document.querySelector(".plot-3d"))), "2D는 회전하는 그림이 아니다");
+      // 식을 3D 곡면으로 바꾼다
+      await page.keyboard.press("Shift+Home");
+      await page.keyboard.type("z = x^2 - y^2");
+      await page.waitForSelector(".plot-3d svg polygon", { timeout: 3000 });
+      const before = await page.evaluate(() => document.querySelector(".plot-3d svg polygon")?.getAttribute("points"));
+      await page.locator(".plot-3d").scrollIntoViewIfNeeded(); // 화면 밖이면 마우스 좌표가 허공을 가리킨다
+      const box = await page.locator(".plot-3d").boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2 + 30, { steps: 5 });
+      await page.mouse.up();
+      const after = await page.evaluate(() => document.querySelector(".plot-3d svg polygon")?.getAttribute("points"));
+      assert(before !== after, "드래그하면 곡면이 돌아간다");
+      await page.locator(".plot-3d").dblclick();
+      eq(await page.evaluate(() => document.querySelector(".plot-3d svg polygon")?.getAttribute("points")), before, "더블클릭하면 처음 시점");
+      // 틀린 식(마우스를 쓴 뒤라 코드 줄을 다시 눌러 커서를 돌려 놓는다)
+      await page.locator(".code-block pre").last().click();
+      await page.keyboard.press("End");
+      await page.keyboard.press("Shift+Home");
+      await page.keyboard.type("y = foo(x)");
+      await page.waitForSelector(".plot-error", { timeout: 3000 });
+      assert((await page.locator(".plot-error").textContent()).includes("foo"), "오류에 모르는 이름이 나온다");
+    },
+  },
+  {
     name: "이모지 자동완성: :글자로 후보가 뜨고 고르면 입력되며, :만 치면 최근에 쓴 이모지를 제안한다",
     async run({ page, open }) {
       await open({ extras: true });

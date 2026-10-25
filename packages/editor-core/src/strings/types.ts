@@ -52,6 +52,13 @@ export interface EditorStrings {
     loading: string;
     viewer: { fitShort: string; label: string; hint: string; zoomOut: string; zoomIn: string; fit: string; actualSize: string; close: string; diagram: string };
   };
+  /** 수식 그래프(` ```plot ` 코드 블록)의 화면 글. `error`는 식·줄 오류를 사람이 읽는 문장으로. */
+  plot: {
+    syntaxError: string;
+    empty: string;
+    dragHint: string;
+    error: (error: { code: string; line: number; name?: string }) => string;
+  };
   /** 추가 문법(`createCoreExtensions({ extras })`)의 화면 글. `items`는 슬래시 메뉴 항목의 이름·설명이다. */
   extras: {
     toc: { title: string; empty: string; jump: string };

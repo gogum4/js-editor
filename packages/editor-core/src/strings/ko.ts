@@ -20,6 +20,42 @@ export const koStrings: EditorStrings = {
     toggleFold: "접기/펴기",
   },
   codeBlock: { show: "코드 보기", hide: "코드 접기", copy: "복사", copied: "복사됨", copyFailed: "복사 실패", metaPlaceholder: "제목 · 강조 줄  예) title=\"a.ts\" {2,4}", metaLabel: "코드 블록 정보" },
+  plot: {
+    syntaxError: "그래프 식을 확인해 주세요",
+    empty: "식을 입력하면 그래프가 표시됩니다. 예: y = sin(x)",
+    dragHint: "끌어서 돌리고, 더블클릭하면 처음 시점으로",
+    error: ({ code, line, name }) => {
+      const where = line > 0 ? `${line}번째 줄: ` : "";
+      switch (code) {
+        case "empty_plot":
+          return "그릴 식이 없어요. 예: y = sin(x)";
+        case "empty":
+          return `${where}식이 비어 있어요`;
+        case "unknown_name":
+          return `${where}'${name ?? ""}'을(를) 알 수 없어요 (쓸 수 있는 변수: x, y, t · 함수: sin, cos, sqrt …)`;
+        case "bad_args":
+          return `${where}${name ?? "함수"}의 인자 개수가 맞지 않아요`;
+        case "unbalanced":
+          return `${where}괄호가 맞지 않아요`;
+        case "bad_range":
+          return `${where}범위는 'a..b' 모양이고 a가 b보다 작아야 해요 (예: x: -2pi..2pi)`;
+        case "bad_option":
+          return `${where}알 수 없는 설정이에요${name ? ` (${name})` : ""}. title·x·y·z·grid·aspect를 쓸 수 있어요`;
+        case "bad_line":
+          return `${where}이해하지 못한 줄이에요. 예: (cos(t), sin(t)), t = 0..2pi`;
+        case "mixed_dims":
+          return "2D와 3D 식을 한 그림에 섞을 수 없어요 (y를 쓰는 식은 3D 곡면이에요)";
+        case "too_many":
+          return "줄이 너무 많아요 (2D 식 8개·3D 곡면 3개·40줄까지)";
+        case "too_long":
+          return `${where}식이 너무 길어요`;
+        case "too_deep":
+          return `${where}괄호가 너무 깊어요`;
+        default:
+          return `${where}식을 이해하지 못했어요`;
+      }
+    },
+  },
   extras: {
     toc: { title: "목차", empty: "제목이 없어요", jump: "이 제목으로 이동" },
     bibliography: { title: "참고문헌", empty: "인용한 문헌이 없어요" },
