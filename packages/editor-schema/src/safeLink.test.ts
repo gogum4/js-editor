@@ -5,6 +5,7 @@ import { isSafeToOpen, wantsToOpenLink } from "./safeLink.ts";
 describe("isSafeToOpen", () => {
   it("allows web and mail addresses", () => {
     expect(isSafeToOpen("https://example.com/path?q=한글")).toBe(true);
+    expect(isSafeToOpen("zotero://select/library/items/ABCD1234")).toBe(true);
     expect(isSafeToOpen("http://localhost:3000")).toBe(true);
     expect(isSafeToOpen("mailto:someone@example.com")).toBe(true);
     expect(isSafeToOpen("  https://example.com  ")).toBe(true);

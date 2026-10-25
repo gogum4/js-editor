@@ -31,6 +31,7 @@ import { blockIdOf, blockIdFromForeign } from "@gogum4/editor-schema/blockId";
 import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
 import { calloutMeta, type CalloutIcons } from "@gogum4/editor-schema/callout";
 import { detectEmbed, embedSource, type EmbedTarget } from "@gogum4/editor-schema/embed";
+import { citationKeys, type ExtraSyntax, normalizeColor, replaceEmojiShortcodes } from "@gogum4/editor-schema/extras";
 import { indentPrefix, normalizeIndent } from "@gogum4/editor-schema/indent";
 import type { PmNode } from "@gogum4/editor-schema/pmDoc";
 import * as Y from "yjs";
@@ -69,7 +70,12 @@ export function editor() {
   // 0.2: 임베드·들여쓰기 옵션, 콜아웃 아이콘 표, 소비자 입력 접점(parseEmbedInput)이 타입으로 풀린다.
   const icons: CalloutIcons = { rocket: "🚀" };
   const ports: EditorPorts = { ...memoryPorts(), calloutIcons: icons, parseEmbedInput: (input: string) => (input.startsWith("post:") ? { kind: "post", id: input.slice(5) } : null) };
-  const rich = createReactExtensions(new Y.Doc(), { ports, embed: true, indent: true, reference: true });
+  const extras: ExtraSyntax = { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true };
+  const rich = createReactExtensions(new Y.Doc(), { ports, embed: true, indent: true, reference: true, extras });
+  const color: string | null = normalizeColor("#f00");
+  const keys: string[] = citationKeys("@smith2020");
+  const emoji: string = replaceEmojiShortcodes(":smile:");
+  void [color, keys, emoji];
   const target: EmbedTarget | null = detectEmbed("https://youtu.be/dQw4w9WgXcQ");
   const src: string | null = target === null ? null : embedSource(target);
   const meta: { label: string; icon: string } = calloutMeta("rocket", icons);

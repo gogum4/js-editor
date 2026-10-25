@@ -5,6 +5,9 @@ export function textOf(node: PmNode): string {
   if (node.type === "text") return node.text ?? "";
   if (node.type === "hardBreak") return " ";
   if (node.type === "rawInline") return typeof node.attrs?.text === "string" ? node.attrs.text : "";
+  if (node.type === "tag") return `#${typeof node.attrs?.name === "string" ? node.attrs.name : ""}`;
+  if (node.type === "citation") return `[${typeof node.attrs?.source === "string" ? node.attrs.source : ""}]`;
+  if (node.type === "comment") return "";
   if (node.type === "mathInline") return typeof node.attrs?.latex === "string" ? node.attrs.latex : "";
   return (node.content ?? []).map(textOf).join("");
 }

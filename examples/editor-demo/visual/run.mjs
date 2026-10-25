@@ -55,8 +55,8 @@ async function main() {
         const text = message.text();
         if (message.type() === "error" && !/Failed to load resource/.test(text)) errors.push(`console.error: ${text}`);
       });
-      const open = async ({ collab = false, raw = false, ref = false, embed = false, indent = false } = {}) => {
-        const query = [collab ? "collab=1" : "", raw ? "raw=1" : "", ref ? "ref=1" : "", embed ? "embed=1" : "", indent ? "indent=1" : ""].filter(Boolean).join("&");
+      const open = async ({ collab = false, raw = false, ref = false, embed = false, indent = false, extras = false } = {}) => {
+        const query = [collab ? "collab=1" : "", raw ? "raw=1" : "", ref ? "ref=1" : "", embed ? "embed=1" : "", indent ? "indent=1" : "", extras ? "extras=1" : ""].filter(Boolean).join("&");
         await page.goto(url + (plain ? "plain.html" : "") + (query ? `?${query}` : ""));
         await waitReady(page);
         // --dark: 다크 모드로 본다(스크린샷을 눈으로 확인하는 용도 — 계산된 스타일 기준과는 비교하지 않는다).

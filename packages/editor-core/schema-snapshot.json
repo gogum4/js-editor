@@ -30,6 +30,15 @@
         "type": "(필수)"
       }
     },
+    "citation": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {
+        "source": "(필수)"
+      }
+    },
     "codeBlock": {
       "content": "text*",
       "group": "block",
@@ -39,6 +48,36 @@
         "id": "(필수)",
         "language": "(필수)"
       }
+    },
+    "comment": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {
+        "text": "(필수)"
+      }
+    },
+    "definitionDetail": {
+      "content": "inline*",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {}
+    },
+    "definitionList": {
+      "content": "(definitionTerm definitionDetail+)+",
+      "group": "block",
+      "inline": false,
+      "atom": false,
+      "attrs": {}
+    },
+    "definitionTerm": {
+      "content": "inline*",
+      "group": null,
+      "inline": false,
+      "atom": false,
+      "attrs": {}
     },
     "doc": {
       "content": "block+",
@@ -227,6 +266,15 @@
       "atom": false,
       "attrs": {}
     },
+    "tag": {
+      "content": null,
+      "group": "inline",
+      "inline": true,
+      "atom": true,
+      "attrs": {
+        "name": "(필수)"
+      }
+    },
     "taskItem": {
       "content": "paragraph block*",
       "group": null,
@@ -252,6 +300,13 @@
       "atom": true,
       "attrs": {}
     },
+    "toc": {
+      "content": null,
+      "group": "block",
+      "inline": false,
+      "atom": true,
+      "attrs": {}
+    },
     "toggle": {
       "content": "paragraph block*",
       "group": "block",
@@ -263,10 +318,26 @@
     }
   },
   "marks": {
+    "abbr": {
+      "attrs": {
+        "title": "(필수)"
+      }
+    },
+    "backgroundColor": {
+      "attrs": {
+        "color": "(필수)"
+      }
+    },
     "bold": {
       "attrs": {}
     },
     "code": {
+      "attrs": {}
+    },
+    "highlight": {
+      "attrs": {}
+    },
+    "insert": {
       "attrs": {}
     },
     "italic": {
@@ -283,6 +354,17 @@
     },
     "strike": {
       "attrs": {}
+    },
+    "subscript": {
+      "attrs": {}
+    },
+    "superscript": {
+      "attrs": {}
+    },
+    "textColor": {
+      "attrs": {
+        "color": "(필수)"
+      }
     },
     "underline": {
       "attrs": {}

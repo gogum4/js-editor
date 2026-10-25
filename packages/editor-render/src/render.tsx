@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { calloutMeta, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeIndent } from "@gogum4/editor-schema/indent";
+import { citationKeys, normalizeAbbrTitle, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag } from "@gogum4/editor-schema/extras";
 import { blueskyProfile, EMBED_DEFAULT_SIZE, EMBED_IFRAME_ALLOW, embedSource, normalizeEmbedSize, normalizeEmbedTarget, withBlueskyDid } from "@gogum4/editor-schema/embed";
 import { blockIdOf } from "@gogum4/editor-schema/blockId";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
@@ -10,12 +11,14 @@ import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
 import { MermaidDiagram } from "./client/MermaidDiagram.tsx";
 import { hastToReact } from "./highlight.tsx";
-import { collectHeadings, textOf } from "./slug.ts";
+import { collectHeadings, slugify, textOf } from "./slug.ts";
 import { koRenderStrings, type RenderStrings } from "./strings.ts";
 import { codeKey, type ImageSource, mathKey, type RenderOptions } from "./types.ts";
 
 /** 렌더 한 번 동안 쓰는 상태. 렌더는 문서 순서대로 한 번 돌고, 각주 번호는 나온 순서대로 매겨진다. */
 interface Context {
+  /** 문서 전체(목차 블록이 제목들을 모은다). */
+  doc: PmNode;
   options: RenderOptions;
   strings: RenderStrings;
   footnotes: string[];
@@ -62,8 +65,21 @@ function renderText(node: PmNode, key: number): ReactNode {
   if (has("code")) out = <code>{out}</code>;
   if (has("underline")) out = <u>{out}</u>;
   if (has("strike")) out = <s>{out}</s>;
+  // 추가 문법의 마크(안쪽부터): 삽입 → 하이라이트 → 위/아래 첨자 → 약어 → 색.
+  if (has("insert")) out = <ins>{out}</ins>;
+  if (has("highlight")) out = <mark>{out}</mark>;
+  if (has("superscript")) out = <sup>{out}</sup>;
+  if (has("subscript")) out = <sub>{out}</sub>;
+  const abbr = marks.find((m) => m.type === "abbr");
+  const abbrTitle = normalizeAbbrTitle(abbr?.attrs?.title);
+  if (abbrTitle !== null) out = <abbr title={abbrTitle}>{out}</abbr>;
   if (has("italic")) out = <em>{out}</em>;
   if (has("bold")) out = <strong>{out}</strong>;
+  const textColor = normalizeColor(marks.find((m) => m.type === "textColor")?.attrs?.color);
+  const backgroundColor = normalizeColor(marks.find((m) => m.type === "backgroundColor")?.attrs?.color);
+  if (textColor !== null || backgroundColor !== null) {
+    out = <span style={{ ...(textColor !== null ? { color: textColor } : {}), ...(backgroundColor !== null ? { backgroundColor } : {}) }}>{out}</span>;
+  }
   const link = marks.find((m) => m.type === "link");
   const href = typeof link?.attrs?.href === "string" ? link.attrs.href.trim() : "";
   // 열면 안 되는 주소(javascript: 등)는 링크 없이 글자만 보인다.
@@ -111,6 +127,43 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
           </sup>
         );
       }
+      case "comment": {
+        // 주석은 독자에게 보이지 않는다(`showComments`로 흐린 글로 보일 수 있다).
+        const text = normalizeCommentText(node.attrs?.text);
+        if (text === null || ctx.options.showComments !== true) return null;
+        return (
+          <span key={index} className="md-comment" data-comment="">
+            %%{text}%%
+          </span>
+        );
+      }
+      case "tag": {
+        const name = normalizeTag(node.attrs?.name);
+        if (name === null) return null;
+        const href = ctx.options.tagHref?.(name) ?? null;
+        return href === null ? (
+          <span key={index} className="md-tag" data-tag={name}>
+            #{name}
+          </span>
+        ) : (
+          <a key={index} className="md-tag" data-tag={name} href={href}>
+            #{name}
+          </a>
+        );
+      }
+      case "citation": {
+        const source = normalizeCitationSource(node.attrs?.source);
+        if (source === null) return null;
+        const keys = citationKeys(source);
+        const label = ctx.options.citationLabel?.(keys, source) ?? null;
+        const href = keys[0] === undefined ? null : (ctx.options.citationHref?.(keys[0]) ?? null);
+        const text = label === null ? `[${source}]` : label;
+        return (
+          <cite key={index} className="md-citation" data-citation={source}>
+            {href === null ? text : <a href={href}>{text}</a>}
+          </cite>
+        );
+      }
       case "rawInline": {
         const text = typeof node.attrs?.text === "string" ? node.attrs.text : "";
         const custom = ctx.options.renderRaw?.(text, true);
@@ -126,8 +179,11 @@ function renderInline(nodes: readonly PmNode[] | undefined, ctx: Context): React
         const target = ctx.options.pageLink?.(pageId) ?? null;
         if (target === null) return null;
         const blockId = blockIdOf({ type: "x", attrs: { id: node.attrs?.blockId } });
+        // 제목 위치(`[[글#제목]]`)는 그 글의 제목 앵커로 잇는다(앵커 id는 제목 글자의 slug).
+        const heading = typeof node.attrs?.heading === "string" && node.attrs.heading.trim() !== "" ? slugify(node.attrs.heading) : null;
+        const hash = blockId !== null ? `#^${blockId}` : heading !== null ? `#${heading}` : "";
         return (
-          <a key={index} className="page-link" href={blockId === null ? target.href : `${target.href}#^${blockId}`}>
+          <a key={index} className="page-link" href={`${target.href}${hash}`}>
             {target.title}
           </a>
         );
@@ -287,6 +343,30 @@ function renderBlock(node: PmNode, ctx: Context, key: number): ReactNode {
         <blockquote key={key} id={anchorId(node, ctx)}>
           {renderBlocks(node.content, ctx)}
         </blockquote>
+      );
+    case "toc": {
+      // 목차: 이 문서의 제목들로 만든 중첩 목록(앵커는 제목의 id와 같다).
+      const headings = collectHeadings(ctx.doc);
+      if (headings.length === 0) return null;
+      const top = Math.min(...headings.map((heading) => heading.level));
+      return (
+        <nav key={key} className="md-toc" data-toc="" aria-label={ctx.strings.toc}>
+          <p className="md-toc-title">{ctx.strings.toc}</p>
+          <ul>
+            {headings.map((heading) => (
+              <li key={heading.id} style={{ marginLeft: `${(heading.level - top) * 1.1}em` }}>
+                <a href={`#${heading.id}`}>{heading.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      );
+    }
+    case "definitionList":
+      return (
+        <dl key={key} className="md-dl">
+          {(node.content ?? []).map((child, index) => (child.type === "definitionTerm" ? <dt key={index}>{renderInline(child.content, ctx)}</dt> : <dd key={index}>{renderInline(child.content, ctx)}</dd>))}
+        </dl>
       );
     case "callout": {
       const type = normalizeCalloutType(node.attrs?.type);
@@ -463,6 +543,7 @@ export function renderDoc(doc: PmNode, options: RenderOptions = {}): ReactNode {
   const ctx: Context = {
     options,
     strings: options.strings ?? koRenderStrings,
+    doc,
     footnotes: [],
     headingIds: collectHeadings(doc).map((heading) => heading.id),
     nextHeading: 0,

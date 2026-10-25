@@ -16,4 +16,5 @@ export { AssetImage } from "./views/AssetImage";
 export { FootnoteEditorHost } from "./hosts/FootnoteEditorHost";
 export { MathEditorHost } from "./hosts/MathEditorHost";
 export { TableToolbar } from "./hosts/TableToolbar";
+export { SelectionToolbar } from "./hosts/SelectionToolbar";
 export { useMathHtml } from "./hooks/useMathHtml";

@@ -11,7 +11,13 @@ import { type ImportContext, markdownToDoc } from "./markdownImport.ts";
 
 /** 기본 300개. 더 오래 돌려 보려면 `FUZZ_SEEDS=20000 pnpm vitest run …`. */
 const SEEDS = Number(process.env.FUZZ_SEEDS ?? 300);
-const ctx: ImportContext = { resolvePage: () => null, resolveImage: () => null, embeds: true, indent: true };
+const ctx: ImportContext = {
+  resolvePage: () => null,
+  resolveImage: () => null,
+  embeds: true,
+  indent: true,
+  extras: { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true },
+};
 
 /** mulberry32: 시드로 재현되는 난수. */
 function rng(seed: number) {
@@ -25,7 +31,9 @@ function rng(seed: number) {
   };
 }
 
-const WORDS = ["가나다", "hello", "한글 단어", "x", "중요한 글", "메모", "A b C", "둘째 줄", "100%", "a-b"];
+// 추가 문법과 닮은 글자(#해시, ==, %%, ^, ++, :코드:, [@키])도 글자 그대로 왕복해야 한다.
+const WORDS = ["가나다", "hello", "한글 단어", "x", "중요한 글", "메모", "A b C", "둘째 줄", "100%", "a-b", "#해시", "a==b", "50%% 할인", "x^2^", "1++1", ":smile: 아님", "시간 10:30:45", "[@키] 아님", "c++", "a^b"];
+const MARKS = ["highlight", "superscript", "subscript", "insert"];
 const CALLOUTS = ["note", "tip", "important", "warning", "caution", "info", "danger", "rocket", "my-kind_2", "success"];
 const EMBEDS: Array<[string, string]> = [
   ["youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
@@ -45,6 +53,11 @@ function build(seed: number): PmNode {
     const style = r();
     if (style < 0.2) return [{ ...t, marks: [{ type: "bold" }] }];
     if (style < 0.3) return [{ ...t, marks: [{ type: "italic" }] }];
+    if (style < 0.45) return [{ ...t, marks: [{ type: pick(MARKS) }] }];
+    if (style < 0.5) return [{ ...t, marks: [{ type: "textColor", attrs: { color: pick(["#dc2626", "#2563eb", "#123456"]) } }] }];
+    if (style < 0.55) return [{ ...t, marks: [{ type: "bold" }, { type: "backgroundColor", attrs: { color: "#fef08a" } }] }];
+    if (style < 0.6) return [{ ...t, marks: [{ type: "abbr", attrs: { title: pick(["Hyper Text", "한글 설명"]) } }] }];
+    if (style < 0.68) return [{ ...t, text: `${t.text} ` }, pick<PmNode>([{ type: "comment", attrs: { text: "메모 하나" } }, { type: "tag", attrs: { name: "태그/하위" } }, { type: "citation", attrs: { source: "@smith2020; @doe_2021, p. 3" } }, { type: "footnote", attrs: { text: "각주" } }])];
     return [t];
   };
   const paragraph = (extra: Record<string, unknown> = {}): PmNode => {
@@ -74,6 +87,11 @@ function build(seed: number): PmNode {
       const items = 1 + Math.floor(r() * 3);
       return { type: "bulletList", content: Array.from({ length: items }, () => ({ type: "listItem", content: [stripIndent(paragraph())] })) };
     }
+    if (roll < 0.9) {
+      const items = 1 + Math.floor(r() * 2);
+      return { type: "definitionList", content: Array.from({ length: items }, () => [{ type: "definitionTerm", content: [text()] }, { type: "definitionDetail", content: [text()] }, ...(r() < 0.3 ? [{ type: "definitionDetail", content: [text()] }] : [])]).flat() };
+    }
+    if (roll < 0.91) return { type: "toc" };
     if (roll < 0.93) {
       const language = pick(["ts", "", "py"]);
       return { type: "codeBlock", ...(language !== "" ? { attrs: { language } } : {}), content: [{ type: "text", text: pick(["const a = 1;", "print(1)", "x"]) }] };
@@ -91,6 +109,17 @@ function stripIndent(node: PmNode): PmNode {
   return { ...node, ...(Object.keys(rest).length > 0 ? { attrs: rest } : { attrs: undefined }) } as PmNode;
 }
 
+/** 정의 목록 둘이 바로 이어지면 Markdown에서는 한 목록이다(구별할 표시가 없다) — 비교할 때 합쳐서 본다. */
+function mergeAdjacentDefinitionLists(nodes: PmNode[]): PmNode[] {
+  const out: PmNode[] = [];
+  for (const node of nodes) {
+    const previous = out[out.length - 1];
+    if (previous?.type === "definitionList" && node.type === "definitionList") out[out.length - 1] = { ...previous, content: [...(previous.content ?? []), ...(node.content ?? [])] };
+    else out.push(node);
+  }
+  return out;
+}
+
 /** 비교용으로 값이 null·undefined인 속성을 지운다(예: 문단의 attrs: {}). */
 function canon(node: PmNode): unknown {
   const attrs = Object.fromEntries(Object.entries(node.attrs ?? {}).filter(([, v]) => v !== null && v !== undefined));
@@ -99,11 +128,11 @@ function canon(node: PmNode): unknown {
     ...(Object.keys(attrs).length > 0 ? { attrs } : {}),
     ...(node.text !== undefined ? { text: node.text } : {}),
     ...(node.marks ? { marks: node.marks } : {}),
-    ...(node.content ? { content: node.content.map(canon) } : {}),
+    ...(node.content ? { content: mergeAdjacentDefinitionLists(node.content).map(canon) } : {}),
   };
 }
 
-const exportMd = (doc: PmNode) => docToMarkdown(doc, { pageTitle: () => null }).markdown;
+const exportMd = (doc: PmNode) => docToMarkdown(doc, { pageTitle: () => null, extras: ctx.extras }).markdown;
 
 describe("Markdown 왕복 속성 시험 (시드 고정, 300개)", () => {
   it("내보냈다 다시 읽으면 같은 문서가 되고, 또 내보내면 같은 글이다", () => {

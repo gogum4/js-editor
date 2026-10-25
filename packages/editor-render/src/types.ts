@@ -47,6 +47,16 @@ export interface RenderOptions {
    * 모르는 핸들의 임베드는 원본 링크만 그린다.
    */
   blueskyDids?: ReadonlyMap<string, string> | Readonly<Record<string, string>>;
+  /** 태그(`#태그`)를 어디로 이을지. 없거나 null이면 링크 없이 `#태그` 글자만 보인다. */
+  tagHref?: (name: string) => string | null;
+  /**
+   * 인용(`[@키]`)의 표시 글: 키들(`keys`)과 원문(`source`)을 받아 사람이 읽는 글(예: "Smith 2020")을 돌려준다. 없거나 null이면 `[원문]`이 보인다.
+   */
+  citationLabel?: (keys: readonly string[], source: string) => string | null;
+  /** 인용 키의 링크(예: Zotero의 `zotero://select/items/…`나 참고 문헌 목록의 앵커). 없거나 null이면 링크 없이 보인다. 첫 키에 걸린다. */
+  citationHref?: (key: string) => string | null;
+  /** 주석(`%%글%%`)을 흐린 글로 보일지. 기본 꺼짐 — 주석은 독자에게 보이지 않는다. */
+  showComments?: boolean;
   /** 페이지 링크(`[[…]]`)를 어디로 이을지. 없거나 null이면 링크 없이 글자만 보인다. */
   pageLink?: (pageId: string) => PageReference | null;
   /** 블록 id를 앵커(`id="^id"`)로 남길지. 블록 링크(`#^id`)가 같은 글 안에서 동작하게 하려면 켠다. 기본 꺼짐. */

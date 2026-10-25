@@ -52,6 +52,14 @@ export interface EditorStrings {
     loading: string;
     viewer: { fitShort: string; label: string; hint: string; zoomOut: string; zoomIn: string; fit: string; actualSize: string; close: string; diagram: string };
   };
+  /** 추가 문법(`createCoreExtensions({ extras })`)의 화면 글. `items`는 슬래시 메뉴 항목의 이름·설명이다. */
+  extras: {
+    toc: { title: string; empty: string; jump: string };
+    comment: { placeholder: string; label: string; edit: string };
+    citation: { placeholder: string; invalid: string; open: string; edit: string };
+    definition: { termPlaceholder: string; detailPlaceholder: string };
+    items: Readonly<Record<string, { label: string; description: string }>>;
+  };
   /** 임베드 노드(주소로 끼워 넣는 영상·게시물, `createCoreExtensions({ embed: true })`). */
   embed: { slashLabel: string; slashDescription: string; placeholder: string; invalid: string; edit: string; open: string; frameTitle: (provider: string) => string };
   /** 참조 노드(다른 개체를 가리키는 카드). */
@@ -103,6 +111,22 @@ export interface EditorStrings {
   table: {
     toolbar: string;
     actions: Readonly<Record<"addRowBefore" | "addRowAfter" | "addColumnBefore" | "addColumnAfter" | "deleteRow" | "deleteColumn" | "mergeCells" | "splitCell" | "toggleHeaderRow" | "deleteTable", { label: string; title: string }>>;
+  };
+  /** 글을 선택하면 뜨는 서식 막대(`SelectionToolbar`). */
+  selection: {
+    toolbar: string;
+    /** 서식 단추 이름. 스키마에 없는 서식의 단추는 보이지 않는다. */
+    marks: Readonly<Record<"bold" | "italic" | "strike" | "underline" | "code" | "highlight" | "superscript" | "subscript" | "insert", string>>;
+    textColor: string;
+    backgroundColor: string;
+    clearColor: string;
+    colors: Readonly<Record<string, string>>;
+    abbr: string;
+    abbrPlaceholder: string;
+    link: string;
+    linkPlaceholder: string;
+    apply: string;
+    remove: string;
   };
   toggle: { expandLabel: string; collapseLabel: string; expandTitle: string; collapseTitle: string };
 }

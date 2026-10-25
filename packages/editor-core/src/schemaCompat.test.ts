@@ -21,7 +21,7 @@ interface Shape {
 }
 
 function currentShape(): Shape {
-  const schema = getSchema(createCoreExtensions(null, { raw: true, reference: true, embed: true, indent: true }));
+  const schema = getSchema(createCoreExtensions(null, { raw: true, reference: true, embed: true, indent: true, extras: { marks: true, abbr: true, comments: true, tags: true, citations: true, definitions: true, toc: true, emoji: true } }));
   const attrsOf = (attrs: Record<string, { hasDefault: boolean; default?: unknown }> | undefined): Attrs =>
     Object.fromEntries(
       Object.entries(attrs ?? {})
