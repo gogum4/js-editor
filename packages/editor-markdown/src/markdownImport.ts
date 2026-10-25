@@ -20,6 +20,7 @@ import {
   CITATION_IN_TEXT_SOURCE,
   colorsFromStyle,
   type ExtraSyntax,
+  isSkippedTag,
   normalizeAbbrTitle,
   normalizeCitationSource,
   normalizeCommentText,
@@ -324,7 +325,7 @@ function protectInline(line: string, store: Placeholder[], footnotes: Map<string
       if (extras.tags) {
         value = value.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (raw, name: string) => {
           const tag = normalizeTag(name);
-          return tag === null ? raw : put({ kind: "tag", name: tag, raw });
+          return tag === null || isSkippedTag(tag, extras) ? raw : put({ kind: "tag", name: tag, raw });
         });
       }
       if (extras.emoji) value = replaceEmojiShortcodes(value);
@@ -442,7 +443,7 @@ function protect(source: string, profile: DialectProfile, references: ImportCont
         while (k < kept.length && DEFINITION_DETAIL.test(kept[k]!)) {
           let detail = kept[k]!.replace(/^ {0,3}:[ \t]+/, "").trim();
           k++;
-          while (k < kept.length && /^( {2,}|\t)\S/.test(kept[k]!)) detail += ` ${kept[k++]!.trim()}`;
+          while (k < kept.length && /^( {2,}|\t)\S/.test(kept[k]!)) detail += `\n${kept[k++]!.trim()}`;
           details.push(protectInline(detail, store, footnotes, profile, extras));
         }
         items.push({ term: protectInline(kept[j]!.trim(), store, footnotes, profile, extras), details });

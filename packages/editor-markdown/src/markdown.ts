@@ -15,7 +15,7 @@ import { normalizeReferenceProps, type ReferenceProps } from "@gogum4/editor-sch
 import { formatReference } from "./referenceDirective.ts";
 import { isBuiltinCalloutType, normalizeCalloutFold, normalizeCalloutTitle, normalizeCalloutType } from "@gogum4/editor-schema/callout";
 import { normalizeEmbedSize, normalizeEmbedTarget } from "@gogum4/editor-schema/embed";
-import { emojiFromShortcode, type ExtraSyntax, normalizeAbbrTitle, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
+import { emojiFromShortcode, type ExtraSyntax, isAbbrTerm, isSkippedTag, normalizeAbbrTitle, normalizeCitationSource, normalizeColor, normalizeCommentText, normalizeTag, TAG_IN_TEXT_SOURCE } from "@gogum4/editor-schema/extras";
 import { indentPrefix } from "@gogum4/editor-schema/indent";
 import type { MarkdownDialect } from "./dialect.ts";
 
@@ -58,6 +58,11 @@ export interface MarkdownOptions {
    * 마크·노드는 이 값과 상관없이 문서에 있으면 내보낸다.
    */
   extras?: ExtraSyntax;
+  /**
+   * 약어를 내보내는 모양. 기본 `"html"`: 낱말마다 `<abbr title="…">`(어디서나 읽힌다). `"definitions"`: 글은 그대로 두고 문서 끝에 `*[HTML]: 설명` 정의를 모은다(Joplin·Pandoc·PHP Markdown Extra).
+   * 정의는 문서의 **같은 낱말 전부**에 걸리므로, 설명이 하나로 정해지고 그 낱말이 나올 때마다 약어인 경우에만 정의로 내보내고 그렇지 않은 낱말은 `<abbr>`로 내보낸다.
+   */
+  abbrStyle?: "html" | "definitions";
 }
 
 export interface MarkdownResult {
@@ -112,7 +117,7 @@ function escapeExtras(text: string, extras: ExtraSyntax, atStart: boolean): stri
   let out = text;
   if (extras.tags) {
     const probe = atStart ? out : `\u0000${out}`;
-    const escaped = probe.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (whole, name: string) => (normalizeTag(name) === null ? whole : `\\#${name}`));
+    const escaped = probe.replace(new RegExp(TAG_IN_TEXT_SOURCE, "gu"), (whole, name: string) => (normalizeTag(name) === null || isSkippedTag(name, extras) ? whole : `\\#${name}`));
     out = atStart ? escaped : escaped.slice(1);
   }
   if (extras.comments) out = out.replace(/%%/g, "\\%\\%");
@@ -170,6 +175,8 @@ class Renderer {
   readonly images = new Map<string, string>();
   /** 문서에 나온 순서대로의 각주 내용 (`[^1]`, `[^2]` …로 내보내고 끝에 정의를 모은다). */
   readonly footnotes: string[] = [];
+  /** `abbrStyle: "definitions"`로 내보낼 수 있는 약어(낱말 → 설명). `prepareAbbreviations`가 채운다. */
+  readonly abbrDefinitions = new Map<string, string>();
   private readonly linkedTitles = new Map<string, Set<string>>();
   private missingLinks = 0;
 
@@ -224,7 +231,7 @@ class Renderer {
         }
         const marks = node.marks ?? [];
         const isCode = marks.some((m) => m.type === "code");
-        const desired = this.markSyntax(marks);
+        const desired = this.markSyntax(marks, core);
         let common = 0;
         while (common < open.length && common < desired.length && open[common]!.key === desired[common]!.key) common++;
         closeFrom(common);
@@ -246,7 +253,7 @@ class Renderer {
   }
 
   /** 글자 노드의 서식을 바깥부터 안쪽 순서(링크 → 굵게 → 기울임 → 취소선 → 밑줄)의 여닫는 기호로. 이 방언에 없는 서식(밑줄)은 안내하고 뺀다. */
-  private markSyntax(marks: readonly { type: string; attrs?: Record<string, unknown> }[]): MarkSyntax[] {
+  private markSyntax(marks: readonly { type: string; attrs?: Record<string, unknown> }[], text?: string): MarkSyntax[] {
     const has = (type: string) => marks.some((m) => m.type === type);
     const out: MarkSyntax[] = [];
     const link = marks.find((m) => m.type === "link");
@@ -268,7 +275,7 @@ class Renderer {
     }
     const abbr = marks.find((m) => m.type === "abbr");
     const abbrTitle = normalizeAbbrTitle(abbr?.attrs?.title);
-    if (abbr && abbrTitle !== null) out.push({ key: `abbr:${abbrTitle}`, open: `<abbr title="${escapeAttr(abbrTitle)}">`, close: "</abbr>" });
+    if (abbr && abbrTitle !== null && !(text !== undefined && this.abbrDefinitions.get(text) === abbrTitle)) out.push({ key: `abbr:${abbrTitle}`, open: `<abbr title="${escapeAttr(abbrTitle)}">`, close: "</abbr>" });
     if (has("underline")) {
       if (this.plain) this.notices.add("밑줄은 이 방언의 문법에 없어서 일반 글자로 내보냈어요.");
       else {
@@ -494,12 +501,13 @@ class Renderer {
     }
   }
 
-  /** 정의 목록: `용어` 다음 줄마다 `: 설명`, 용어 묶음 사이는 빈 줄. 용어·설명은 한 줄(줄바꿈은 공백)이다. */
+  /** 정의 목록: `용어` 다음 줄마다 `: 설명`, 용어 묶음 사이는 빈 줄. 용어는 한 줄(줄바꿈은 공백)이고, 설명 안의 줄바꿈은 들여쓴 이어지는 줄이다. */
   private definitionList(node: PmNode): string | null {
     const groups: string[] = [];
     let current: string[] = [];
     for (const child of node.content ?? []) {
-      const text = this.inline(child.content).replace(/\s*\n\s*/g, " ").trim();
+      const rendered = this.inline(child.content).replace(/\\\n/g, "\n").trim();
+      const text = child.type === "definitionTerm" ? rendered.replace(/\s*\n\s*/g, " ") : rendered.replace(/\s*\n\s*/g, "\n    ");
       if (child.type === "definitionTerm") {
         if (current.length > 0) groups.push(current.join("\n"));
         current = [text === "" ? "\u00a0" : text];
@@ -695,9 +703,44 @@ function prefixLines(text: string, prefix: string): string {
 }
 
 /** 문서(ProseMirror JSON의 `doc`)를 Markdown으로. 내용이 없으면 빈 문자열. */
+/**
+ * `abbrStyle: "definitions"`일 때 정의로 내보내도 다시 읽어 같아지는 약어만 고른다: 낱말(공백·대괄호 없는 한 덩어리)마다 설명이 하나이고,
+ * 문서 어디서든 그 낱말이 (앞뒤가 글자가 아닌) 낱말로 나올 때는 항상 같은 약어 마크가 달려 있어야 한다.
+ */
+function prepareAbbreviations(doc: PmNode): Map<string, string> {
+  const titles = new Map<string, Set<string>>();
+  const texts: Array<{ text: string; title: string | null }> = [];
+  const visit = (node: PmNode) => {
+    if (node.type === "text") {
+      const title = normalizeAbbrTitle(node.marks?.find((m) => m.type === "abbr")?.attrs?.title);
+      texts.push({ text: node.text ?? "", title });
+      if (title !== null && isAbbrTerm(node.text)) (titles.get(node.text) ?? titles.set(node.text, new Set()).get(node.text)!).add(title);
+      return;
+    }
+    // 코드 안의 글자는 정의가 걸리지 않는다(가져올 때 코드 조각은 건드리지 않는다) — 확인에서 뺀다.
+    for (const child of node.content ?? []) visit(child);
+  };
+  visit(doc);
+  const safe = new Map<string, string>();
+  for (const [term, set] of titles) {
+    if (set.size !== 1) continue;
+    const title = [...set][0]!;
+    const pattern = new RegExp(`(?<![\\p{L}\\p{N}_])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_])`, "gu");
+    const consistent = texts.every((entry) => !pattern.test(entry.text) || (entry.title === title && entry.text === term));
+    pattern.lastIndex = 0;
+    if (consistent) safe.set(term, title);
+  }
+  return safe;
+}
+
 export function docToMarkdown(doc: PmNode, options: MarkdownOptions): MarkdownResult {
   const renderer = new Renderer(options);
+  if (options.abbrStyle === "definitions") for (const [term, title] of prepareAbbreviations(doc)) renderer.abbrDefinitions.set(term, title);
   let body = renderer.blocks(doc.content, true);
+  if (renderer.abbrDefinitions.size > 0) {
+    const used = [...renderer.abbrDefinitions].map(([term, title]) => `*[${term}]: ${title}`).join("\n");
+    body = body === "" ? used : `${body}\n\n${used}`;
+  }
   if (renderer.footnotes.length > 0) {
     const definitions = renderer.footnotes.map((text, i) => footnoteDefinition(i + 1, text)).join("\n");
     body = body === "" ? definitions : `${body}\n\n${definitions}`;

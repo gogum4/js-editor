@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import * as Y from "yjs";
 
 import { memoryPorts, type AssetStore, type ReferenceResolver } from "@gogum4/editor-core";
-import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, TableToolbar } from "@gogum4/editor-react";
+import { createReactExtensions, EditorPortsProvider, FootnoteEditorHost, MathEditorHost, SelectionToolbar, TableToolbar } from "@gogum4/editor-react";
 import { DEMO_DOC } from "./demoDoc";
 
 /**
@@ -138,6 +138,7 @@ createRoot(document.getElementById("root")!).render(
   <EditorPortsProvider ports={ports}>
     <EditorContent editor={editor} />
     <TableToolbar editor={editor} />
+    {extras && <SelectionToolbar editor={editor} />}
     <MathEditorHost />
     <FootnoteEditorHost />
   </EditorPortsProvider>,

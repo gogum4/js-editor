@@ -131,3 +131,17 @@ describe("추가 문법: 정의 목록의 Enter", () => {
     expect(doc().child(0).textContent).toBe("용어");
   });
 });
+
+describe("추가 문법: 정의 목록 합치기", () => {
+  it("이웃한 정의 목록은 하나로 합쳐진다", () => {
+    const list = (term: string) => ({ type: "definitionList", content: [{ type: "definitionTerm", content: [{ type: "text", text: term }] }, { type: "definitionDetail", content: [{ type: "text", text: "설명" }] }] });
+    const editor = editorWith();
+    editor.commands.setContent({ type: "doc", content: [list("가"), list("나"), { type: "paragraph" }] });
+    // 내용을 바꾸는 입력이 한 번 일어나야 플러그인이 동작한다.
+    editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+    typeText(editor, "x");
+    const types: string[] = [];
+    editor.state.doc.forEach((node) => types.push(`${node.type.name}:${node.childCount}`));
+    expect(types).toEqual(["definitionList:4", "paragraph:1"]);
+  });
+});

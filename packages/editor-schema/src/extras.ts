@@ -12,8 +12,11 @@ export interface ExtraSyntax {
   abbr?: boolean;
   /** 주석 `%%글%%`: 화면에 흐리게 보이고 렌더러에서는 숨는다. */
   comments?: boolean;
-  /** 태그 `#태그`. */
-  tags?: boolean;
+  /**
+   * 태그 `#태그`. `{ skipHexColors: true }`면 `#fff`·`#ff00aa`처럼 16진 색으로 보이는 것(3·4·6·8자리 16진수만)은 태그가 아니라 글자로 둔다
+   * (기본은 Obsidian과 같게 글자가 하나라도 있으면 태그라 `#bad`도 `#fff`도 태그다 — 진짜 태그 `#bad`가 막히는 부작용이 있다).
+   */
+  tags?: boolean | { skipHexColors?: boolean };
   /** 인용 `[@citekey]`(Pandoc/Zotero). */
   citations?: boolean;
   /** 정의 목록: `용어` 다음 줄 `: 설명`. */
@@ -112,6 +115,12 @@ export const TAG_BODY_SOURCE = "[\\p{L}\\p{N}_/-]*[\\p{L}_-][\\p{L}\\p{N}_/-]*";
 export const TAG_PATTERN = new RegExp(`^${TAG_BODY_SOURCE}$`, "u");
 /** 글 속에서 태그를 찾는 패턴의 조각(앞은 줄 처음이나 공백이어야 한다 — 링크 주소의 `(#앵커)`는 태그가 아니다). 소비자(가져오기)가 쓴다. */
 export const TAG_IN_TEXT_SOURCE = `(?<=^|\\s)#(${TAG_BODY_SOURCE})`;
+
+/** 이 태그를 글자로 둘지(`tags: { skipHexColors: true }`일 때 16진 색 모양). */
+export function isSkippedTag(name: string, extras: ExtraSyntax | undefined): boolean {
+  const tags = extras?.tags;
+  return typeof tags === "object" && tags.skipHexColors === true && /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(name);
+}
 
 export function normalizeTag(value: unknown): string | null {
   if (typeof value !== "string") return null;

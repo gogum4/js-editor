@@ -138,3 +138,40 @@ describe("페이지 링크의 제목 위치 (anchors)", () => {
     expect(doc.content![0]).toEqual({ type: "pageBlock", attrs: { pageId: "노트", mode: "embed", heading: "제목" } });
   });
 });
+
+describe("추가 문법 옵션", () => {
+  it("tags.skipHexColors: 16진 색 모양은 글자로 두고, 다른 태그는 그대로 태그", () => {
+    const skip: ImportContext = { ...ctx, extras: { ...all, tags: { skipHexColors: true } } };
+    expect(inline("#fff #bad? #ff00aa #할일", skip).filter((node) => node.type === "tag").map((node) => node.attrs!.name)).toEqual(["할일"]);
+    // 내보낼 때도 같은 규칙: 16진 모양은 이스케이프하지 않고, 진짜 태그 모양 글자는 이스케이프한다.
+    expect(docToMarkdown({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "#fff 와 #할일" }] }] }, { pageTitle: () => null, extras: skip.extras }).markdown).toBe("#fff 와 \\#할일\n");
+    expect(roundTrip("색 #fff 와 #할일\n", skip)).toBe("색 #fff 와 #할일\n");
+  });
+
+  const abbrDoc = (...parts: Array<[string, string | null]>) => ({
+    type: "doc",
+    content: [{ type: "paragraph", content: parts.map(([text, title]) => (title === null ? { type: "text", text } : { type: "text", text, marks: [{ type: "abbr", attrs: { title } }] })) }],
+  });
+  const definitions = (doc: object) => docToMarkdown(doc as never, { pageTitle: () => null, extras: all, abbrStyle: "definitions" }).markdown;
+
+  it("abbrStyle definitions: 글은 그대로 두고 문서 끝에 정의를 모으며, 다시 읽으면 같다", () => {
+    const doc = abbrDoc(["HTML", "Hyper Text"], [" 과 ", null], ["CSS", "Cascading"], [" 그리고 ", null], ["HTML", "Hyper Text"]);
+    const md = definitions(doc);
+    expect(md).toBe("HTML 과 CSS 그리고 HTML\n\n*[HTML]: Hyper Text\n*[CSS]: Cascading\n");
+    expect(JSON.stringify(markdownToDoc(md, ctx, "").doc.content![0]!.content!.filter((node) => node.marks).length)).toBe("3");
+  });
+
+  it("abbrStyle definitions: 정의가 다른 낱말·마크 없는 같은 낱말이 있으면 <abbr>로 내보낸다", () => {
+    expect(definitions(abbrDoc(["HTML", "하나"], [" ", null], ["HTML", "둘"]))).toContain('<abbr title="하나">HTML</abbr>');
+    const mixed = definitions(abbrDoc(["HTML", "Hyper Text"], [" 그리고 HTML 일반", null]));
+    expect(mixed).toContain("<abbr");
+    expect(mixed).not.toContain("*[HTML]");
+  });
+
+  it("정의 목록의 설명은 줄바꿈이 있어도 되고, 한 줄 설명과 똑같이 왕복한다", () => {
+    const md = "용어\n: 첫 줄\n    둘째 줄\n: 다른 설명\n";
+    const [list] = blocks(md);
+    expect(list!.content![1]!.content).toEqual([{ type: "text", text: "첫 줄" }, { type: "hardBreak" }, { type: "text", text: "둘째 줄" }]);
+    expect(roundTrip(md)).toBe(md);
+  });
+});

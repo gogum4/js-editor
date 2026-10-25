@@ -147,6 +147,20 @@ export const koStrings: EditorStrings = {
     libraryError: "수식 라이브러리를 불러오지 못했어요",
     delete: "삭제",
   },
+  selection: {
+    toolbar: "서식",
+    marks: { bold: "굵게", italic: "기울임", strike: "취소선", underline: "밑줄", code: "코드", highlight: "하이라이트", superscript: "위첨자", subscript: "아래첨자", insert: "삽입" },
+    textColor: "글자색",
+    backgroundColor: "배경색",
+    clearColor: "색 지우기",
+    colors: { red: "빨강", orange: "주황", yellow: "노랑", green: "초록", blue: "파랑", purple: "보라", pink: "분홍", gray: "회색" },
+    abbr: "약어",
+    abbrPlaceholder: "뜻 (예: Hyper Text Markup Language)",
+    link: "링크",
+    linkPlaceholder: "주소 (비우면 링크 해제)",
+    apply: "적용",
+    remove: "해제",
+  },
   table: {
     toolbar: "표 편집",
     actions: {

@@ -12,7 +12,7 @@ export function extraExtensions(extras: ExtraSyntax | undefined): AnyExtension[]
     ...(extras.marks ? [Highlight, Superscript, Subscript, Insert, TextColor, BackgroundColor] : []),
     ...(extras.abbr ? [Abbr] : []),
     ...(extras.comments ? [Comment] : []),
-    ...(extras.tags ? [Tag] : []),
+    ...(extras.tags ? [Tag.configure({ skipHexColors: typeof extras.tags === "object" && extras.tags.skipHexColors === true })] : []),
     ...(extras.citations ? [Citation] : []),
     ...(extras.definitions ? [DefinitionList, DefinitionTerm, DefinitionDetail] : []),
     ...(extras.toc ? [Toc] : []),

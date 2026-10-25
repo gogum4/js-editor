@@ -180,6 +180,20 @@ export const enStrings: EditorStrings = {
     libraryError: "Couldn't load the equation library",
     delete: "Delete",
   },
+  selection: {
+    toolbar: "Formatting",
+    marks: { bold: "Bold", italic: "Italic", strike: "Strikethrough", underline: "Underline", code: "Code", highlight: "Highlight", superscript: "Superscript", subscript: "Subscript", insert: "Inserted" },
+    textColor: "Text color",
+    backgroundColor: "Background color",
+    clearColor: "Clear color",
+    colors: { red: "Red", orange: "Orange", yellow: "Yellow", green: "Green", blue: "Blue", purple: "Purple", pink: "Pink", gray: "Gray" },
+    abbr: "Abbreviation",
+    abbrPlaceholder: "Meaning (e.g. Hyper Text Markup Language)",
+    link: "Link",
+    linkPlaceholder: "Address (empty = remove link)",
+    apply: "Apply",
+    remove: "Remove",
+  },
   table: {
     toolbar: "Edit table",
     actions: {

@@ -328,15 +328,49 @@ export const BEHAVIORS = [
       assert(await page.evaluate(() => !!document.querySelector(".ProseMirror .md-tag")), "태그 칩");
       // 주석 칩을 누르면 입력 상자로 바뀐다.
       await page.click(".ProseMirror .md-comment");
-      await page.waitForSelector(".md-comment-input", { timeout: 2000 });
+      await page.waitForSelector(".md-comment-input", { timeout: 2000 }).catch(async () => { throw new Error("주석 입력 상자가 안 뜬다: " + (await page.evaluate(() => document.querySelector(".ProseMirror").innerHTML.slice(0, 600)))); });
       await page.keyboard.press("Escape");
       // 목차 슬래시 명령
       await page.keyboard.press("End");
       await page.keyboard.press("Enter");
       await page.keyboard.type("/목차");
       await page.keyboard.press("Enter");
-      await page.waitForSelector(".ProseMirror nav.md-toc", { timeout: 2000 });
+      await page.waitForSelector(".ProseMirror nav.md-toc", { timeout: 2000 }).catch(async () => { throw new Error("목차가 안 생긴다: " + (await page.evaluate(() => document.querySelector(".ProseMirror").innerHTML.slice(-700)))); });
       assert(await page.evaluate(() => document.querySelector(".ProseMirror nav.md-toc").textContent.length > 0), "목차가 보인다");
+    },
+  },
+  {
+    name: "선택 서식 막대: 글을 선택하면 뜨고 서식·색·약어를 건다",
+    async run({ page, open }) {
+      await open({ extras: true });
+      await focusScratch(page);
+      await page.keyboard.type("서식을 걸 낱말");
+      assert(!(await page.$('[data-testid="selection-toolbar"]')), "선택이 없으면 막대가 없다");
+      // 마지막 낱말 "낱말"을 선택한다(Shift+Ctrl+←).
+      await page.keyboard.press("Shift+Control+ArrowLeft");
+      await page.waitForSelector('[data-testid="selection-toolbar"]', { timeout: 2000 });
+      const marksOf = () => page.evaluate(() => {
+        const found = [];
+        const doc = window.__demo.editor.state.doc;
+        const paragraph = doc.child(doc.childCount - 1).textContent.includes("낱말") ? doc.child(doc.childCount - 1) : doc.child(doc.childCount - 2);
+        paragraph.forEach((child) => { if (child.isText && child.text.includes("낱말")) found.push(...child.marks.map((m) => m.type.name + (m.attrs.color ? ":" + m.attrs.color : "") + (m.attrs.title ? ":" + m.attrs.title : ""))); });
+        return found;
+      });
+      await page.click('[data-testid="selection-toolbar"] [data-mark="bold"]');
+      await page.click('[data-testid="selection-toolbar"] [data-mark="highlight"]');
+      // 색 팔레트
+      await page.click('[data-testid="selection-toolbar"] [data-panel="color"]');
+      await page.click('[data-testid="selection-toolbar"] [data-kind="text"][data-color="red"]');
+      // 약어 설명
+      await page.click('[data-testid="selection-toolbar"] [data-panel="abbr"]');
+      await page.fill('[data-panel-body="abbr"] input', "낱말의 뜻");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+      const marks = await marksOf();
+      for (const expected of ["bold", "highlight", "textColor:#dc2626", "abbr:낱말의 뜻"]) assert(marks.includes(expected), `${expected} 가 걸려야 한다: ${marks.join(", ")}`);
+      // 눌렀다 떼면 해제된다.
+      await page.click('[data-testid="selection-toolbar"] [data-mark="bold"]');
+      assert(!(await marksOf()).includes("bold"), "굵게가 해제된다");
     },
   },
   {

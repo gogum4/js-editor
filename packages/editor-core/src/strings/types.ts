@@ -112,5 +112,21 @@ export interface EditorStrings {
     toolbar: string;
     actions: Readonly<Record<"addRowBefore" | "addRowAfter" | "addColumnBefore" | "addColumnAfter" | "deleteRow" | "deleteColumn" | "mergeCells" | "splitCell" | "toggleHeaderRow" | "deleteTable", { label: string; title: string }>>;
   };
+  /** 글을 선택하면 뜨는 서식 막대(`SelectionToolbar`). */
+  selection: {
+    toolbar: string;
+    /** 서식 단추 이름. 스키마에 없는 서식의 단추는 보이지 않는다. */
+    marks: Readonly<Record<"bold" | "italic" | "strike" | "underline" | "code" | "highlight" | "superscript" | "subscript" | "insert", string>>;
+    textColor: string;
+    backgroundColor: string;
+    clearColor: string;
+    colors: Readonly<Record<string, string>>;
+    abbr: string;
+    abbrPlaceholder: string;
+    link: string;
+    linkPlaceholder: string;
+    apply: string;
+    remove: string;
+  };
   toggle: { expandLabel: string; collapseLabel: string; expandTitle: string; collapseTitle: string };
 }

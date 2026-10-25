@@ -1,6 +1,7 @@
 import { type Editor, mergeAttributes, Node } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
-import { TextSelection } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
+import { canJoin } from "@tiptap/pm/transform";
 
 import { stringsOf } from "../ports/editorPorts";
 
@@ -37,6 +38,35 @@ export const DefinitionList = Node.create({
             ],
           }),
     };
+  },
+
+  // 정의 목록 둘이 바로 이어지면 Markdown에서는 구별되지 않아 한 목록으로 읽힌다 — 편집기에서도 하나로 합쳐 화면과 파일이 같게 한다.
+  addProseMirrorPlugins() {
+    const name = this.name;
+    return [
+      new Plugin({
+        key: new PluginKey("definitionListMerge"),
+        appendTransaction: (transactions, _oldState, newState) => {
+          if (!transactions.some((transaction) => transaction.docChanged)) return null;
+          // 이웃한 정의 목록 사이의 자리(두 목록 사이의 위치)를 모은다. 문서 루트의 내용은 0에서, 다른 노드의 내용은 그 노드 시작 + 1에서 시작한다.
+          const boundaries: number[] = [];
+          const scan = (parent: PmNode, base: number) => {
+            parent.forEach((child, offset, index) => {
+              if (index > 0 && child.type.name === name && parent.child(index - 1).type.name === name) boundaries.push(base + offset);
+            });
+          };
+          scan(newState.doc, 0);
+          newState.doc.descendants((node, pos) => {
+            scan(node, pos + 1);
+          });
+          const unique = [...new Set(boundaries)].filter((pos) => canJoin(newState.doc, pos)).sort((a, b) => b - a);
+          if (unique.length === 0) return null;
+          const tr = newState.tr;
+          for (const pos of unique) tr.join(pos);
+          return tr;
+        },
+      }),
+    ];
   },
 
   addKeyboardShortcuts() {

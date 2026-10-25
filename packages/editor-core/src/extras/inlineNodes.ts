@@ -4,6 +4,7 @@ import {
   CITATION_IN_TEXT_SOURCE,
   citationKeys,
   emojiFromShortcode,
+  isSkippedTag,
   normalizeCitationSource,
   normalizeCommentText,
   normalizeTag,
@@ -151,8 +152,9 @@ export const Comment = Node.create({
 });
 
 /** 태그 `#태그`: 글자가 아니라 한 덩어리. 띄어쓰기를 치면 `#이름`이 태그가 된다. */
-export const Tag = Node.create({
+export const Tag = Node.create<{ skipHexColors: boolean }>({
   name: "tag",
+  addOptions: () => ({ skipHexColors: false }),
   group: "inline",
   inline: true,
   atom: true,
@@ -176,7 +178,7 @@ export const Tag = Node.create({
         find: new RegExp(`(?:^|\\s)#(${TAG_BODY_SOURCE})\\s$`, "u"),
         handler: ({ state, range, match }) => {
           const name = normalizeTag(match[1]);
-          if (name === null) return null;
+          if (name === null || isSkippedTag(name, { tags: { skipHexColors: this.options.skipHexColors } })) return null;
           // 앞의 공백은 남기고 `#이름`만 태그로 바꾼다. 방금 친 공백은 태그 뒤에 남긴다.
           const start = range.from + match[0].indexOf("#");
           state.tr.replaceWith(start, range.to, [this.type.create({ name }), state.schema.text(" ")]);
