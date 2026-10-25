@@ -75,6 +75,8 @@ describe("FixedToolbar", () => {
     expect(document.querySelector(".fixed-toolbar-menu")).toBeNull();
     click('[data-action="insert"]');
     expect(document.querySelector('[data-item="table"]')).not.toBeNull();
+    // 막대 안(overflow)에 갇히지 않게 화면 좌표로 띄운다
+    expect(document.querySelector<HTMLElement>(".fixed-toolbar-menu")!.style.top).not.toBe("");
     expect(document.querySelector('[data-item="bulletList"]')).toBeNull();
     click('[data-item="horizontalRule"]');
     expect(document.querySelector(".fixed-toolbar-menu")).toBeNull();
