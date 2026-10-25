@@ -27,9 +27,11 @@ import {
   normalizeTag,
   replaceEmojiShortcodes,
   TAG_IN_TEXT_SOURCE,
+  normalizeTaskStatus,
 } from "@gogum4/editor-schema/extras";
 import { indentFromLeadingSpaces } from "@gogum4/editor-schema/indent";
-import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
+import { normalizeCodeMeta } from "@gogum4/editor-schema/codeMeta";
+import { normalizeImageCaption, normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import type { PmMark, PmNode } from "@gogum4/editor-schema/pmDoc";
 import { isSafeToOpen } from "@gogum4/editor-schema/safeLink";
 import { normalizeTextAlign } from "@gogum4/editor-schema/textAlign";
@@ -526,6 +528,10 @@ export interface ImportContext {
    */
   anchors?: boolean;
   /**
+   * 지금 읽는 글 자신의 페이지 id. 있으면 대상이 빈 `[[#제목]]`·`[[#^블록]]`(같은 글 안의 위치)을 이 페이지로 푼다. 없으면 풀지 못해 글자로 남긴다.
+   */
+  selfPage?: string | null;
+  /**
    * 참조 노드(`reference`)로 읽을 줄. `true`면 기본 표기 `::ref{kind=… id=…}`, 함수면 소비자의 표기(한 줄을 받아 대상이거나 null).
    * 끄면(기본) 글자로 읽는다. `createCoreExtensions({ reference: true })`와 짝이다.
    */
@@ -613,7 +619,7 @@ function restoreRaw(text: string, state: State): string {
 
 /** 위키 링크 하나를 노드로. 찾지 못하면 원래 글자로 둔다. */
 function wikiNode(p: Extract<Placeholder, { kind: "wiki" }>, marks: readonly PmMark[], state: State): PmNode {
-  const pageId = p.target === "" ? null : state.ctx.resolvePage(p.target, state.fromDir);
+  const pageId = p.target === "" ? (state.ctx.selfPage ?? null) : state.ctx.resolvePage(p.target, state.fromDir);
   if (pageId === null) {
     note(state, p.embed ? NOTICE.unresolvedEmbed : NOTICE.unresolvedLink);
     return textNode(p.raw, marks);
@@ -709,7 +715,14 @@ function embedNode(href: string, rawAlt: string, state: State): PmNode | null {
 }
 
 /** 이미지 하나(`![설명|너비](경로)`)를 이미지 노드로. 인터넷 주소·폴더에 없는 파일은 글자·링크로 둔다. */
-function imageNode(href: string, rawAlt: string, state: State): PmNode {
+function imageNode(href: string, rawAlt: string, state: State, title: string | null = null): PmNode {
+  const node = imageNodeBase(href, rawAlt, state);
+  // `![alt](src "캡션")`의 title을 캡션으로 보존한다(이미지 노드로 읽힌 경우만).
+  const caption = normalizeImageCaption(title === null ? null : decodeEntities(restoreRaw(title, state)));
+  return node.type === "image" && caption !== null ? { ...node, attrs: { ...node.attrs, caption } } : node;
+}
+
+function imageNodeBase(href: string, rawAlt: string, state: State): PmNode {
   // `설명|300`·`설명|300x200`·`300`(Obsidian): 너비만 쓴다.
   let alt = rawAlt;
   let width: number | null = null;
@@ -763,6 +776,7 @@ function htmlMarkTag(raw: string, state: State): boolean {
   const extras = state.ctx.extras;
   let marks: PmMark[] | null = null;
   if (name === "u" && !state.profile.rawEmbeds) marks = [{ type: "underline" }];
+  else if (extras?.kbd && name === "kbd") marks = [{ type: "kbd" }];
   else if (extras?.marks && HTML_MARK_TAGS[name] !== undefined) marks = [{ type: HTML_MARK_TAGS[name]! }];
   else if (extras?.marks && name === "span") {
     const { color, background } = colorsFromStyle(/style\s*=\s*"([^"]*)"/i.exec(attrs)?.[1] ?? "");
@@ -827,7 +841,7 @@ function inlineNodes(tokens: readonly Token[], marks: readonly PmMark[], state: 
           nodes.push({ type: "rawInline", attrs: { text: restoreRaw(t.raw, state) } });
           break;
         }
-        nodes.push(imageNode(t.href, restoreRaw(t.text, state), state));
+        nodes.push(imageNode(t.href, restoreRaw(t.text, state), state, t.title ?? null));
         break;
       }
       case "link": {
@@ -966,8 +980,12 @@ function paragraphBlocks(token: Tokens.Paragraph | Tokens.Text, state: State): P
   if (placeholder?.kind === "wiki" && placeholder.embed) {
     const image = embeddedImage(placeholder, state);
     if (image) return [image];
-    const pageId = placeholder.target === "" ? null : state.ctx.resolvePage(placeholder.target, state.fromDir);
+    const pageId = placeholder.target === "" ? (state.ctx.selfPage ?? null) : state.ctx.resolvePage(placeholder.target, state.fromDir);
     if (pageId !== null) {
+      // `![[페이지#^블록]]`은 블록 하나만 끼우는 임베드다(`blockId`). 블록 id를 받지 않는 소비자의 스키마는 무시한다.
+      if (placeholder.anchor !== null && placeholder.anchor.startsWith("^") && placeholder.anchor.length > 1) {
+        return [{ type: "pageBlock", attrs: { pageId, mode: "embed", blockId: blockIdFromForeign(placeholder.anchor.slice(1)) } }];
+      }
       const heading = state.ctx.anchors === true && placeholder.anchor !== null && !placeholder.anchor.startsWith("^") ? placeholder.anchor : null;
       if (placeholder.anchor !== null && heading === null) note(state, NOTICE.embedAnchor);
       return [{ type: "pageBlock", attrs: { pageId, mode: "embed", ...(heading !== null ? { heading } : {}) } }];
@@ -1018,9 +1036,29 @@ function itemContent(tokens: Token[], state: State): PmNode[] {
  * 목록 하나를 블록들로. 일반 항목과 할 일 항목은 한 목록이 될 수 없어서(`bulletList`와 `taskList`) **연속한 같은 종류 구간마다** 목록을 따로 만든다.
  * (내보낸 Markdown에서 불릿 목록 바로 뒤의 할 일 목록은 CommonMark 규칙상 하나의 목록으로 읽히므로 이렇게 되돌린다.)
  */
+/** 할 일 상태 `[/] 글`: 항목 첫 글자에 상태 표시가 있으면 표시를 떼고 상태와 함께 돌려준다(상태 문법을 켠 때만). */
+function withTaskStatus(item: Tokens.ListItem, state: State): { item: Tokens.ListItem; status: string | null } {
+  if (state.ctx.extras?.taskStatus !== true || item.task) return { item, status: null };
+  const first = item.tokens[0];
+  const match = first && first.type === "text" ? /^\[(.)\] /.exec((first as Tokens.Text).text) : null;
+  const status = match ? normalizeTaskStatus(match[1]) : null;
+  if (!match || status === null) return { item, status: null };
+  const cut = (t: Token): Token => ("text" in t && typeof t.text === "string" ? { ...t, text: t.text.slice(match[0].length), raw: t.raw.slice(match[0].length) } : t);
+  const text = first as Tokens.Text;
+  const inner = text.tokens && text.tokens.length > 0 ? [cut(text.tokens[0]!), ...text.tokens.slice(1)] : text.tokens;
+  const stripped = { ...cut(text), ...(inner ? { tokens: inner } : {}) } as Tokens.Text;
+  return { item: { ...item, task: true, checked: false, tokens: [stripped, ...item.tokens.slice(1)] }, status };
+}
+
 function listBlocks(token: Tokens.List, state: State): PmNode[] {
+  const statuses = new Map<Tokens.ListItem, string>();
+  const items = token.items.map((original) => {
+    const { item, status } = withTaskStatus(original, state);
+    if (status !== null) statuses.set(item, status);
+    return item;
+  });
   const runs: Tokens.ListItem[][] = [];
-  for (const item of token.items) {
+  for (const item of items) {
     const last = runs[runs.length - 1];
     if (last && Boolean(last[0]!.task) === Boolean(item.task)) last.push(item);
     else runs.push([item]);
@@ -1029,7 +1067,7 @@ function listBlocks(token: Tokens.List, state: State): PmNode[] {
     if (run[0]!.task) {
       return {
         type: "taskList",
-        content: run.map((item) => ({ type: "taskItem", attrs: { checked: item.checked === true }, content: itemContent(item.tokens, state) })),
+        content: run.map((item) => ({ type: "taskItem", attrs: { checked: item.checked === true, ...(statuses.has(item) ? { status: statuses.get(item) } : {}) }, content: itemContent(item.tokens, state) })),
       };
     }
     const items = run.map((item) => ({ type: "listItem", content: itemContent(item.tokens, state) }));
@@ -1087,9 +1125,14 @@ function tokenBlocksWithoutId(token: Token, state: State): PmNode[] {
     }
     case "code": {
       const t = token as Tokens.Code;
-      const language = (t.lang ?? "").trim().split(/\s+/)[0] ?? "";
+      const info = (t.lang ?? "").trim();
+      const language = info.split(/\s+/)[0] ?? "";
+      // 언어 뒤 글(`title="a.ts" {2,4}`)은 메타로 보존한다. 언어 자리가 `{2}`·`title=…`처럼 메타로 시작하면 언어 없는 메타다.
+      const metaStart = /^(\{|title=|showLineNumbers|ln(?:\s|$))/.test(info);
+      const meta = normalizeCodeMeta(metaStart ? info : info.slice(language.length));
+      const lang = metaStart ? "" : language;
       const text = restoreRaw(t.text, state);
-      return [{ type: "codeBlock", ...(language !== "" ? { attrs: { language } } : {}), ...(text !== "" ? { content: [{ type: "text", text }] } : {}) }];
+      return [{ type: "codeBlock", ...(lang !== "" || meta !== null ? { attrs: { ...(lang !== "" ? { language: lang } : {}), ...(meta !== null ? { meta } : {}) } } : {}), ...(text !== "" ? { content: [{ type: "text", text }] } : {}) }];
     }
     case "blockquote":
       return blockquoteBlocks(token as Tokens.Blockquote, state);

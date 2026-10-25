@@ -17,6 +17,7 @@ declare module "@tiptap/core" {
       /** 선택한 글자를 약어로 만든다(마우스를 올리면 설명이 보인다). */
       setAbbr: (title: string) => ReturnType;
       unsetAbbr: () => ReturnType;
+      toggleKbd: () => ReturnType;
     };
   }
 }
@@ -65,6 +66,16 @@ export const Subscript = Mark.create({
   },
   addKeyboardShortcuts() {
     return { "Mod-,": () => this.editor.commands.toggleSubscript() };
+  },
+});
+
+/** 키보드 키: `<kbd>Ctrl</kbd>`. 코드 마크와 달리 다른 서식과 함께 쓸 수 있다. */
+export const Kbd = Mark.create({
+  name: "kbd",
+  parseHTML: () => [{ tag: "kbd" }],
+  renderHTML: ({ HTMLAttributes }) => ["kbd", mergeAttributes({ class: "md-kbd" }, HTMLAttributes), 0],
+  addCommands() {
+    return { toggleKbd: () => ({ commands }) => commands.toggleMark(this.name) };
   },
 });
 

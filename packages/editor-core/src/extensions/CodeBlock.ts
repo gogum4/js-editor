@@ -1,6 +1,7 @@
 import CodeBlockBase, { type CodeBlockOptions } from "@tiptap/extension-code-block";
 import { Plugin, TextSelection } from "@tiptap/pm/state";
 
+import { normalizeCodeMeta } from "@gogum4/editor-schema/codeMeta";
 import { enterEdit, shouldDeletePair, typedCharAction } from "./codeAssist";
 import { isCompletionOpen } from "../completion/CodeCompletion";
 import { computeIndentEdits } from "./codeIndent";
@@ -22,6 +23,21 @@ export const CodeBlock = CodeBlockBase.extend<CodeBlockOptions & NodeViewOptions
 
   addNodeView() {
     return this.options.nodeView;
+  },
+
+  // 펜스의 언어 뒤 글(`title="a.ts" {2,4}`)을 원문 그대로 둔다. 뜻은 `parseCodeMeta`가 푼다.
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      meta: {
+        default: null,
+        parseHTML: (element: HTMLElement) => normalizeCodeMeta(element.getAttribute("data-meta")),
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const meta = normalizeCodeMeta(attributes.meta);
+          return meta === null ? {} : { "data-meta": meta };
+        },
+      },
+    };
   },
 
   addKeyboardShortcuts() {

@@ -33,6 +33,7 @@ import { MarkdownPaste } from "./extensions/MarkdownPaste";
 import { Settle } from "./extensions/Settle";
 import { CodeHighlight } from "./highlight/CodeHighlight";
 import { ImageBlock } from "./image/ImageBlock";
+import { TaskItemStatus } from "./extras/TaskItemStatus";
 import { CORE_SLASH_ITEMS, EMBED_SLASH_ITEM, extraSlashItems, localizeSlashItems, type SlashItem } from "./lib/slashItems";
 import type { SlashHandlers } from "./slash/runSlashCommand";
 import { SlashCommand } from "./slash/SlashCommand";
@@ -144,7 +145,8 @@ export function createCoreExtensions(ydoc: Y.Doc | null, options: CoreExtensions
     TableHeader.extend({ content: "paragraph+" }),
     TableCell.extend({ content: "paragraph+" }),
     TaskList,
-    TaskItem.configure({ nested: true }),
+    // 상태 문법(`- [/]`)을 켜면 `status` 속성이 있는 할 일 항목을 쓴다.
+    (options.extras?.taskStatus ? TaskItemStatus : TaskItem).configure({ nested: true }),
     Placeholder.configure({
       // 비어 있는 줄에 커서가 있을 때만 안내를 보여 준다.
       placeholder: ({ node }) => {

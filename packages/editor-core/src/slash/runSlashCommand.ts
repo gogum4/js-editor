@@ -89,6 +89,8 @@ export function runSlashCommand(editor: Editor, range: Range, id: string, handle
       return chain.toggleSubscript().run();
     case "insert":
       return chain.toggleInsert().run();
+    case "kbd":
+      return chain.toggleKbd().run();
     case "color-reset":
       return chain.unsetTextColor().unsetBackgroundColor().run();
     case "embed":

@@ -143,6 +143,54 @@
   white-space: pre;
 }
 
+/* 코드 블록 메타: 파일명 줄·강조 줄·줄 번호 */
+.md-doc .code-figure {
+  margin: 1em 0;
+}
+.md-doc .code-figure > pre.code-block {
+  margin: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.md-doc .code-title {
+  padding: 0.35em 1em;
+  font: 0.8125em ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  color: var(--md-muted);
+  background: var(--md-subtle);
+  border: 1px solid var(--md-border);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+}
+.md-doc pre.code-block {
+  position: relative;
+  --md-code-line: calc(0.875em * 1.55);
+}
+.md-doc pre.code-block .code-hl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-top: 0.9em;
+  height: var(--md-code-line);
+  background: color-mix(in srgb, var(--md-border) 55%, transparent);
+  pointer-events: none;
+}
+.md-doc pre.code-block code {
+  position: relative;
+}
+.md-doc pre.code-block[data-line-numbers] {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+.md-doc pre.code-block .code-lines {
+  position: relative;
+  padding-right: 1em;
+  text-align: right;
+  white-space: pre;
+  user-select: none;
+  color: var(--md-muted);
+  font: 0.875em ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
 /* 인용 */
 .md-doc blockquote {
   padding: 0 1em;
@@ -252,6 +300,29 @@
   text-decoration: line-through;
 }
 
+/* 할 일 상태(진행 중 / 취소 / 미룸 / 질문 / 중요): 체크 상자 자리에 상태 글자를 그린다. */
+.md-doc .task-item[data-status] input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1em;
+  height: 1em;
+  margin: 0.4em 0 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.75;
+}
+.md-doc .task-item[data-status="progress"] input[type="checkbox"]::before { content: "/"; }
+.md-doc .task-item[data-status="cancelled"] input[type="checkbox"]::before { content: "–"; }
+.md-doc .task-item[data-status="deferred"] input[type="checkbox"]::before { content: ">"; }
+.md-doc .task-item[data-status="question"] input[type="checkbox"]::before { content: "?"; }
+.md-doc .task-item[data-status="important"] input[type="checkbox"]::before { content: "!"; }
+.md-doc .task-item[data-status="cancelled"] > div { text-decoration: line-through; color: var(--md-muted, #9ca3af); }
+
 /* 토글(<details>) */
 .md-doc details.toggle {
   border: 1px solid var(--md-border);
@@ -271,6 +342,12 @@
 /* 이미지 */
 .md-doc figure.image {
   text-align: left;
+}
+.md-doc figure.image figcaption {
+  margin-top: 0.4em;
+  font-size: 0.875em;
+  text-align: center;
+  color: var(--md-muted);
 }
 .md-doc figure.image img {
   max-width: 100%;
@@ -373,6 +450,16 @@
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 2px;
+}
+.md-doc kbd {
+  padding: 0.1em 0.4em;
+  font: 0.85em ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  color: inherit;
+  background: var(--md-subtle, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--md-border, rgba(0, 0, 0, 0.18));
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  white-space: nowrap;
 }
 .md-doc abbr[title] {
   text-decoration: underline dotted;

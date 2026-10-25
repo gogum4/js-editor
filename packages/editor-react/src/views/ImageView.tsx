@@ -8,6 +8,7 @@ import {
   matchingPreset,
   presetWidth,
   resizedWidth,
+  normalizeImageCaption,
 } from "@gogum4/editor-schema/imageLayout";
 import { AssetImage } from "./AssetImage";
 import { useEditorStrings } from "../context";
@@ -25,6 +26,15 @@ export function ImageView({ node, selected, updateAttributes }: NodeViewProps) {
   const mime = String(node.attrs.mime ?? "");
   const alt = String(node.attrs.alt ?? "");
   const { width, align } = imageLayout(node.attrs);
+  const caption = normalizeImageCaption(node.attrs.caption);
+  // 입력 중에는 화면 값만 바꾸고 포커스를 잃거나 Enter를 칠 때 저장한다(글자마다 되돌리기 단계가 생기지 않게).
+  const [captionDraft, setCaptionDraft] = useState<string | null>(null);
+  const commitCaption = () => {
+    if (captionDraft === null) return;
+    const next = normalizeImageCaption(captionDraft);
+    setCaptionDraft(null);
+    if (next !== caption) updateAttributes({ caption: next });
+  };
 
   const frameRef = useRef<HTMLDivElement>(null);
   // 끄는 중의 너비(저장 전). 끝나면 null.
@@ -129,6 +139,24 @@ export function ImageView({ node, selected, updateAttributes }: NodeViewProps) {
           </>
         )}
       </div>
+      {(selected || caption !== null || captionDraft !== null) && (
+        <input
+          className="image-caption"
+          type="text"
+          value={captionDraft ?? caption ?? ""}
+          placeholder={strings.captionPlaceholder}
+          aria-label={strings.captionPlaceholder}
+          onChange={(event) => setCaptionDraft(event.target.value)}
+          onBlur={commitCaption}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitCaption();
+              (event.target as HTMLInputElement).blur();
+            }
+          }}
+        />
+      )}
     </NodeViewWrapper>
   );
 }

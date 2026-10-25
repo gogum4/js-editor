@@ -23,12 +23,32 @@ export interface ExtraSyntax {
   definitions?: boolean;
   /** 목차 `[toc]`: 문서의 제목들로 그려지는 블록. */
   toc?: boolean;
+  /** 할 일 상태: `- [/]` 진행 중, `- [-]` 취소, `- [>]` 미룸, `- [?]` 질문, `- [!]` 중요 (Obsidian 테마·Tasks). 할 일 항목의 `status` 속성. */
+  taskStatus?: boolean;
+  /** 키보드 키 `<kbd>Ctrl</kbd>`: 글자 모양의 마크. 따로 켠다(`marks`와 별개). */
+  kbd?: boolean;
   /** 이모지 단축 코드 `:smile:` → 😄 (가져올 때 글자로 바꾸고, 편집기에서는 입력 규칙). */
   emoji?: boolean;
 }
 
 export const EXTRA_MARKS = ["highlight", "superscript", "subscript", "insert", "textColor", "backgroundColor"] as const;
+/** 할 일 상태 글자(`[ ]`·`[x]` 밖의 것). 저장은 이 한 글자이고, 뜻은 아래 이름이다. */
+export const TASK_STATUSES = { "/": "progress", "-": "cancelled", ">": "deferred", "?": "question", "!": "important" } as const;
+export type TaskStatus = keyof typeof TASK_STATUSES;
+
+export function normalizeTaskStatus(value: unknown): TaskStatus | null {
+  return typeof value === "string" && Object.hasOwn(TASK_STATUSES, value) ? (value as TaskStatus) : null;
+}
+
+/** 상태를 돌려 가며 바꿀 순서(없음 → … → 없음). */
+export function nextTaskStatus(current: unknown): TaskStatus | null {
+  const order: Array<TaskStatus | null> = [null, "/", ">", "?", "!", "-"];
+  const at = order.indexOf(normalizeTaskStatus(current));
+  return order[(at + 1) % order.length] ?? null;
+}
+
 export const ABBR_MARK = "abbr";
+export const KBD_MARK = "kbd";
 export const COMMENT_NODE = "comment";
 export const TAG_NODE = "tag";
 export const CITATION_NODE = "citation";

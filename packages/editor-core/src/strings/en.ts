@@ -52,7 +52,7 @@ export const enStrings: EditorStrings = {
     foldClosed: "Collapsible (closed)",
     toggleFold: "Collapse / expand",
   },
-  codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed" },
+  codeBlock: { show: "Show code", hide: "Hide code", copy: "Copy", copied: "Copied", copyFailed: "Copy failed", metaPlaceholder: "Title · highlight lines  e.g. title=\"a.ts\" {2,4}", metaLabel: "Code block info" },
   extras: {
     toc: { title: "Contents", empty: "No headings", jump: "Jump to this heading" },
     comment: { placeholder: "Comment (hidden from readers)", label: "Comment", edit: "Edit comment" },
@@ -68,6 +68,7 @@ export const enStrings: EditorStrings = {
       superscript: { label: "Superscript", description: "Raise text like x² (Ctrl+., ^text^)" },
       subscript: { label: "Subscript", description: "Lower text like H₂O (Ctrl+,)" },
       insert: { label: "Inserted text", description: "Mark added text (++text++)" },
+      kbd: { label: "Keyboard key", description: "Show a key like Ctrl (<kbd>)" },
       abbr: { label: "Abbreviation", description: "A word that explains itself on hover" },
       "color-reset": { label: "Clear colors", description: "Remove text and background colors" },
       "color-red": { label: "Text color · Red", description: "Make the text red" },
@@ -145,6 +146,7 @@ export const enStrings: EditorStrings = {
   },
   image: {
     alt: "Image",
+    captionPlaceholder: "Add a caption",
     loading: "Loading image…",
     failed: "Couldn't load the image",
     toolbarLabel: "Image alignment and size",

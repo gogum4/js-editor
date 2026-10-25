@@ -182,3 +182,23 @@ describe("참조·원문 (P7)", () => {
     expect(custom).not.toContain("youtube");
   });
 });
+
+describe("코드 블록 메타", () => {
+  const code = (meta: string | null): PmNode => ({ type: "doc", content: [{ type: "codeBlock", attrs: { language: "ts", meta }, content: [{ type: "text", text: "a\nb\nc" }] }] });
+
+  it("제목은 파일명 줄, 강조 줄은 띠, 줄 번호는 번호 칸으로 그린다", () => {
+    const html = renderToStaticMarkup(renderDoc(code('title="a.ts" {2} ln')));
+    expect(html).toContain('<div class="code-title">a.ts</div>');
+    expect(html).toContain('class="code-hl"');
+    expect(html).toContain("calc(1 * var(--md-code-line");
+    expect(html).toContain('data-line-numbers=""');
+    expect(html).toContain("1\n2\n3");
+  });
+
+  it("메타가 없으면 예전과 같은 모양", () => {
+    const html = renderToStaticMarkup(renderDoc(code(null)));
+    expect(html).not.toContain("code-title");
+    expect(html).not.toContain("code-hl");
+    expect(html).not.toContain("code-lines");
+  });
+});

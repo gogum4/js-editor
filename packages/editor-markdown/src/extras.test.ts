@@ -139,6 +139,23 @@ describe("페이지 링크의 제목 위치 (anchors)", () => {
   });
 });
 
+describe("같은 글 안의 위치와 블록 임베드", () => {
+  const base = { ...ctx, extras: undefined, anchors: true };
+  it("[[#제목]]은 selfPage로 풀고, selfPage가 없으면 글자로 남는다", () => {
+    const on = markdownToDoc("[[#제목]] [[#^abcdefghij]]", { ...base, selfPage: "나" }, "");
+    expect(on.doc.content![0]!.content!.filter((n) => n.type === "pageLink").map((n) => n.attrs)).toEqual([{ pageId: "나", heading: "제목" }, { pageId: "나", blockId: "abcdefghij" }]);
+    const off = markdownToDoc("[[#제목]]", base, "");
+    expect(off.doc.content![0]!.content![0]!.type).toBe("text");
+  });
+
+  it("![[노트#^블록]]은 blockId가 있는 임베드이고, blockIds를 켜면 같은 글로 내보낸다", () => {
+    const { doc } = markdownToDoc("![[노트#^abcdefghij]]", base, "");
+    expect(doc.content![0]).toEqual({ type: "pageBlock", attrs: { pageId: "노트", mode: "embed", blockId: "abcdefghij" } });
+    const out = docToMarkdown(doc, { pageTitle: (id) => id, blockIds: true });
+    expect(out.markdown).toBe("![[노트#^abcdefghij]]\n");
+  });
+});
+
 describe("추가 문법 옵션", () => {
   it("tags.skipHexColors: 16진 색 모양은 글자로 두고, 다른 태그는 그대로 태그", () => {
     const skip: ImportContext = { ...ctx, extras: { ...all, tags: { skipHexColors: true } } };
@@ -173,5 +190,84 @@ describe("추가 문법 옵션", () => {
     const [list] = blocks(md);
     expect(list!.content![1]!.content).toEqual([{ type: "text", text: "첫 줄" }, { type: "hardBreak" }, { type: "text", text: "둘째 줄" }]);
     expect(roundTrip(md)).toBe(md);
+  });
+});
+
+describe("코드 블록 메타", () => {
+  const roundTripMd = (md: string) => docToMarkdown(markdownToDoc(md, { ...ctx, extras: undefined }, "").doc, { pageTitle: () => null }).markdown;
+
+  it("언어 뒤 글을 meta로 보존하고 같은 글로 내보낸다", () => {
+    const md = '```ts title="a.ts" {2,4}\nconst a = 1;\n```\n';
+    const { doc } = markdownToDoc(md, { ...ctx, extras: undefined }, "");
+    expect(doc.content![0]!.attrs).toEqual({ language: "ts", meta: 'title="a.ts" {2,4}' });
+    expect(roundTripMd(md)).toBe(md);
+  });
+
+  it("언어 없이 메타만 있는 펜스", () => {
+    const { doc } = markdownToDoc("```{2}\nx\n```\n", { ...ctx, extras: undefined }, "");
+    expect(doc.content![0]!.attrs).toEqual({ meta: "{2}" });
+    expect(roundTripMd("```{2}\nx\n```\n")).toBe("```{2}\nx\n```\n");
+  });
+
+  it("메타가 없으면 속성을 만들지 않는다", () => {
+    expect(markdownToDoc("```ts\nx\n```\n", { ...ctx, extras: undefined }, "").doc.content![0]!.attrs).toEqual({ language: "ts" });
+  });
+});
+
+describe("이미지 캡션", () => {
+  const withImage = { ...ctx, extras: undefined, resolveImage: (p: string) => p };
+
+  it('![alt](src "캡션")의 title을 caption으로 보존하고 같은 글로 내보낸다', () => {
+    const { doc } = markdownToDoc('![그림](a.png "첫 번째 그림")\n', withImage, "");
+    expect(doc.content![0]).toEqual({ type: "image", attrs: { importPath: "a.png", alt: "그림", caption: "첫 번째 그림" } });
+  });
+
+  it("title이 없으면 속성을 만들지 않는다", () => {
+    expect(markdownToDoc("![그림](a.png)\n", withImage, "").doc.content![0]!.attrs).toEqual({ importPath: "a.png", alt: "그림" });
+  });
+
+  it("내보낼 때 큰따옴표를 이스케이프한다", () => {
+    const hash = "a".repeat(64);
+    const out = docToMarkdown({ type: "doc", content: [{ type: "image", attrs: { hash, mime: "image/png", alt: "x", caption: '그는 "안녕"' } }] }, { pageTitle: () => null, assetPath: () => "a.png" });
+    expect(out.markdown).toBe('![x](a.png "그는 \\"안녕\\"")\n');
+  });
+});
+
+describe("키보드 키 <kbd>", () => {
+  const withKbd = { ...ctx, extras: { kbd: true } };
+  it("kbd를 켜면 마크로 읽고 같은 태그로 내보낸다", () => {
+    const { doc } = markdownToDoc("누르기 <kbd>Ctrl</kbd>+<kbd>C</kbd>\n", withKbd, "");
+    const nodes = doc.content![0]!.content!;
+    expect(nodes.filter((n) => n.marks?.some((m) => m.type === "kbd")).map((n) => n.text)).toEqual(["Ctrl", "C"]);
+    expect(docToMarkdown(doc, { pageTitle: () => null, extras: withKbd.extras }).markdown).toBe("누르기 <kbd>Ctrl</kbd>+<kbd>C</kbd>\n");
+  });
+
+  it("꺼져 있으면 읽지 않는다", () => {
+    const { doc } = markdownToDoc("<kbd>Ctrl</kbd>\n", { ...ctx, extras: undefined }, "");
+    expect(JSON.stringify(doc)).not.toContain('"kbd"');
+  });
+});
+
+describe("할 일 상태", () => {
+  const withStatus = { ...ctx, extras: { taskStatus: true } };
+  const md = "- [ ] 일반\n- [x] 끝\n- [/] 진행 중 *강조*\n- [-] 취소\n- [>] 미룸\n- [?] 질문\n- [!] 중요\n";
+
+  it("[/] [-] [>] [?] [!]를 status로 읽고 같은 글로 내보낸다", () => {
+    const { doc } = markdownToDoc(md, withStatus, "");
+    const items = doc.content![0]!.content!;
+    expect(items.map((i) => [i.attrs!.checked, i.attrs!.status ?? null])).toEqual([[false, null], [true, null], [false, "/"], [false, "-"], [false, ">"], [false, "?"], [false, "!"]]);
+    // 표시를 떼고 남은 글에 서식이 살아 있다.
+    expect(items[2]!.content![0]!.content).toEqual([{ type: "text", text: "진행 중 " }, { type: "text", text: "강조", marks: [{ type: "italic" }] }]);
+    expect(docToMarkdown(doc, { pageTitle: () => null, extras: withStatus.extras }).markdown).toBe(md);
+  });
+
+  it("꺼져 있으면 일반 목록의 글자로 남는다", () => {
+    const { doc } = markdownToDoc("- [/] 진행 중\n", { ...ctx, extras: undefined }, "");
+    expect(doc.content![0]!.type).toBe("bulletList");
+  });
+
+  it("상태 문법을 끈 채 내보내면 상태 없는 항목", () => {
+    const { doc } = markdownToDoc("- [/] 진행 중\n", withStatus, "");
+    expect(docToMarkdown(doc, { pageTitle: () => null }).markdown).toBe("- [ ] 진행 중\n");
   });
 });

@@ -1,7 +1,7 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
-import { normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
+import { normalizeImageCaption, normalizeImageWidth } from "@gogum4/editor-schema/imageLayout";
 import { insertImageFiles } from "./insertImages";
 import type { NodeViewOptions } from "../ports/ui";
 
@@ -37,6 +37,15 @@ export const ImageBlock = Node.create<NodeViewOptions>({
         default: "",
         parseHTML: (element) => element.getAttribute("alt") ?? "",
         renderHTML: (attributes) => (attributes.alt ? { alt: attributes.alt } : {}),
+      },
+      // 그림 아래의 설명(`<figcaption>`). Markdown의 `![alt](src "캡션")`과 같다.
+      caption: {
+        default: null,
+        parseHTML: (element) => normalizeImageCaption(element.getAttribute("data-caption")),
+        renderHTML: (attributes) => {
+          const caption = normalizeImageCaption(attributes.caption);
+          return caption === null ? {} : { "data-caption": caption };
+        },
       },
       width: {
         default: null,

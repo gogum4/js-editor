@@ -19,7 +19,7 @@ export const koStrings: EditorStrings = {
     foldClosed: "접을 수 있음 (접힌 채로)",
     toggleFold: "접기/펴기",
   },
-  codeBlock: { show: "코드 보기", hide: "코드 접기", copy: "복사", copied: "복사됨", copyFailed: "복사 실패" },
+  codeBlock: { show: "코드 보기", hide: "코드 접기", copy: "복사", copied: "복사됨", copyFailed: "복사 실패", metaPlaceholder: "제목 · 강조 줄  예) title=\"a.ts\" {2,4}", metaLabel: "코드 블록 정보" },
   extras: {
     toc: { title: "목차", empty: "제목이 없어요", jump: "이 제목으로 이동" },
     comment: { placeholder: "주석 (글에는 안 보여요)", label: "주석", edit: "주석 고치기" },
@@ -35,6 +35,7 @@ export const koStrings: EditorStrings = {
       superscript: { label: "위첨자", description: "x² 처럼 올려 쓰기 (Ctrl+., ^글^)" },
       subscript: { label: "아래첨자", description: "H₂O 처럼 내려 쓰기 (Ctrl+,)" },
       insert: { label: "삽입", description: "추가된 글 표시 (++글++)" },
+      kbd: { label: "키보드 키", description: "Ctrl 처럼 키를 표시 (<kbd>)" },
       abbr: { label: "약어", description: "마우스를 올리면 뜻이 보이는 낱말" },
       "color-reset": { label: "색 지우기", description: "글자색과 배경색을 없애기" },
       "color-red": { label: "글자색 · 빨강", description: "이어서 쓰는 글(또는 선택한 글)을 빨강으로" },
@@ -112,6 +113,7 @@ export const koStrings: EditorStrings = {
   },
   image: {
     alt: "이미지",
+    captionPlaceholder: "설명을 입력하세요",
     loading: "이미지를 불러오는 중…",
     failed: "이미지를 불러오지 못했어요",
     toolbarLabel: "이미지 정렬과 크기",

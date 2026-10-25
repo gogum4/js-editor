@@ -56,3 +56,12 @@ export function matchingPreset(width: number | null, container: number): number 
   const percent = (width / container) * 100;
   return IMAGE_WIDTH_PRESETS.find((p) => Math.abs(percent - p) <= 1) ?? null;
 }
+
+const MAX_CAPTION = 300;
+
+/** 이미지 캡션(`![alt](src "캡션")`의 title): 한 줄로 정리하고 비면 null. */
+export function normalizeImageCaption(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const caption = value.replace(/\s+/g, " ").trim().slice(0, MAX_CAPTION);
+  return caption === "" ? null : caption;
+}
