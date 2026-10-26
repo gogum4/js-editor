@@ -61,6 +61,25 @@ describe("FixedToolbar", () => {
     expect(e.isActive("heading", { level: 2 })).toBe(true);
   });
 
+  it("블록 종류 선택은 목록에 없는 블록의 이름을 보이고, 모르는 블록은 —로 보인다", () => {
+    const e = mount();
+    const select = () => document.querySelector<HTMLSelectElement>('[data-action="block-type"]')!;
+    const shown = () => select().selectedOptions[0]!.textContent;
+    act(() => {
+      e.commands.setHeading({ level: 5 });
+    });
+    expect(shown()).toBe("제목 5");
+    act(() => {
+      e.commands.setCodeBlock();
+    });
+    expect(shown()).toBe("코드 블록");
+    act(() => {
+      e.commands.setHorizontalRule();
+      e.commands.setNodeSelection(e.state.selection.from - 1 < 0 ? 0 : e.state.selection.from - 1);
+    });
+    expect(shown()).not.toBe("");
+  });
+
   it("실행 취소가 입력을 되돌린다", () => {
     const e = mount();
     e.commands.setTextSelection(1);

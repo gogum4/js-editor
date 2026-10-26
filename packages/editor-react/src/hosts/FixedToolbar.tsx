@@ -35,9 +35,10 @@ function slashConfig(editor: Editor): { items: readonly SlashItem[]; handlers: S
   return options?.items ? { items: options.items, handlers: options.handlers ?? {} } : null;
 }
 
-/** 지금 커서가 있는 블록의 종류(블록 종류 선택의 값). */
+/** 지금 커서가 있는 블록의 종류(슬래시 항목 id). 알 수 없으면(카드·임베드 같은 노드 선택 등) "". */
 function currentBlockType(editor: Editor): string {
-  for (let level = 1; level <= 3; level += 1) if (editor.isActive("heading", { level })) return `heading${level}`;
+  for (let level = 1; level <= 6; level += 1) if (editor.isActive("heading", { level })) return `heading${level}`;
+  if (editor.isActive("codeBlock")) return "codeBlock";
   return editor.isActive("paragraph") ? "paragraph" : "";
 }
 
@@ -136,7 +137,12 @@ export function FixedToolbar({ editor }: { editor: Editor | null }) {
             editor.commands.focus();
           }}
         >
-          {blockValue === "" && <option value="" />}
+          {/* 목록에 없는 블록(제목 4~6·코드 블록 …)이면 그 이름을, 알 수 없으면 "—"를 보여 준다(고를 수는 없다). */}
+          {!blockTypes.some((id) => id === blockValue) && (
+            <option value={blockValue} disabled>
+              {blockValue !== "" && itemById(blockValue) ? labelOf(itemById(blockValue)!) : "—"}
+            </option>
+          )}
           {blockTypes.map((id) => (
             <option key={id} value={id}>
               {labelOf(itemById(id)!)}
