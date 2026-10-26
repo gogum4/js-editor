@@ -1,5 +1,13 @@
 # @gogum4/editor-react
 
+## 0.7.2
+
+### Patch Changes
+
+- e947716: 고정 서식 막대의 블록 종류 선택이 제목 4~6·코드 블록·카드/임베드 같은 블록에서 빈칸으로 보이던 것을 고친다(알려진 블록은 그 이름을, 모르는 블록은 "—"를 보인다).
+- @gogum4/editor-core@0.7.2
+  - @gogum4/editor-schema@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
