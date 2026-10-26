@@ -1,5 +1,13 @@
 # @gogum4/editor-react
 
+## 0.7.1
+
+### Patch Changes
+
+- 661276a: 고정 서식 막대의 "삽입" 메뉴가 막대의 가로 스크롤 영역에 가려져 보이지 않던 것을 고친다(메뉴를 단추 위치의 화면 좌표로 띄우고, 스크롤·크기 변경 때 닫는다).
+- @gogum4/editor-core@0.7.1
+  - @gogum4/editor-schema@0.7.1
+
 ## 0.7.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @gogum4/editor-render
 
+## 0.7.1
+
+### Patch Changes
+
+- @gogum4/editor-markdown@0.7.1
+  - @gogum4/editor-schema@0.7.1
+
 ## 0.7.0
 
 ### Patch Changes
