@@ -28,6 +28,11 @@ export interface AssetStore {
   requestRemote?(hash: string): boolean;
   /** 이 해시의 이미지가 도착하면 `listener`를 부른다. 해제 함수를 돌려준다. */
   onArrived?(hash: string, listener: () => void): () => void;
+  /**
+   * 붙여넣기·끌어 놓기·고르는 창에서 받는 형식. 없으면 `SUPPORTED_IMAGE_TYPES`(PNG·JPEG·GIF·WebP).
+   * SVG(`SVG_IMAGE_TYPE`)를 넣으면 **`put`이 받은 바이트를 정화·검사해야 한다**(스크립트·외부 주소가 들어갈 수 있다).
+   */
+  acceptedTypes?: readonly string[];
 }
 
 /** 사용자에게 알리는 창구. */

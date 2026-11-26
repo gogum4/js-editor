@@ -1,5 +1,8 @@
-import { sniffImageMime } from "@gogum4/editor-schema/assets";
+import { looksLikeSvg, sniffImageMime, SVG_IMAGE_TYPE } from "@gogum4/editor-schema/assets";
 import type { AssetStore } from "../ports/types";
+
+/** 저장소가 준 바이트를 보일 형식. SVG는 `Blob`에 형식이 없으면 `<img>`가 그리지 않으므로 따로 알아본다(안전 검사는 저장소의 몫이다). */
+const displayMime = (bytes: Uint8Array): string => sniffImageMime(bytes) ?? (looksLikeSvg(bytes) ? SVG_IMAGE_TYPE : "");
 
 /**
  * 첨부 이미지를 화면에 보이려면 바이트를 읽어 `blob:` 주소로 바꿔야 한다. 같은 이미지는 한 번만 읽고
@@ -21,7 +24,7 @@ export function createAssetCache(assets: AssetStore): AssetCache {
       if (!pending) {
         pending = assets
           .get(hash)
-          .then((bytes) => URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime || sniffImageMime(bytes) || "" })));
+          .then((bytes) => URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime || displayMime(bytes) })));
         urls.set(hash, pending);
         pending.catch(() => {
           if (urls.get(hash) === pending) urls.delete(hash);

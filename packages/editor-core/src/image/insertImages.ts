@@ -25,7 +25,7 @@ export async function insertImageFiles(editor: Editor, files: readonly File[], p
   let inserted = 0;
   let at = position;
   for (const file of files) {
-    const check = checkImageFile(file);
+    const check = checkImageFile(file, assets.acceptedTypes);
     if (!check.ok) {
       const reason = check.code === "type" ? strings.unsupportedType : check.code === "empty" ? strings.emptyFile : strings.tooLarge(MAX_ASSET_BYTES / 1024 / 1024);
       notifier.notice(strings.rejected(file.name || strings.fallbackName, reason));
@@ -53,7 +53,7 @@ export function openImagePicker(editor: Editor): void {
   const input = document.createElement("input");
   input.type = "file";
   input.multiple = true;
-  input.accept = SUPPORTED_IMAGE_TYPES.join(",");
+  input.accept = (portsOf(editor).assets.acceptedTypes ?? SUPPORTED_IMAGE_TYPES).join(",");
   input.onchange = () => {
     const files = [...(input.files ?? [])];
     if (files.length > 0) void insertImageFiles(editor, files);
